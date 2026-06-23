@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Nhiệm Vụ Hằng Ngày — Whop Community App</title>
+<title>Điểm Danh Hằng Ngày — Whop Community App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -61,16 +61,6 @@
   .day.big .r{font-size:16px}
   .day.big{border-color:rgba(244,196,65,.3)}
 
-  .qlist{display:flex;flex-direction:column;gap:10px}
-  .quest{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
-    border-radius:12px;padding:14px}
-  .quest .ic{font-size:24px}
-  .quest .info{flex:1;min-width:0}
-  .quest .nm{font-size:14px;font-weight:600;color:#fff;margin-bottom:2px}
-  .quest .rw{font-family:'Oswald',sans-serif;font-size:12px;color:var(--gold);letter-spacing:.05em}
-  .quest.done{opacity:.55}
-  .quest.done .nm::after{content:" ✓";color:var(--cyan)}
-
   .state{text-align:center;padding:60px 20px;color:var(--muted)}
   .spinner{width:40px;height:40px;border:2px solid rgba(39,227,255,.2);border-top-color:var(--cyan);border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -91,7 +81,7 @@
     <a href="/events.html">🗓 Lịch sự kiện</a>
     <a href="/mailbox.html">📬 Hộp thư</a>
   </div>
-  <div class="top"><span class="s">♦</span> Nhiệm Vụ <b>Hằng Ngày</b></div>
+  <div class="top"><span class="s">♦</span> Điểm Danh <b>Hằng Ngày</b></div>
   <div id="content"><div class="state"><div class="spinner"></div>Đang tải...</div></div>
 </div>
 
@@ -145,9 +135,9 @@ function calendarHTML(ck){
 }
 
 function render(d){
-  const ck=d.checkin, qs=d.quests||[], se=d.season||{};
+  const ck=d.checkin, se=d.season||{};
   const locked = d.tier==='free';
-  const upsell = locked ? `<div class="upsell">🔒 Điểm danh &amp; nhiệm vụ hằng ngày là tính năng <b>trả phí</b>. Nâng cấp trong Whop để mở khoá và bắt đầu tích xu mỗi ngày.</div>` : '';
+  const upsell = locked ? `<div class="upsell">🔒 Điểm danh hằng ngày là tính năng <b>trả phí</b>. Nâng cấp trong Whop để mở khoá và bắt đầu tích xu mỗi ngày.</div>` : '';
   const html=`
     ${upsell}
     <div class="bal">
@@ -167,21 +157,6 @@ function render(d){
       <div class="calendar">${calendarHTML(ck)}</div>
       <p style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center">
         Đứt chuỗi → reset về ngày 1. Mốc ngày có thưởng lớn 🎉
-      </p>
-    </div>
-
-    <div class="sect">⚡ Nhiệm vụ hôm nay</div>
-    <div class="panel ${locked?'locked':''}">
-      <div class="qlist">
-        ${qs.filter(q=>q.active!==false).map(q=>`
-          <div class="quest ${q.done?'done':''}">
-            <div class="ic">${q.icon||'⭐'}</div>
-            <div class="info"><div class="nm">${q.name}</div><div class="rw">+${q.reward} xu</div></div>
-            <button class="btn" data-q="${q.id}" ${(locked||q.done)?'disabled':''}>${locked?'🔒':(q.done?'Đã xong':'Nhận')}</button>
-          </div>`).join('')}
-      </div>
-      <p style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center">
-        Reset 07:00 sáng mỗi ngày (giờ Việt Nam).
       </p>
     </div>
 
@@ -211,18 +186,6 @@ function render(d){
         setTimeout(load,400);
       }catch(e){toast('⚠ '+e.message);$('claim-ck').disabled=false;}
     };
-    document.querySelectorAll('button[data-q]').forEach(b=>{
-      b.onclick=async ()=>{
-        b.disabled=true;
-        try{
-          const r=await tenantFetch('/.netlify/functions/quests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({questId:b.dataset.q})});
-          const j=await r.json();
-          if(!r.ok) throw new Error(j.error||'Lỗi');
-          toast(j.message);
-          setTimeout(load,400);
-        }catch(e){toast('⚠ '+e.message);b.disabled=false;}
-      };
-    });
   }
 
   // countdown

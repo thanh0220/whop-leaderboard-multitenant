@@ -135,13 +135,18 @@
   .evt-bar .grip{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize;z-index:2}
   .evt-bar .grip-l{left:0} .evt-bar .grip-r{right:0}
   .evt-bar .evt-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .ev-thumb{width:16px;height:16px;border-radius:4px;object-fit:cover;flex-shrink:0;margin-right:4px}
+  .ev-thumb{width:20px;height:20px;border-radius:5px;object-fit:cover;flex-shrink:0;margin-right:4px;cursor:pointer}
+  .ev-thumb-empty{width:20px;height:20px;border-radius:5px;flex-shrink:0;margin-right:4px;cursor:pointer;display:inline-flex;
+    align-items:center;justify-content:center;font-size:11px;background:rgba(255,255,255,.08);border:1px dashed rgba(255,255,255,.25)}
+  .evt-name-inline{flex:1;min-width:0;background:transparent;border:none;color:inherit;font:inherit;padding:0;outline:none}
+  .evt-name-inline:focus{border-bottom:1px dashed currentColor}
   .evt-bar .ex{font-size:10px;line-height:1;opacity:.6;cursor:pointer;padding:2px;flex-shrink:0;margin-left:4px}
   .evt-bar .ex:hover{opacity:1}
   .ev-empty{text-align:center;color:var(--muted);font-size:12px;padding:10px 0}
   .unscheduled-tray{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
   .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:999px;
-    margin:0 6px 6px 0;cursor:grab;user-select:none}
+    margin:0 6px 6px 0;cursor:grab;user-select:none;width:160px}
+  .chip .evt-name-inline{width:auto}
   .chip .ex{opacity:.7;cursor:pointer}
   .flash{animation:flash-pulse 1.5s ease-out;border-radius:12px}
   @keyframes flash-pulse{0%,30%{box-shadow:0 0 0 2px var(--cyan)}100%{box-shadow:0 0 0 0 transparent}}
@@ -157,7 +162,6 @@
     <a href="#conn">🔌 Kết nối</a>
     <a href="#season">🏆 Mùa giải</a>
     <a href="#daily">📅 Điểm danh</a>
-    <a href="#quests">✅ Nhiệm vụ</a>
     <a href="#store">🎁 Cửa hàng</a>
     <a href="#codes">🔑 Code</a>
     <a href="#events">🗓 Sự kiện</a>
@@ -207,9 +211,6 @@ function storeBackHtml(r){
 }
 function seasonTileHtml(r,i){
   return `<div class="pv-prize r${i+1}"><div class="pp">${esc(r.rank||'')}</div><div class="pxu">🪙 ${esc(r.prize||'')}</div></div>`;
-}
-function questCardHtml(q){
-  return `<div class="pv-quest"><div class="ic">${esc(q.icon||'⭐')}</div><div class="info"><div class="nm">${esc(q.name||'(chưa đặt tên)')}</div><div class="rw">+${fmt(q.reward)} xu</div></div></div>`;
 }
 function dayCellHtml(v,i){
   return `<div class="pv-day"><div class="n">Ngày ${i+1}</div><div class="r">+${fmt(v)}</div></div>`;
@@ -262,12 +263,11 @@ async function load(){
         whopCompanyId: j.whopCompanyId || '',
         seasonTopRewards: j.seasonTopRewards || [],
         checkinRewards: j.checkinRewards || [],
-        dailyQuests: j.dailyQuests || [],
         rewards: j.rewards || [],
         redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>
           typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),
-        chestRules: j.chestRules || {thresholds:[],rewardRange:{},expiryHours:48},
-        events: j.events || [],
+        chestRules: j.chestRules || {thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},
+        events: normalizeEvents(j.events),
       };
       renderAll();
       return;
@@ -282,7 +282,7 @@ async function load(){
 
 function renderAll(){
   $('content').innerHTML =
-    renderConn() + renderSeason() + renderDaily() + renderQuests() + renderStore() + renderCodes() + renderEvents() + renderChests() +
+    renderConn() + renderSeason() + renderDaily() + renderStore() + renderCodes() + renderEvents() + renderChests() +
     `<div class="save-bar"><button class="btn big" id="save-all">💾 Lưu tất cả</button></div>`;
   $('save-all').onclick = saveAll;
 }
@@ -343,46 +343,6 @@ function renderDaily(){
     <div class="panel">
       <p class="hint-small" style="margin-bottom:10px">Số xu cho mỗi ngày trong chu kỳ 30 ngày (lặp lại khi hết chuỗi).</p>
       <div class="calgrid">${cells}</div>
-    </div>`;
-}
-
-// ===== #quests =====
-function renderQuests(){
-  const rows = (STATE.dailyQuests||[]).map((q,i)=>`
-    <div class="item" id="quest-item-${i}">
-      <div class="edit-row">
-        <div>
-          <div class="row2">
-            <div><label>ID (không đổi nếu đã có)</label><input value="${esc(q.id)}" oninput="setPath(STATE,'dailyQuests.${i}.id',this.value)"/></div>
-            <div><label>Icon</label><input value="${esc(q.icon)}" oninput="setPath(STATE,'dailyQuests.${i}.icon',this.value);$('prev-quest-${i}').innerHTML=questCardHtml(STATE.dailyQuests[${i}])"/></div>
-          </div>
-          <label>Tên nhiệm vụ</label>
-          <input value="${esc(q.name)}" oninput="setPath(STATE,'dailyQuests.${i}.name',this.value);$('prev-quest-${i}').innerHTML=questCardHtml(STATE.dailyQuests[${i}])"/>
-          <label>Xu thưởng</label>
-          <input type="number" value="${q.reward}" oninput="setPath(STATE,'dailyQuests.${i}.reward',Number(this.value)||0);$('prev-quest-${i}').innerHTML=questCardHtml(STATE.dailyQuests[${i}])"/>
-          <label>Ảnh (dán link ảnh, để trống = dùng icon)</label>
-          <img class="thumb" id="quest-thumb-${i}" src="${esc(q.image||'')}" alt="" style="${q.image?'':'display:none'}"/>
-          <input value="${esc(q.image||'')}" placeholder="https://..." oninput="setPath(STATE,'dailyQuests.${i}.image',this.value);const t=$('quest-thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none'"/>
-          <div class="row2">
-            <div><label>Bắt đầu (để trống = luôn chạy)</label><input type="date" value="${esc(q.startDate||'')}" oninput="setPath(STATE,'dailyQuests.${i}.startDate',this.value)"/></div>
-            <div><label>Kết thúc (để trống = không hết hạn)</label><input type="date" value="${esc(q.endDate||'')}" oninput="setPath(STATE,'dailyQuests.${i}.endDate',this.value)"/></div>
-          </div>
-          <label>Lặp lại mỗi (số ngày, để trống = không lặp)</label>
-          <input type="number" min="1" value="${esc(q.repeatDays||'')}" oninput="setPath(STATE,'dailyQuests.${i}.repeatDays',this.value?Number(this.value):'')"/>
-          <div class="hint-small">Để trống ngày = nhiệm vụ luôn hoạt động. Đặt ngày để giới hạn thời gian hoạt động; lặp lại = tái diễn mỗi N ngày, độ dài mỗi lần giữ nguyên theo khoảng Bắt đầu→Kết thúc.</div>
-          <button class="btn del" onclick="STATE.dailyQuests.splice(${i},1);renderAll()">🗑 Xoá nhiệm vụ</button>
-        </div>
-        <div class="prev-col">
-          <div class="prev-label">Preview</div>
-          <div id="prev-quest-${i}">${questCardHtml(q)}</div>
-        </div>
-      </div>
-    </div>`).join('');
-  return `
-    <div class="sect" id="quests">✅ Nhiệm Vụ Hằng Ngày</div>
-    <div class="panel">
-      ${rows || '<p class="hint-small">Chưa có nhiệm vụ nào.</p>'}
-      <button class="btn" onclick="STATE.dailyQuests.push({id:'quest_'+Date.now().toString(36),name:'',reward:1,icon:'⭐'});renderAll()">+ Thêm nhiệm vụ</button>
     </div>`;
 }
 
@@ -525,15 +485,39 @@ function renderChests(){
     <div class="panel">
       <p class="hint-small" style="margin-bottom:10px">Khi 1 member mua hàng thật trên Whop, TOÀN BỘ member khác trong kênh nhận 1 rương ở 🗓 Hộp thư (mô tả ghi rõ tên người mua). Tier chọn theo số tiền giao dịch (USD), số xu random trong khoảng đã đặt.</p>
       ${rows || '<p class="hint-small">Chưa có cấu hình tier nào.</p>'}
+      <div class="item">
+        <label>🎉 Xu "Cảm ơn đã mua hàng" — phát thẳng cho chính người mua (ngoài rương cộng đồng ở trên)</label>
+        <div class="row2">
+          <div><label>Xu tối thiểu</label><input type="number" min="0" value="${(rules.buyerReward||{}).min||0}" oninput="setPath(STATE,'chestRules.buyerReward.min',Number(this.value)||0)"/></div>
+          <div><label>Xu tối đa</label><input type="number" min="0" value="${(rules.buyerReward||{}).max||0}" oninput="setPath(STATE,'chestRules.buyerReward.max',Number(this.value)||0)"/></div>
+        </div>
+      </div>
       <label>Hạn nhận rương (giờ)</label>
       <input type="number" min="1" value="${rules.expiryHours}" oninput="setPath(STATE,'chestRules.expiryHours',Number(this.value)||48)"/>
       <div class="hint-small">Cần tạo Webhook trên Whop Dev Dashboard (event <code>payment_succeeded</code>) trỏ vào <code>/.netlify/functions/webhook</code> và set biến môi trường <code>WHOP_WEBHOOK_SECRET</code> trên Netlify — chỉ làm 1 lần cho app.</div>
     </div>`;
 }
 
-// ===== #events — lịch sự kiện độc lập (STATE.events — KHÔNG gắn Nhiệm vụ/Code) =====
+// ===== #events — đúng 3 ô (ảnh + tên + 1 ngày), sửa trực tiếp trên ô, kéo-thả lên lịch =====
 let eventsWeekOffset = 0;
-let dragChip = null; // idx của chip đang kéo (drop lần đầu lên lịch)
+let dragChip = null; // idx của ô đang kéo (drop lần đầu lên lịch)
+
+// Luôn đảm bảo đúng 3 phần tử {id,name,image,date} — migrate dữ liệu cũ
+// (startDate/endDate) về `date` nếu có, không thêm/xoá được từ UI.
+function normalizeEvents(raw){
+  const list = Array.isArray(raw) ? raw : [];
+  const out = [];
+  for(let i=0;i<3;i++){
+    const e = list[i] || {};
+    out.push({
+      id: e.id || ('event_'+(i+1)),
+      name: e.name || ('Sự kiện '+(i+1)),
+      image: e.image || '',
+      date: e.date || e.startDate || '',
+    });
+  }
+  return out;
+}
 
 function evWeekDates(offset){
   const todayKey = new Date().toISOString().slice(0,10);
@@ -547,23 +531,20 @@ function addDays(dateKey, n){
   const d = new Date(dateKey+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n);
   return d.toISOString().slice(0,10);
 }
-function dayDelta(a,b){ return Math.round((new Date(b+'T00:00:00Z') - new Date(a+'T00:00:00Z'))/86400000); }
 
-// Lặp lại: quét vài chu kỳ quanh tuần đang xem, trả về danh sách [start,end]
-// của các lần lặp có chạm vào tuần hiển thị (không lặp = đúng 1 lần).
-function evOccurrences(item, week){
-  if(!item.startDate || !item.endDate) return [];
-  const start = item.startDate, end = item.endDate;
-  if(!item.repeatDays) return [[start,end]];
-  const winLen = dayDelta(start, end);
-  const results = [];
-  let k = Math.floor(dayDelta(start, week[0]) / item.repeatDays) - 1;
-  for(let n=0; n<4; n++, k++){
-    const occStart = addDays(start, k*item.repeatDays);
-    const occEnd = addDays(occStart, winLen);
-    if(occEnd >= week[0] && occStart <= week[6]) results.push([occStart, occEnd]);
-  }
-  return results;
+function evCardHtml(e, idx){
+  return `
+    <img class="ev-thumb" id="ev-thumb-${idx}" src="${esc(e.image||'')}" style="${e.image?'':'display:none'}" onclick="promptImage(${idx})" title="Bấm để đổi ảnh"/>
+    ${e.image?'':`<span class="ev-thumb ev-thumb-empty" onclick="promptImage(${idx})" title="Bấm để đặt ảnh">🖼</span>`}
+    <input class="evt-name-inline" value="${esc(e.name)}" oninput="STATE.events[${idx}].name=this.value" onmousedown="event.stopPropagation()"/>
+  `;
+}
+function promptImage(idx){
+  const cur = STATE.events[idx].image || '';
+  const url = prompt('Dán link ảnh cho sự kiện này:', cur);
+  if(url === null) return;
+  STATE.events[idx].image = url.trim();
+  refreshEvents();
 }
 
 function renderEvents(){
@@ -576,62 +557,31 @@ function renderEvents(){
     return `<div class="ev-head-cell ${isToday?'today':''}" ondragover="event.preventDefault()" ondrop="onEvDrop(event,'${dk}')">${dowLabel[i]}<div class="dd">${dd}/${m}</div></div>`;
   }).join('');
 
-  const items = (STATE.events||[]).map((e,i)=>({idx:i,label:(e.time?`🕒 ${esc(e.time)} `:'')+(esc(e.name)||'(chưa đặt tên)'),image:e.image,startDate:e.startDate,endDate:e.endDate,repeatDays:e.repeatDays}));
-  const scheduled = items.filter(it=>it.startDate && it.endDate);
-  const unscheduled = items.filter(it=>!(it.startDate && it.endDate));
+  const events = STATE.events||[];
+  const scheduledIdx = events.map((e,i)=>i).filter(i=>events[i].date);
+  const unscheduledIdx = events.map((e,i)=>i).filter(i=>!events[i].date);
 
-  const bars = scheduled.flatMap(it=>evOccurrences(it, week).map(([occStart,occEnd])=>{
-    let startCol = week.indexOf(occStart);
-    let endCol = week.indexOf(occEnd);
-    if(startCol===-1) startCol = occStart < week[0] ? 0 : 7;
-    if(endCol===-1) endCol = occEnd > week[6] ? 6 : -1;
-    if(startCol>6 || endCol<0 || startCol>endCol) return '';
-    const thumb = it.image ? `<img class="ev-thumb" src="${esc(it.image)}"/>` : '';
+  const bars = scheduledIdx.map(idx=>{
+    const e = events[idx];
+    let col = week.indexOf(e.date);
+    if(col===-1) return ''; // ngoài tuần đang xem
     return `<div class="ev-track">
-      <div class="evt-bar quest" style="grid-column:${startCol+1} / ${endCol+2}" onmousedown="startDragMove(event,${it.idx})">
-        <div class="grip grip-l" onmousedown="startDragResize(event,${it.idx},'start')"></div>
-        ${thumb}<span class="evt-label">${it.label}</span>
-        <span class="ex" onmousedown="event.stopPropagation()" onclick="jumpToEdit(${it.idx})" title="Sửa">✎</span>
-        <span class="ex" onmousedown="event.stopPropagation()" onclick="unscheduleEvent(${it.idx})" title="Bỏ lịch">✕</span>
-        <span class="ex" onmousedown="event.stopPropagation()" onclick="deleteEventItem(${it.idx})" title="Xoá hẳn">🗑</span>
-        <div class="grip grip-r" onmousedown="startDragResize(event,${it.idx},'end')"></div>
+      <div class="evt-bar quest" style="grid-column:${col+1} / ${col+2}" onmousedown="startDragMove(event,${idx})">
+        ${evCardHtml(e, idx)}
+        <span class="ex" onmousedown="event.stopPropagation()" onclick="unscheduleEvent(${idx})" title="Bỏ khỏi lịch">✕</span>
       </div>
     </div>`;
-  })).filter(Boolean).join('') || '<div class="ev-empty">Chưa có sự kiện nào trong tuần này — kéo chip ở dưới vào 1 ô ngày, hoặc bấm "+ Sự kiện mới".</div>';
+  }).filter(Boolean).join('') || (scheduledIdx.length ? '<div class="ev-empty">Không có sự kiện nào trong tuần này.</div>' : '<div class="ev-empty">Kéo 1 ô ở dưới vào 1 ngày để lên lịch.</div>');
 
-  const chips = unscheduled.map(it=>
-    `<span class="chip quest" draggable="true" ondragstart="onChipDragStart(event,${it.idx})">${it.label}
-      <span class="ex" onmousedown="event.stopPropagation()" onclick="jumpToEdit(${it.idx})" title="Sửa">✎</span>
-      <span class="ex" onmousedown="event.stopPropagation()" onclick="deleteEventItem(${it.idx})" title="Xoá hẳn">🗑</span>
-    </span>`
-  ).join('') || '<span class="hint-small">Không có gì chưa lên lịch.</span>';
-
-  const editList = (STATE.events||[]).map((e,i)=>`
-    <div class="item" id="event-item-${i}">
-      <label>Tên sự kiện</label>
-      <input value="${esc(e.name)}" oninput="setPath(STATE,'events.${i}.name',this.value)"/>
-      <label>Mô tả</label>
-      <textarea oninput="setPath(STATE,'events.${i}.desc',this.value)">${esc(e.desc)}</textarea>
-      <div class="row2">
-        <div><label>Giờ bắt đầu (không bắt buộc)</label><input type="time" value="${esc(e.time||'')}" oninput="setPath(STATE,'events.${i}.time',this.value)"/></div>
-        <div><label>Link (không bắt buộc)</label><input value="${esc(e.link||'')}" placeholder="https://..." oninput="setPath(STATE,'events.${i}.link',this.value)"/></div>
-      </div>
-      <label>Ảnh (dán link ảnh, không bắt buộc)</label>
-      <img class="thumb" id="event-thumb-${i}" src="${esc(e.image||'')}" alt="" style="${e.image?'':'display:none'}"/>
-      <input value="${esc(e.image||'')}" placeholder="https://..." oninput="setPath(STATE,'events.${i}.image',this.value);const t=$('event-thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none'"/>
-      <div class="row2">
-        <div><label>Bắt đầu</label><input type="date" value="${esc(e.startDate||'')}" oninput="setPath(STATE,'events.${i}.startDate',this.value)"/></div>
-        <div><label>Kết thúc</label><input type="date" value="${esc(e.endDate||'')}" oninput="setPath(STATE,'events.${i}.endDate',this.value)"/></div>
-      </div>
-      <label>Lặp lại mỗi (số ngày, để trống = không lặp)</label>
-      <input type="number" min="1" value="${esc(e.repeatDays||'')}" oninput="setPath(STATE,'events.${i}.repeatDays',this.value?Number(this.value):'')"/>
-      <button class="btn del" onclick="STATE.events.splice(${i},1);renderAll()">🗑 Xoá sự kiện</button>
-    </div>`).join('');
+  const chips = unscheduledIdx.map(idx=>{
+    const e = events[idx];
+    return `<span class="chip quest" draggable="true" ondragstart="onChipDragStart(event,${idx})">${evCardHtml(e, idx)}</span>`;
+  }).join('') || '<span class="hint-small">Cả 3 sự kiện đã lên lịch.</span>';
 
   return `<div id="events-wrap">
     <div class="sect" id="events">🗓 Sự Kiện</div>
     <div class="panel">
-      <p class="hint-small" style="margin-bottom:10px">Lịch sự kiện độc lập (live, khuyến mãi, AMA, bảo trì...) — không liên quan Nhiệm vụ/Code/thưởng.</p>
+      <p class="hint-small" style="margin-bottom:10px">Đúng 3 ô — gõ tên trực tiếp, bấm vào ảnh để đổi, kéo vào lịch để đặt ngày.</p>
       <div class="events-nav">
         <button class="btn" onclick="eventsWeekOffset--;refreshEvents()">‹ Tuần trước</button>
         <span class="lbl">${week[0].slice(8,10)}/${week[0].slice(5,7)} — ${week[6].slice(8,10)}/${week[6].slice(5,7)}</span>
@@ -644,10 +594,6 @@ function renderEvents(){
         ${chips}
       </div>
     </div>
-    <div class="panel" style="margin-top:8px">
-      <button class="btn" onclick="quickAddEvent()">+ Sự kiện mới</button>
-      ${editList}
-    </div>
   </div>`;
 }
 function refreshEvents(){ $('events-wrap').outerHTML = renderEvents(); }
@@ -657,73 +603,27 @@ function startDragMove(e, idx){
   const track = e.currentTarget.closest('.ev-track');
   const cellWidth = track.getBoundingClientRect().width/7;
   const item = STATE.events[idx];
-  const origStart = item.startDate, origEnd = item.endDate;
+  const origDate = item.date;
   const x0 = e.clientX;
   function onUp(ev){
     document.removeEventListener('mouseup', onUp);
     const delta = Math.round((ev.clientX - x0)/cellWidth);
     if(delta){
-      item.startDate = addDays(origStart, delta);
-      item.endDate = addDays(origEnd, delta);
+      item.date = addDays(origDate, delta);
       refreshEvents();
     }
   }
   document.addEventListener('mouseup', onUp);
 }
-function startDragResize(e, idx, edge){
-  e.preventDefault(); e.stopPropagation();
-  const track = e.currentTarget.closest('.ev-track');
-  const cellWidth = track.getBoundingClientRect().width/7;
-  const item = STATE.events[idx];
-  const origStart = item.startDate, origEnd = item.endDate;
-  const x0 = e.clientX;
-  function onUp(ev){
-    document.removeEventListener('mouseup', onUp);
-    const delta = Math.round((ev.clientX - x0)/cellWidth);
-    if(!delta) return;
-    if(edge==='start'){
-      let ns = addDays(origStart, delta);
-      if(dayDelta(ns, origEnd) < 0) ns = origEnd;
-      item.startDate = ns;
-    } else {
-      let ne = addDays(origEnd, delta);
-      if(dayDelta(origStart, ne) < 0) ne = origStart;
-      item.endDate = ne;
-    }
-    refreshEvents();
-  }
-  document.addEventListener('mouseup', onUp);
-}
 function unscheduleEvent(idx){
-  const item = STATE.events[idx];
-  item.startDate = ''; item.endDate = '';
+  STATE.events[idx].date = '';
   refreshEvents();
-}
-function quickAddEvent(){
-  STATE.events.push({id:'event_'+Date.now().toString(36),name:'Sự kiện mới',desc:'',time:'',link:'',image:''});
-  const idx = STATE.events.length-1;
-  renderAll();
-  jumpToEdit(idx);
-}
-function jumpToEdit(idx){
-  const el = document.getElementById('event-item-'+idx);
-  if(!el) return;
-  el.scrollIntoView({behavior:'smooth', block:'center'});
-  el.classList.add('flash');
-  setTimeout(()=>el.classList.remove('flash'), 1500);
-}
-function deleteEventItem(idx){
-  if(!confirm('Xoá hẳn sự kiện này? Không thể hoàn tác.')) return;
-  STATE.events.splice(idx,1);
-  renderAll();
 }
 function onChipDragStart(e, idx){ dragChip = idx; }
 function onEvDrop(e, dateKey){
   e.preventDefault();
   if(dragChip == null) return;
-  const item = STATE.events[dragChip];
-  item.startDate = dateKey;
-  item.endDate = addDays(dateKey, 2);
+  STATE.events[dragChip].date = dateKey;
   dragChip = null;
   refreshEvents();
 }
@@ -749,7 +649,6 @@ async function saveAll(){
   const payload = {
     seasonTopRewards: STATE.seasonTopRewards,
     checkinRewards: STATE.checkinRewards,
-    dailyQuests: STATE.dailyQuests,
     rewards: STATE.rewards,
     redeemCodes,
     chestRules: STATE.chestRules,
