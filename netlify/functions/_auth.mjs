@@ -1,34 +1,27 @@
-import { WhopServerSdk } from "@whop/api";
+import { verifyUserToken } from "@whop/api";
 
-// App API key của CHÍNH app này (đăng ký trên dev.whop.com) — dùng để verify
-// user token. KHÔNG còn dùng để xin access token company-scoped nữa (xem
-// _tokens.mjs — đã đổi sang dùng key admin tự dán per-tenant).
+// App ID của CHÍNH app này (đăng ký trên dev.whop.com) — dùng để verify user
+// token. KHÔNG còn dùng app API key để xin access token company-scoped nữa
+// (xem _tokens.mjs — đã đổi sang dùng key admin tự dán per-tenant).
 const APP_ID = process.env.WHOP_APP_ID || process.env.NEXT_PUBLIC_WHOP_APP_ID;
-const APP_API_KEY = process.env.WHOP_APP_API_KEY;
 
-const whop = WhopServerSdk({ appId: APP_ID, appApiKey: APP_API_KEY });
-
-// Xác thực token Whop gắn trong iframe, trả userId hoặc null.
-// lastVerifyError lưu lỗi thật của lần verify gần nhất (kể cả khi trả null)
-// để debug endpoint soi được nguyên nhân thật — trước đây lỗi bị nuốt mất.
+// ĐÃ XÁC MINH bằng cách đọc trực tiếp type definitions của package @whop/api
+// (KHÔNG phải method trên object trả về từ WhopServerSdk(...) như docs ví dụ
+// — bản 0.0.23 thực tế export verifyUserToken là 1 hàm RIÊNG, nhận trực tiếp
+// token/Headers/Request làm tham số đầu, kèm { appId, dontThrow }):
+//   verifyUserToken(tokenOrHeadersOrRequest, { appId, dontThrow }) -> { userId, appId } | null
 export let lastVerifyError = null;
 async function verifyUser(event) {
   const h = event.headers || {};
   const token = h["x-whop-user-token"] || h["X-Whop-User-Token"];
   if (!token) { lastVerifyError = "no-token-header"; return null; }
   try {
-    const res = await whop.verifyUserToken(new Headers(h));
-    lastVerifyError = null;
-    return res?.userId || res?.user_id || null;
-  } catch (e1) {
-    try {
-      const res = await whop.verifyUserToken(token);
-      lastVerifyError = null;
-      return res?.userId || res?.user_id || null;
-    } catch (e2) {
-      lastVerifyError = `attempt1: ${e1?.message || e1}; attempt2: ${e2?.message || e2}`;
-      return null;
-    }
+    const res = await verifyUserToken(new Headers(h), { appId: APP_ID, dontThrow: true });
+    lastVerifyError = res ? null : "verifyUserToken trả null (token sai/hết hạn)";
+    return res?.userId || null;
+  } catch (e) {
+    lastVerifyError = e?.message || String(e);
+    return null;
   }
 }
 
