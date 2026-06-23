@@ -14,6 +14,11 @@ export const DEFAULT_TENANT = {
   // tạm cho tới khi xác minh được cách gọi checkAccess() chuẩn của Whop SDK
   // để gate theo đúng quyền admin thật trong Whop.
   setupSecret: null,
+  // Khi true: bỏ qua paywall freemium hoàn toàn cho tenant này — dùng trong
+  // giai đoạn build/test CMS admin, KHÔNG xoá logic gate thật ở isPaidTier()
+  // (_tenant.mjs) — chỉ OR thêm điều kiện này. Tắt (false) khi có billing
+  // thật (Phase 5 trong kế hoạch).
+  unlockAllFeatures: true,
   branding: {
     displayName: "Your Community",
     primaryColor: "#7c3aed",

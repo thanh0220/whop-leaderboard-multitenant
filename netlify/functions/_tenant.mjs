@@ -44,6 +44,8 @@ export async function saveTenantConfig(companyId, partialConfig) {
 
 export async function isPaidTier(companyId) {
   if (!companyId) return false;
+  const cfg = await getTenantConfig(companyId);
+  if (cfg.unlockAllFeatures) return true;
   const store = pointsStore();
   try {
     const tier = await store.get(tenantKey("tenant-tier", companyId));
