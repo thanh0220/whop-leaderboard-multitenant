@@ -13,6 +13,16 @@ const json = (code, obj) => ({
 // POST: lưu whopApiKey/whopCompanyId mới — lần đầu thì set luôn setupSecret;
 // lần sau phải gửi đúng setupSecret cũ mới cho sửa.
 export const handler = async (event) => {
+  if (event.queryStringParameters && event.queryStringParameters.debug) {
+    const h = event.headers || {};
+    return json(200, {
+      debug: true,
+      hasTokenHeader: !!(h["x-whop-user-token"] || h["X-Whop-User-Token"]),
+      referer: h["referer"] || h["Referer"] || null,
+      auth: await getAuthContext(event),
+    });
+  }
+
   const { userId, companyId } = await getAuthContext(event);
   if (!userId) return json(401, { error: "Không xác định được người dùng." });
   if (!companyId) return json(400, { error: "Không xác định được community. Hãy mở trang này bên trong Whop." });
