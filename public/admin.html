@@ -56,14 +56,28 @@ function tenantQS(){
 }
 function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
 
+// Whop cần 1 chút thời gian sau khi trang vừa load để gắn token xác thực vào
+// các request — gọi API ngay lúc parse xong script (quá sớm) có thể bị
+// "Không xác định được người dùng" dù token thực ra vẫn hoạt động bình
+// thường. Tự thử lại 1 lần sau khoảng nghỉ ngắn trước khi báo lỗi thật.
+async function loadOnce(){
+  const r = await tenantFetch('/.netlify/functions/admin-config');
+  const j = await r.json();
+  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+  return j;
+}
 async function load(){
   try{
-    const r = await tenantFetch('/.netlify/functions/admin-config');
-    const j = await r.json();
-    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    const j = await loadOnce();
     render(j);
   }catch(e){
-    $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${e.message}</div></div>`;
+    try{
+      await new Promise(res=>setTimeout(res,800));
+      const j = await loadOnce();
+      render(j);
+    }catch(e2){
+      $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${e2.message}</div></div>`;
+    }
   }
 }
 
@@ -116,7 +130,7 @@ function render(j){
   };
 }
 
-load();
+setTimeout(load, 300);
 </script>
 </body>
 </html>
