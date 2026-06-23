@@ -1,4 +1,4 @@
-import { getAuthContext } from "./_auth.mjs";
+import { getAuthContext, lastVerifyError } from "./_auth.mjs";
 import { getTenantConfig, saveTenantConfig } from "./_tenant.mjs";
 
 const json = (code, obj) => ({
@@ -15,11 +15,13 @@ const json = (code, obj) => ({
 export const handler = async (event) => {
   if (event.queryStringParameters && event.queryStringParameters.debug) {
     const h = event.headers || {};
+    const auth = await getAuthContext(event);
     return json(200, {
       debug: true,
       hasTokenHeader: !!(h["x-whop-user-token"] || h["X-Whop-User-Token"]),
       referer: h["referer"] || h["Referer"] || null,
-      auth: await getAuthContext(event),
+      auth,
+      verifyError: lastVerifyError,
     });
   }
 
