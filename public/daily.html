@@ -88,6 +88,7 @@
     <a href="/">🏆 Bảng xếp hạng</a>
     <a href="/daily.html" class="on">📅 Hằng ngày</a>
     <a href="/store.html">🎁 Cửa hàng</a>
+    <a href="/events.html">🗓 Lịch sự kiện</a>
   </div>
   <div class="top"><span class="s">♦</span> Nhiệm Vụ <b>Hằng Ngày</b></div>
   <div id="content"><div class="state"><div class="spinner"></div>Đang tải...</div></div>
@@ -171,7 +172,7 @@ function render(d){
     <div class="sect">⚡ Nhiệm vụ hôm nay</div>
     <div class="panel ${locked?'locked':''}">
       <div class="qlist">
-        ${qs.map(q=>`
+        ${qs.filter(q=>q.active!==false).map(q=>`
           <div class="quest ${q.done?'done':''}">
             <div class="ic">${q.icon||'⭐'}</div>
             <div class="info"><div class="nm">${q.name}</div><div class="rw">+${q.reward} xu</div></div>

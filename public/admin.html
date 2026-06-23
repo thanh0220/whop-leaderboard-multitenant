@@ -233,7 +233,8 @@ async function load(){
         checkinRewards: j.checkinRewards || [],
         dailyQuests: j.dailyQuests || [],
         rewards: j.rewards || [],
-        redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,xu])=>({code,xu})),
+        redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>
+          typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,startDate:v.startDate||'',endDate:v.endDate||''}),
       };
       renderAll();
       return;
@@ -326,6 +327,11 @@ function renderQuests(){
           <input value="${esc(q.name)}" oninput="setPath(STATE,'dailyQuests.${i}.name',this.value);$('prev-quest-${i}').innerHTML=questCardHtml(STATE.dailyQuests[${i}])"/>
           <label>Xu thưởng</label>
           <input type="number" value="${q.reward}" oninput="setPath(STATE,'dailyQuests.${i}.reward',Number(this.value)||0);$('prev-quest-${i}').innerHTML=questCardHtml(STATE.dailyQuests[${i}])"/>
+          <div class="row2">
+            <div><label>Bắt đầu (để trống = luôn chạy)</label><input type="date" value="${esc(q.startDate||'')}" oninput="setPath(STATE,'dailyQuests.${i}.startDate',this.value)"/></div>
+            <div><label>Kết thúc (để trống = không hết hạn)</label><input type="date" value="${esc(q.endDate||'')}" oninput="setPath(STATE,'dailyQuests.${i}.endDate',this.value)"/></div>
+          </div>
+          <div class="hint-small">Đặt ngày để nhiệm vụ này hiện trên 🗓 Lịch sự kiện như 1 sự kiện giới hạn thời gian.</div>
           <button class="btn del" onclick="STATE.dailyQuests.splice(${i},1);renderAll()">🗑 Xoá nhiệm vụ</button>
         </div>
         <div class="prev-col">
@@ -433,6 +439,11 @@ function renderCodes(){
       <div><label>Code</label><input value="${esc(c.code)}" oninput="setPath(STATE,'redeemCodesList.${i}.code',this.value)"/></div>
       <div><label>Xu nhận được</label><input type="number" value="${c.xu}" oninput="setPath(STATE,'redeemCodesList.${i}.xu',Number(this.value)||0)"/></div>
     </div>
+    <div class="row2">
+      <div><label>Bắt đầu (để trống = dùng được ngay)</label><input type="date" value="${esc(c.startDate||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.startDate',this.value)"/></div>
+      <div><label>Kết thúc (để trống = không hết hạn)</label><input type="date" value="${esc(c.endDate||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.endDate',this.value)"/></div>
+    </div>
+    <div class="hint-small">Đặt ngày để code này hiện trên 🗓 Lịch sự kiện như 1 khuyến mãi giới hạn thời gian.</div>
     <button class="btn del" onclick="STATE.redeemCodesList.splice(${i},1);renderAll()">🗑 Xoá code</button>
   `).join('<hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:10px 0">');
   return `
@@ -451,7 +462,11 @@ async function saveAll(){
   const redeemCodes = {};
   (STATE.redeemCodesList||[]).forEach(c=>{
     const code = (c.code||'').trim().toLowerCase();
-    if (code) redeemCodes[code] = Number(c.xu)||0;
+    if (!code) return;
+    const entry = { xu: Number(c.xu)||0 };
+    if (c.startDate) entry.startDate = c.startDate;
+    if (c.endDate) entry.endDate = c.endDate;
+    redeemCodes[code] = entry;
   });
 
   const payload = {

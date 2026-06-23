@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lịch Sự Kiện — Whop Community App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070910;--red:#ff2d4b;--cyan:#27e3ff;--gold:#f4c441;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:0 0 60px;
+    background:radial-gradient(120% 70% at 50% -10%,rgba(255,45,75,.13),var(--bg) 55%),var(--bg);background-attachment:fixed}
+  .wrap{max-width:960px;margin:0 auto;padding:22px 18px}
+  .nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .nav a{font-family:'Oswald',sans-serif;letter-spacing:.1em;text-transform:uppercase;font-size:11px;
+    padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.03);color:var(--muted);text-decoration:none;transition:.15s}
+  .nav a.on{border-color:var(--line2);background:rgba(39,227,255,.1);color:var(--cyan);box-shadow:0 0 14px rgba(39,227,255,.25)}
+  .top{display:flex;align-items:center;gap:10px;font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;font-size:16px;margin-bottom:14px}
+  .top .s{color:var(--red);font-size:18px;text-shadow:0 0 12px rgba(255,45,75,.7)}
+  .top b{color:var(--red)}
+
+  .legend{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+  .lg{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;text-align:center}
+  .lg .n{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;line-height:1}
+  .lg .l{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+  .lg.season .n{color:var(--gold)} .lg.code .n{color:var(--red)} .lg.quest .n{color:var(--cyan)}
+  @media(max-width:560px){.legend{grid-template-columns:1fr}}
+
+  .panel{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px}
+  .head-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px}
+  .head-cell{text-align:center;font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+  .head-cell.today{color:var(--cyan)}
+  .head-cell .dd{font-size:13px;color:var(--text);font-weight:700;margin-top:2px}
+  .head-cell.today .dd{color:var(--cyan)}
+
+  .track{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;min-height:38px}
+  .evt{border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap}
+  .evt small{font-weight:400;opacity:.8;font-size:10.5px}
+  .evt.season{background:rgba(244,196,65,.16);border:1px solid rgba(244,196,65,.5);color:var(--gold)}
+  .evt.code{background:rgba(255,45,75,.16);border:1px solid rgba(255,45,75,.5);color:#ffb0bd}
+  .evt.quest{background:rgba(39,227,255,.16);border:1px solid rgba(39,227,255,.5);color:var(--cyan)}
+
+  .empty{text-align:center;color:var(--muted);font-size:13px;padding:14px 0}
+
+  .state{text-align:center;padding:60px 20px;color:var(--muted)}
+  .spinner{width:40px;height:40px;border:2px solid rgba(39,227,255,.2);border-top-color:var(--cyan);border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .err{background:rgba(255,45,75,.12);border:1px solid rgba(255,45,75,.4);border-radius:14px;padding:20px;color:#ffd0d8;font-size:14px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <a href="/">🏆 Bảng xếp hạng</a>
+    <a href="/daily.html">📅 Hằng ngày</a>
+    <a href="/store.html">🎁 Cửa hàng</a>
+    <a href="/events.html" class="on">🗓 Lịch sự kiện</a>
+  </div>
+  <div class="top"><span class="s">♦</span> Lịch <b>Sự Kiện</b></div>
+  <div id="content"><div class="state"><div class="spinner"></div>Đang tải...</div></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function tenantQS(){
+  const u = new URL(location.href);
+  const exp = u.searchParams.get('experienceId') || '';
+  const co  = u.searchParams.get('companyId') || '';
+  const p = new URLSearchParams();
+  if (exp) p.set('experienceId', exp);
+  if (co)  p.set('companyId', co);
+  const s = p.toString();
+  return s ? '?' + s : '';
+}
+function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
+
+async function load(){
+  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Đang tải...</div>`;
+  try{
+    const r=await tenantFetch('/.netlify/functions/events');
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    render(j);
+  }catch(e){
+    $('content').innerHTML=`<div class="err"><b>⚠ Không tải được dữ liệu:</b> ${e.message}<br><br>Hãy mở trang này bên trong Whop.</div>`;
+  }
+}
+
+// Tuần hiện tại (Chủ Nhật -> Thứ Bảy, theo ngày UTC để khớp utcDayKey() backend)
+function weekDates(todayKey){
+  const today = new Date(todayKey + 'T00:00:00Z');
+  const dow = today.getUTCDay(); // 0=CN
+  const start = new Date(today); start.setUTCDate(today.getUTCDate() - dow);
+  const days = [];
+  for(let i=0;i<7;i++){ const d=new Date(start); d.setUTCDate(start.getUTCDate()+i); days.push(d.toISOString().slice(0,10)); }
+  return days;
+}
+function dayCol(dateKey, week){ return week.indexOf(dateKey); } // -1 nếu ngoài tuần
+
+function evtRow(item, cls, label){
+  const week = item.__week;
+  let startCol = dayCol(item.startDate, week);
+  let endCol = dayCol(item.endDate, week);
+  // clip vào tuần hiện tại: nếu mốc nằm ngoài tuần ở 1 phía, kéo về biên tuần
+  if(startCol===-1) startCol = item.startDate < week[0] ? 0 : 7;
+  if(endCol===-1) endCol = item.endDate > week[6] ? 6 : -1;
+  if(startCol>6 || endCol<0 || startCol>endCol) return ''; // hoàn toàn ngoài tuần này
+  // grid-column đặt rõ vị trí, không cần ô lấp đầy ở các cột còn lại trong .track
+  return `<div class="track"><div class="evt ${cls}" style="grid-column:${startCol+1} / ${endCol+2}">${label}</div></div>`;
+}
+
+function render(d){
+  const today = d.today;
+  const week = weekDates(today);
+  const dowLabel=['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+
+  const headCells = week.map((dk,i)=>{
+    const isToday = dk===today;
+    const [,m,dd] = dk.split('-');
+    return `<div class="head-cell ${isToday?'today':''}">${dowLabel[i]}<div class="dd">${dd}/${m}</div></div>`;
+  }).join('');
+
+  const seasonRow = evtRow({...d.season, __week:week}, 'season', `🏆 ${esc(d.season.label||'Mùa giải')}`);
+  const codeRows = (d.codes||[]).map(c=>evtRow({...c, __week:week}, 'code', `🔑 Code "${esc(c.code)}" <small>+${c.xu} xu</small>`)).filter(Boolean).join('');
+  const questRows = (d.quests||[]).map(q=>evtRow({...q, __week:week}, 'quest', `${esc(q.icon||'⭐')} ${esc(q.name)} <small>+${q.reward} xu</small>`)).filter(Boolean).join('');
+
+  const html = `
+    <div class="legend">
+      <div class="lg season"><div class="n">1</div><div class="l">🏆 Nổi bật</div></div>
+      <div class="lg code"><div class="n">${(d.codes||[]).length}</div><div class="l">🔑 Lễ hội</div></div>
+      <div class="lg quest"><div class="n">${(d.quests||[]).length}</div><div class="l">✅ Hằng ngày</div></div>
+    </div>
+    <div class="panel">
+      <div class="head-row">${headCells}</div>
+      ${seasonRow || '<div class="empty">Không có sự kiện nổi bật trong tuần này.</div>'}
+      ${codeRows || '<div class="empty">Không có code khuyến mãi nào trong tuần này.</div>'}
+      ${questRows || '<div class="empty">Không có nhiệm vụ giới hạn thời gian nào trong tuần này.</div>'}
+    </div>`;
+  $('content').innerHTML = html;
+}
+
+load();
+</script>
+</body>
+</html>
