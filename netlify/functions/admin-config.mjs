@@ -21,6 +21,7 @@ const ALLOWED_KEYS = [
   "rewards",
   "redeemCodes",
   "unlockAllFeatures",
+  "chestRules",
 ];
 
 // GET: trả toàn bộ config tenant (trừ whopApiKey/setupSecret — không bao giờ
@@ -60,6 +61,7 @@ export const handler = async (event) => {
       rewards: cfg.rewards,
       redeemCodes: cfg.redeemCodes,
       unlockAllFeatures: cfg.unlockAllFeatures,
+      chestRules: cfg.chestRules,
     });
   }
 
@@ -91,6 +93,9 @@ export const handler = async (event) => {
   }
   if ("redeemCodes" in partial && (typeof partial.redeemCodes !== "object" || partial.redeemCodes === null || Array.isArray(partial.redeemCodes))) {
     return json(400, { error: "redeemCodes phải là 1 object dạng { code: số xu }." });
+  }
+  if ("chestRules" in partial && (typeof partial.chestRules !== "object" || partial.chestRules === null || Array.isArray(partial.chestRules))) {
+    return json(400, { error: "chestRules phải là 1 object." });
   }
 
   if (whopApiKey) partial.whopApiKey = String(whopApiKey).trim();

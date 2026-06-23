@@ -2,6 +2,7 @@ import { pointsStore, tenantKey } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getTenantConfig, isPaidTier } from "./_tenant.mjs";
 import { utcDayKey } from "./_season.mjs";
+import { isWithinWindow } from "./_repeat.mjs";
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -32,8 +33,9 @@ export const handler = async (event) => {
   if (!reward || !reward.xu) return json(400, { error: "Code không hợp lệ." });
 
   const today = utcDayKey();
-  if (reward.startDate && today < reward.startDate) return json(400, { error: "Code chưa tới ngày sử dụng." });
-  if (reward.endDate && today > reward.endDate) return json(400, { error: "Code đã hết hạn sử dụng." });
+  if (!isWithinWindow(reward.startDate, reward.endDate, reward.repeatDays, today)) {
+    return json(400, { error: "Code chưa tới ngày sử dụng hoặc đã hết hạn." });
+  }
 
   const store = pointsStore();
   let bonus = 0;

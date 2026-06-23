@@ -2,6 +2,7 @@ import { pointsStore, tenantKey } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getTenantConfig, isPaidTier } from "./_tenant.mjs";
 import { utcDayKey } from "./_season.mjs";
+import { isWithinWindow } from "./_repeat.mjs";
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -29,8 +30,9 @@ export const handler = async (event) => {
   } catch (_) {}
 
   // Nhiệm vụ không set startDate/endDate = luôn hoạt động (mặc định cũ).
-  // Có set thì chỉ active trong khung ngày đó (so theo utcDayKey, dạng "YYYY-MM-DD").
-  const isActive = (q) => (!q.startDate || today >= q.startDate) && (!q.endDate || today <= q.endDate);
+  // Có set thì chỉ active trong khung ngày đó; có thêm repeatDays = tái diễn
+  // mỗi N ngày, độ dài mỗi lần giữ nguyên (endDate-startDate).
+  const isActive = (q) => isWithinWindow(q.startDate, q.endDate, q.repeatDays, today);
 
   if (event.httpMethod === "GET") {
     return json(200, {

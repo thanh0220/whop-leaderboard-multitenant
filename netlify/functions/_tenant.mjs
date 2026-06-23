@@ -39,7 +39,30 @@ export async function saveTenantConfig(companyId, partialConfig) {
   const current = await getTenantConfig(companyId);
   const merged = deepMerge(current, partialConfig);
   await store.setJSON(key, merged);
+
+  // companyId ở trên là tenantId giả (subdomain referer — xem _auth.mjs),
+  // KHÁC với company_id thật (biz_xxx) admin tự dán vào whopCompanyId. Webhook
+  // (webhook.mjs) chỉ nhận được company_id thật từ Whop, không có subdomain —
+  // cần bảng tra ngược để map về đúng tenant.
+  if (merged.whopCompanyId) {
+    try { await store.set(tenantKey("tenant-by-realid", merged.whopCompanyId), companyId); } catch (_) {}
+  }
+
   return merged;
+}
+
+// Dùng bởi webhook.mjs: từ company_id THẬT (biz_xxx) trong payload webhook,
+// tìm ra tenantId giả tương ứng đã lưu config. Trả null nếu chưa tenant nào
+// từng dán đúng whopCompanyId này qua Settings.
+export async function getTenantIdByRealCompanyId(realCompanyId) {
+  if (!realCompanyId) return null;
+  const store = pointsStore();
+  try {
+    const tenantId = await store.get(tenantKey("tenant-by-realid", realCompanyId));
+    return tenantId || null;
+  } catch (_) {
+    return null;
+  }
 }
 
 export async function isPaidTier(companyId) {

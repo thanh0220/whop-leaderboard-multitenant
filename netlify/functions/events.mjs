@@ -30,16 +30,23 @@ export const handler = async (event) => {
       name: q.name,
       icon: q.icon,
       reward: q.reward,
+      image: q.image || null,
+      repeatDays: q.repeatDays || null,
       startDate: q.startDate || season.seasonKey + "-01",
       endDate: q.endDate || today,
     }));
 
+  // KHÔNG trả raw `code` (chuỗi bí mật để redeem) ra member — chỉ trả title
+  // hiển thị (hoặc nhãn chung nếu admin chưa đặt title) để tránh lộ mã trước
+  // khi admin chủ động công bố nó ở nơi khác.
   const codes = Object.entries(cfg.redeemCodes || {})
     .map(([code, v]) => (typeof v === "number" ? { code, xu: v } : { code, ...v }))
     .filter((c) => c.startDate || c.endDate)
     .map((c) => ({
-      code: c.code,
+      title: c.title || "Mã khuyến mãi",
       xu: c.xu,
+      image: c.image || null,
+      repeatDays: c.repeatDays || null,
       startDate: c.startDate || season.seasonKey + "-01",
       endDate: c.endDate || today,
     }));

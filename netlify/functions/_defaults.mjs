@@ -59,4 +59,20 @@ export const DEFAULT_TENANT = {
   // được ship sẵn sản phẩm của 1 business cụ thể cho mọi tenant khác.
   rewards: [],
   redeemCodes: {},
+  // Rương Liên Minh: khi 1 member mua hàng thật trên Whop (webhook
+  // payment_succeeded — xem webhook.mjs), TOÀN BỘ member khác trong kênh
+  // nhận 1 rương. Tier chọn theo số tiền USD của giao dịch (đã đổi qua `fx`).
+  chestRules: {
+    thresholds: [
+      { tier: "wood",   label: "Rương Gỗ",   icon: "🟫", minUsd: 0 },
+      { tier: "silver", label: "Rương Bạc",  icon: "⬜", minUsd: 20 },
+      { tier: "gold",   label: "Rương Vàng", icon: "🟨", minUsd: 100 },
+    ],
+    rewardRange: {
+      wood:   { min: 5,   max: 15 },
+      silver: { min: 20,  max: 50 },
+      gold:   { min: 100, max: 300 },
+    },
+    expiryHours: 48,
+  },
 };
