@@ -118,6 +118,30 @@
     background:rgba(255,255,255,.02);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin-top:4px}
   .pv-day .n{font-size:8px;color:var(--muted);letter-spacing:.04em}
   .pv-day .r{font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;color:#fff}
+
+  /* ===== #events — lịch kéo-thả ===== */
+  .events-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+  .events-nav .lbl{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+  .ev-head-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:10px;user-select:none}
+  .ev-head-cell{text-align:center;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;padding:6px 2px;border-radius:6px}
+  .ev-head-cell.today{color:var(--cyan);background:rgba(39,227,255,.08)}
+  .ev-head-cell .dd{font-size:12px;color:var(--text);font-weight:700;margin-top:2px}
+  .ev-track{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;min-height:34px}
+  .evt-bar{position:relative;border-radius:8px;padding:7px 16px;font-size:11.5px;font-weight:600;display:flex;align-items:center;
+    overflow:hidden;white-space:nowrap;cursor:grab;user-select:none}
+  .evt-bar:active{cursor:grabbing}
+  .evt-bar.quest{background:rgba(39,227,255,.18);border:1px solid rgba(39,227,255,.5);color:var(--cyan)}
+  .evt-bar.code{background:rgba(255,45,75,.18);border:1px solid rgba(255,45,75,.5);color:#ffb0bd}
+  .evt-bar .grip{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize}
+  .evt-bar .grip-l{left:0} .evt-bar .grip-r{right:0}
+  .evt-bar .ex{position:absolute;top:2px;right:3px;font-size:10px;line-height:1;opacity:.6;cursor:pointer;padding:2px}
+  .evt-bar .ex:hover{opacity:1}
+  .ev-empty{text-align:center;color:var(--muted);font-size:12px;padding:10px 0}
+  .unscheduled-tray{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:999px;
+    margin:0 6px 6px 0;cursor:grab;user-select:none}
+  .chip.quest{background:rgba(39,227,255,.1);border:1px solid rgba(39,227,255,.4);color:var(--cyan)}
+  .chip.code{background:rgba(255,45,75,.1);border:1px solid rgba(255,45,75,.4);color:#ffb0bd}
 </style>
 </head>
 <body>
@@ -131,6 +155,7 @@
     <a href="#quests">✅ Nhiệm vụ</a>
     <a href="#store">🎁 Cửa hàng</a>
     <a href="#codes">🔑 Code</a>
+    <a href="#events">🗓 Sự kiện</a>
   </div>
   <div id="content"><div class="state">Đang tải...</div></div>
 </div>
@@ -249,7 +274,7 @@ async function load(){
 
 function renderAll(){
   $('content').innerHTML =
-    renderConn() + renderSeason() + renderDaily() + renderQuests() + renderStore() + renderCodes() +
+    renderConn() + renderSeason() + renderDaily() + renderQuests() + renderStore() + renderCodes() + renderEvents() +
     `<div class="save-bar"><button class="btn big" id="save-all">💾 Lưu tất cả</button></div>`;
   $('save-all').onclick = saveAll;
 }
@@ -452,6 +477,143 @@ function renderCodes(){
       ${rows || '<p class="hint-small">Chưa có code nào.</p>'}
       <button class="btn" onclick="STATE.redeemCodesList.push({code:'',xu:0});renderAll()">+ Thêm code</button>
     </div>`;
+}
+
+// ===== #events — lịch kéo-thả (cùng dữ liệu STATE.dailyQuests/redeemCodesList, chỉ là khung nhìn khác) =====
+let eventsWeekOffset = 0;
+let dragChip = null; // {kind, idx} của chip đang kéo (drop lần đầu lên lịch)
+
+function evWeekDates(offset){
+  const todayKey = new Date().toISOString().slice(0,10);
+  const t = new Date(todayKey+'T00:00:00Z');
+  const start = new Date(t); start.setUTCDate(t.getUTCDate() - t.getUTCDay() + offset*7);
+  const days = [];
+  for(let i=0;i<7;i++){ const d=new Date(start); d.setUTCDate(start.getUTCDate()+i); days.push(d.toISOString().slice(0,10)); }
+  return days;
+}
+function addDays(dateKey, n){
+  const d = new Date(dateKey+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n);
+  return d.toISOString().slice(0,10);
+}
+function dayDelta(a,b){ return Math.round((new Date(b+'T00:00:00Z') - new Date(a+'T00:00:00Z'))/86400000); }
+
+function evItems(){
+  const quests = (STATE.dailyQuests||[]).map((q,i)=>({kind:'quest',idx:i,label:(q.icon||'⭐')+' '+(q.name||'(chưa đặt tên)'),startDate:q.startDate,endDate:q.endDate}));
+  const codes = (STATE.redeemCodesList||[]).map((c,i)=>({kind:'code',idx:i,label:'🔑 '+(c.code||'(chưa đặt code)'),startDate:c.startDate,endDate:c.endDate}));
+  return [...quests, ...codes];
+}
+
+function renderEvents(){
+  const week = evWeekDates(eventsWeekOffset);
+  const todayKey = new Date().toISOString().slice(0,10);
+  const dowLabel=['CN','T2','T3','T4','T5','T6','T7'];
+  const headCells = week.map((dk,i)=>{
+    const isToday = dk===todayKey;
+    const [,m,dd]=dk.split('-');
+    return `<div class="ev-head-cell ${isToday?'today':''}" ondragover="event.preventDefault()" ondrop="onEvDrop(event,'${dk}')">${dowLabel[i]}<div class="dd">${dd}/${m}</div></div>`;
+  }).join('');
+
+  const items = evItems();
+  const scheduled = items.filter(it=>it.startDate && it.endDate);
+  const unscheduled = items.filter(it=>!(it.startDate && it.endDate));
+
+  const bars = scheduled.map(it=>{
+    let startCol = week.indexOf(it.startDate);
+    let endCol = week.indexOf(it.endDate);
+    if(startCol===-1) startCol = it.startDate < week[0] ? 0 : 7;
+    if(endCol===-1) endCol = it.endDate > week[6] ? 6 : -1;
+    if(startCol>6 || endCol<0 || startCol>endCol) return '';
+    return `<div class="ev-track">
+      <div class="evt-bar ${it.kind}" style="grid-column:${startCol+1} / ${endCol+2}" onmousedown="startDragMove(event,'${it.kind}',${it.idx})">
+        <div class="grip grip-l" onmousedown="startDragResize(event,'${it.kind}',${it.idx},'start')"></div>
+        ${esc(it.label)}
+        <span class="ex" onmousedown="event.stopPropagation()" onclick="unscheduleEvent('${it.kind}',${it.idx})">✕</span>
+        <div class="grip grip-r" onmousedown="startDragResize(event,'${it.kind}',${it.idx},'end')"></div>
+      </div>
+    </div>`;
+  }).join('') || '<div class="ev-empty">Chưa có sự kiện nào trong tuần này — kéo chip ở dưới vào 1 ô ngày.</div>';
+
+  const chips = unscheduled.map(it=>
+    `<span class="chip ${it.kind}" draggable="true" ondragstart="onChipDragStart(event,'${it.kind}',${it.idx})">${esc(it.label)}</span>`
+  ).join('') || '<span class="hint-small">Không có gì chưa lên lịch.</span>';
+
+  return `<div id="events-wrap">
+    <div class="sect" id="events">🗓 Sự Kiện</div>
+    <div class="panel">
+      <div class="events-nav">
+        <button class="btn" onclick="eventsWeekOffset--;refreshEvents()">‹ Tuần trước</button>
+        <span class="lbl">${week[0].slice(8,10)}/${week[0].slice(5,7)} — ${week[6].slice(8,10)}/${week[6].slice(5,7)}</span>
+        <button class="btn" onclick="eventsWeekOffset++;refreshEvents()">Tuần sau ›</button>
+      </div>
+      <div class="ev-head-row">${headCells}</div>
+      ${bars}
+      <div class="unscheduled-tray">
+        <div class="prev-label" style="text-align:left">📥 Chưa lên lịch (kéo vào 1 ô ngày ở trên)</div>
+        ${chips}
+      </div>
+    </div>
+  </div>`;
+}
+function refreshEvents(){ $('events-wrap').outerHTML = renderEvents(); }
+
+function evItem(kind, idx){ return kind==='quest' ? STATE.dailyQuests[idx] : STATE.redeemCodesList[idx]; }
+
+function startDragMove(e, kind, idx){
+  e.preventDefault();
+  const track = e.currentTarget.closest('.ev-track');
+  const cellWidth = track.getBoundingClientRect().width/7;
+  const item = evItem(kind, idx);
+  const origStart = item.startDate, origEnd = item.endDate;
+  const x0 = e.clientX;
+  function onUp(ev){
+    document.removeEventListener('mouseup', onUp);
+    const delta = Math.round((ev.clientX - x0)/cellWidth);
+    if(delta){
+      item.startDate = addDays(origStart, delta);
+      item.endDate = addDays(origEnd, delta);
+      refreshEvents();
+    }
+  }
+  document.addEventListener('mouseup', onUp);
+}
+function startDragResize(e, kind, idx, edge){
+  e.preventDefault(); e.stopPropagation();
+  const track = e.currentTarget.closest('.ev-track');
+  const cellWidth = track.getBoundingClientRect().width/7;
+  const item = evItem(kind, idx);
+  const origStart = item.startDate, origEnd = item.endDate;
+  const x0 = e.clientX;
+  function onUp(ev){
+    document.removeEventListener('mouseup', onUp);
+    const delta = Math.round((ev.clientX - x0)/cellWidth);
+    if(!delta) return;
+    if(edge==='start'){
+      let ns = addDays(origStart, delta);
+      if(dayDelta(ns, origEnd) < 0) ns = origEnd;
+      item.startDate = ns;
+    } else {
+      let ne = addDays(origEnd, delta);
+      if(dayDelta(origStart, ne) < 0) ne = origStart;
+      item.endDate = ne;
+    }
+    refreshEvents();
+  }
+  document.addEventListener('mouseup', onUp);
+}
+function unscheduleEvent(kind, idx){
+  const item = evItem(kind, idx);
+  item.startDate = ''; item.endDate = '';
+  refreshEvents();
+}
+function onChipDragStart(e, kind, idx){ dragChip = {kind, idx}; }
+function onEvDrop(e, dateKey){
+  e.preventDefault();
+  if(!dragChip) return;
+  const item = evItem(dragChip.kind, dragChip.idx);
+  item.startDate = dateKey;
+  item.endDate = addDays(dateKey, 2);
+  dragChip = null;
+  refreshEvents();
 }
 
 // ===== Lưu tất cả =====
