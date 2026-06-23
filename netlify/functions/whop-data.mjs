@@ -79,6 +79,10 @@ export const handler = async (event) => {
 
   const cfg = await getTenantConfig(companyId);
   const FX = cfg.fx;
+  // companyId ở trên là tenantId suy ra từ subdomain cài app (xem _auth.mjs),
+  // KHÔNG phải company_id thật dạng biz_xxx — 2 endpoint dưới đây cần đúng
+  // biz_xxx thật, lấy từ whopCompanyId admin đã dán qua trang Settings.
+  const realCompanyId = cfg.whopCompanyId;
 
   try {
     // 1) Memberships — phân trang để lấy HẾT (không dừng ở 50)
@@ -100,7 +104,7 @@ export const handler = async (event) => {
 
     // 2) Affiliates — endpoint đúng: /v5/affiliates?companyId=biz_xxx
     const affiliatesRes = await fetch(
-      `${WHOP_API}/affiliates?companyId=${companyId}&first=50`,
+      `${WHOP_API}/affiliates?companyId=${realCompanyId}&first=50`,
       { headers }
     );
     let affiliatesData = { data: [] };
@@ -206,7 +210,7 @@ export const handler = async (event) => {
     if (Object.keys(paidInfo).length === 0) {
       try {
         const r = await fetch(
-          `https://api.whop.com/api/v1/payments?company_id=${companyId}&page=1`,
+          `https://api.whop.com/api/v1/payments?company_id=${realCompanyId}&page=1`,
           { headers }
         );
         if (r.ok) {
@@ -300,6 +304,7 @@ export const handler = async (event) => {
         body: JSON.stringify(
           {
             companyId,
+            realCompanyId,
             membersStatus,
             affiliatesStatus: affiliatesRes.status,
             memberCount: members.length,

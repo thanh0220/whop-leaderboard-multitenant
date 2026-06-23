@@ -3,6 +3,17 @@
 // Calendly, không ảnh brand). Mỗi business tự thêm phần thưởng riêng của họ
 // qua trang admin (Dashboard View — xem _tenant.mjs + admin-config.mjs).
 export const DEFAULT_TENANT = {
+  // Admin của tenant tự dán qua trang Settings (admin-config.mjs). Whop
+  // không cấp companyId cho app theo cách tự động — đây là Company API key
+  // (apik_...) + Company ID (biz_...) thật của business đó, lấy từ chính
+  // Whop của họ. KHÔNG BAO GIỜ trả 2 field này ra response cho trang member.
+  whopApiKey: null,
+  whopCompanyId: null,
+  // "Mật khẩu" đơn giản để khoá trang Settings — người đầu tiên cấu hình đặt
+  // setupSecret này, lần sửa sau phải nhập đúng mới được. Đây là giải pháp
+  // tạm cho tới khi xác minh được cách gọi checkAccess() chuẩn của Whop SDK
+  // để gate theo đúng quyền admin thật trong Whop.
+  setupSecret: null,
   branding: {
     displayName: "Your Community",
     primaryColor: "#7c3aed",
