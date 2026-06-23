@@ -132,14 +132,19 @@
   .evt-bar:active{cursor:grabbing}
   .evt-bar.quest{background:rgba(39,227,255,.18);border:1px solid rgba(39,227,255,.5);color:var(--cyan)}
   .evt-bar.code{background:rgba(255,45,75,.18);border:1px solid rgba(255,45,75,.5);color:#ffb0bd}
-  .evt-bar .grip{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize}
+  .evt-bar .grip{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize;z-index:2}
   .evt-bar .grip-l{left:0} .evt-bar .grip-r{right:0}
-  .evt-bar .ex{position:absolute;top:2px;right:3px;font-size:10px;line-height:1;opacity:.6;cursor:pointer;padding:2px}
+  .evt-bar .evt-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ev-thumb{width:16px;height:16px;border-radius:4px;object-fit:cover;flex-shrink:0;margin-right:4px}
+  .evt-bar .ex{font-size:10px;line-height:1;opacity:.6;cursor:pointer;padding:2px;flex-shrink:0;margin-left:4px}
   .evt-bar .ex:hover{opacity:1}
   .ev-empty{text-align:center;color:var(--muted);font-size:12px;padding:10px 0}
   .unscheduled-tray{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
   .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:999px;
     margin:0 6px 6px 0;cursor:grab;user-select:none}
+  .chip .ex{opacity:.7;cursor:pointer}
+  .flash{animation:flash-pulse 1.5s ease-out;border-radius:12px}
+  @keyframes flash-pulse{0%,30%{box-shadow:0 0 0 2px var(--cyan)}100%{box-shadow:0 0 0 0 transparent}}
   .chip.quest{background:rgba(39,227,255,.1);border:1px solid rgba(39,227,255,.4);color:var(--cyan)}
   .chip.code{background:rgba(255,45,75,.1);border:1px solid rgba(255,45,75,.4);color:#ffb0bd}
 </style>
@@ -156,6 +161,7 @@
     <a href="#store">🎁 Cửa hàng</a>
     <a href="#codes">🔑 Code</a>
     <a href="#events">🗓 Sự kiện</a>
+    <a href="#chests">📬 Rương Liên Minh</a>
   </div>
   <div id="content"><div class="state">Đang tải...</div></div>
 </div>
@@ -259,7 +265,8 @@ async function load(){
         dailyQuests: j.dailyQuests || [],
         rewards: j.rewards || [],
         redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>
-          typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,startDate:v.startDate||'',endDate:v.endDate||''}),
+          typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),
+        chestRules: j.chestRules || {thresholds:[],rewardRange:{},expiryHours:48},
       };
       renderAll();
       return;
@@ -274,7 +281,7 @@ async function load(){
 
 function renderAll(){
   $('content').innerHTML =
-    renderConn() + renderSeason() + renderDaily() + renderQuests() + renderStore() + renderCodes() + renderEvents() +
+    renderConn() + renderSeason() + renderDaily() + renderQuests() + renderStore() + renderCodes() + renderEvents() + renderChests() +
     `<div class="save-bar"><button class="btn big" id="save-all">💾 Lưu tất cả</button></div>`;
   $('save-all').onclick = saveAll;
 }
@@ -341,7 +348,7 @@ function renderDaily(){
 // ===== #quests =====
 function renderQuests(){
   const rows = (STATE.dailyQuests||[]).map((q,i)=>`
-    <div class="item">
+    <div class="item" id="quest-item-${i}">
       <div class="edit-row">
         <div>
           <div class="row2">
@@ -352,11 +359,16 @@ function renderQuests(){
           <input value="${esc(q.name)}" oninput="setPath(STATE,'dailyQuests.${i}.name',this.value);$('prev-quest-${i}').innerHTML=questCardHtml(STATE.dailyQuests[${i}])"/>
           <label>Xu thưởng</label>
           <input type="number" value="${q.reward}" oninput="setPath(STATE,'dailyQuests.${i}.reward',Number(this.value)||0);$('prev-quest-${i}').innerHTML=questCardHtml(STATE.dailyQuests[${i}])"/>
+          <label>Ảnh (dán link ảnh, để trống = dùng icon)</label>
+          <img class="thumb" id="quest-thumb-${i}" src="${esc(q.image||'')}" alt="" style="${q.image?'':'display:none'}"/>
+          <input value="${esc(q.image||'')}" placeholder="https://..." oninput="setPath(STATE,'dailyQuests.${i}.image',this.value);const t=$('quest-thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none'"/>
           <div class="row2">
             <div><label>Bắt đầu (để trống = luôn chạy)</label><input type="date" value="${esc(q.startDate||'')}" oninput="setPath(STATE,'dailyQuests.${i}.startDate',this.value)"/></div>
             <div><label>Kết thúc (để trống = không hết hạn)</label><input type="date" value="${esc(q.endDate||'')}" oninput="setPath(STATE,'dailyQuests.${i}.endDate',this.value)"/></div>
           </div>
-          <div class="hint-small">Đặt ngày để nhiệm vụ này hiện trên 🗓 Lịch sự kiện như 1 sự kiện giới hạn thời gian.</div>
+          <label>Lặp lại mỗi (số ngày, để trống = không lặp)</label>
+          <input type="number" min="1" value="${esc(q.repeatDays||'')}" oninput="setPath(STATE,'dailyQuests.${i}.repeatDays',this.value?Number(this.value):'')"/>
+          <div class="hint-small">Đặt ngày để nhiệm vụ này hiện trên 🗓 Lịch sự kiện như 1 sự kiện giới hạn thời gian. Lặp lại = tái diễn mỗi N ngày, độ dài mỗi lần giữ nguyên theo khoảng Bắt đầu→Kết thúc.</div>
           <button class="btn del" onclick="STATE.dailyQuests.splice(${i},1);renderAll()">🗑 Xoá nhiệm vụ</button>
         </div>
         <div class="prev-col">
@@ -460,22 +472,61 @@ function renderStore(){
 // ===== #codes =====
 function renderCodes(){
   const rows = (STATE.redeemCodesList||[]).map((c,i)=>`
+    <div id="code-item-${i}">
     <div class="row2">
-      <div><label>Code</label><input value="${esc(c.code)}" oninput="setPath(STATE,'redeemCodesList.${i}.code',this.value)"/></div>
+      <div><label>Code (chuỗi bí mật để member nhập)</label><input value="${esc(c.code)}" oninput="setPath(STATE,'redeemCodesList.${i}.code',this.value)"/></div>
       <div><label>Xu nhận được</label><input type="number" value="${c.xu}" oninput="setPath(STATE,'redeemCodesList.${i}.xu',Number(this.value)||0)"/></div>
     </div>
+    <label>Tên hiển thị (dùng cho 🗓 Lịch sự kiện — KHÔNG hiện code thật)</label>
+    <input value="${esc(c.title||'')}" placeholder="vd: Voucher mừng lễ" oninput="setPath(STATE,'redeemCodesList.${i}.title',this.value)"/>
+    <label>Ảnh (dán link ảnh, không bắt buộc)</label>
+    <img class="thumb" id="code-thumb-${i}" src="${esc(c.image||'')}" alt="" style="${c.image?'':'display:none'}"/>
+    <input value="${esc(c.image||'')}" placeholder="https://..." oninput="setPath(STATE,'redeemCodesList.${i}.image',this.value);const t=$('code-thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none'"/>
     <div class="row2">
       <div><label>Bắt đầu (để trống = dùng được ngay)</label><input type="date" value="${esc(c.startDate||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.startDate',this.value)"/></div>
       <div><label>Kết thúc (để trống = không hết hạn)</label><input type="date" value="${esc(c.endDate||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.endDate',this.value)"/></div>
     </div>
-    <div class="hint-small">Đặt ngày để code này hiện trên 🗓 Lịch sự kiện như 1 khuyến mãi giới hạn thời gian.</div>
+    <label>Lặp lại mỗi (số ngày, để trống = không lặp)</label>
+    <input type="number" min="1" value="${esc(c.repeatDays||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.repeatDays',this.value?Number(this.value):'')"/>
+    <div class="hint-small">Đặt ngày để code này hiện trên 🗓 Lịch sự kiện như 1 khuyến mãi giới hạn thời gian. Lặp lại = tái diễn mỗi N ngày.</div>
     <button class="btn del" onclick="STATE.redeemCodesList.splice(${i},1);renderAll()">🗑 Xoá code</button>
+    </div>
   `).join('<hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:10px 0">');
   return `
     <div class="sect" id="codes">🔑 Code Đặc Biệt</div>
     <div class="panel">
       ${rows || '<p class="hint-small">Chưa có code nào.</p>'}
       <button class="btn" onclick="STATE.redeemCodesList.push({code:'',xu:0});renderAll()">+ Thêm code</button>
+    </div>`;
+}
+
+// ===== #chests — Rương Liên Minh (phát khi có member mua hàng — xem webhook.mjs) =====
+function renderChests(){
+  const rules = STATE.chestRules || {thresholds:[],rewardRange:{},expiryHours:48};
+  const rows = (rules.thresholds||[]).map((t,i)=>{
+    const range = rules.rewardRange[t.tier] || {min:0,max:0};
+    return `
+    <div class="item">
+      <div class="row2">
+        <div><label>Icon</label><input value="${esc(t.icon)}" oninput="setPath(STATE,'chestRules.thresholds.${i}.icon',this.value)"/></div>
+        <div><label>Tên hiển thị</label><input value="${esc(t.label)}" oninput="setPath(STATE,'chestRules.thresholds.${i}.label',this.value)"/></div>
+      </div>
+      <label>Mốc tối thiểu (USD) — giao dịch ≥ mốc này mới lên tier này</label>
+      <input type="number" min="0" value="${t.minUsd}" oninput="setPath(STATE,'chestRules.thresholds.${i}.minUsd',Number(this.value)||0)"/>
+      <div class="row2">
+        <div><label>Xu tối thiểu</label><input type="number" min="0" value="${range.min}" oninput="setPath(STATE,'chestRules.rewardRange.${t.tier}.min',Number(this.value)||0)"/></div>
+        <div><label>Xu tối đa</label><input type="number" min="0" value="${range.max}" oninput="setPath(STATE,'chestRules.rewardRange.${t.tier}.max',Number(this.value)||0)"/></div>
+      </div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="sect" id="chests">📬 Rương Liên Minh</div>
+    <div class="panel">
+      <p class="hint-small" style="margin-bottom:10px">Khi 1 member mua hàng thật trên Whop, TOÀN BỘ member khác trong kênh nhận 1 rương ở 🗓 Hộp thư (mô tả ghi rõ tên người mua). Tier chọn theo số tiền giao dịch (USD), số xu random trong khoảng đã đặt.</p>
+      ${rows || '<p class="hint-small">Chưa có cấu hình tier nào.</p>'}
+      <label>Hạn nhận rương (giờ)</label>
+      <input type="number" min="1" value="${rules.expiryHours}" oninput="setPath(STATE,'chestRules.expiryHours',Number(this.value)||48)"/>
+      <div class="hint-small">Cần tạo Webhook trên Whop Dev Dashboard (event <code>payment_succeeded</code>) trỏ vào <code>/.netlify/functions/webhook</code> và set biến môi trường <code>WHOP_WEBHOOK_SECRET</code> trên Netlify — chỉ làm 1 lần cho app.</div>
     </div>`;
 }
 
@@ -498,9 +549,26 @@ function addDays(dateKey, n){
 function dayDelta(a,b){ return Math.round((new Date(b+'T00:00:00Z') - new Date(a+'T00:00:00Z'))/86400000); }
 
 function evItems(){
-  const quests = (STATE.dailyQuests||[]).map((q,i)=>({kind:'quest',idx:i,label:(q.icon||'⭐')+' '+(q.name||'(chưa đặt tên)'),startDate:q.startDate,endDate:q.endDate}));
-  const codes = (STATE.redeemCodesList||[]).map((c,i)=>({kind:'code',idx:i,label:'🔑 '+(c.code||'(chưa đặt code)'),startDate:c.startDate,endDate:c.endDate}));
+  const quests = (STATE.dailyQuests||[]).map((q,i)=>({kind:'quest',idx:i,label:(q.icon||'⭐')+' '+(q.name||'(chưa đặt tên)'),image:q.image,startDate:q.startDate,endDate:q.endDate,repeatDays:q.repeatDays}));
+  const codes = (STATE.redeemCodesList||[]).map((c,i)=>({kind:'code',idx:i,label:'🔑 '+(c.title||c.code||'(chưa đặt code)'),image:c.image,startDate:c.startDate,endDate:c.endDate,repeatDays:c.repeatDays}));
   return [...quests, ...codes];
+}
+
+// Lặp lại: quét vài chu kỳ quanh tuần đang xem, trả về danh sách [start,end]
+// của các lần lặp có chạm vào tuần hiển thị (không lặp = đúng 1 lần).
+function evOccurrences(item, week){
+  if(!item.startDate || !item.endDate) return [];
+  const start = item.startDate, end = item.endDate;
+  if(!item.repeatDays) return [[start,end]];
+  const winLen = dayDelta(start, end);
+  const results = [];
+  let k = Math.floor(dayDelta(start, week[0]) / item.repeatDays) - 1;
+  for(let n=0; n<4; n++, k++){
+    const occStart = addDays(start, k*item.repeatDays);
+    const occEnd = addDays(occStart, winLen);
+    if(occEnd >= week[0] && occStart <= week[6]) results.push([occStart, occEnd]);
+  }
+  return results;
 }
 
 function renderEvents(){
@@ -517,24 +585,30 @@ function renderEvents(){
   const scheduled = items.filter(it=>it.startDate && it.endDate);
   const unscheduled = items.filter(it=>!(it.startDate && it.endDate));
 
-  const bars = scheduled.map(it=>{
-    let startCol = week.indexOf(it.startDate);
-    let endCol = week.indexOf(it.endDate);
-    if(startCol===-1) startCol = it.startDate < week[0] ? 0 : 7;
-    if(endCol===-1) endCol = it.endDate > week[6] ? 6 : -1;
+  const bars = scheduled.flatMap(it=>evOccurrences(it, week).map(([occStart,occEnd])=>{
+    let startCol = week.indexOf(occStart);
+    let endCol = week.indexOf(occEnd);
+    if(startCol===-1) startCol = occStart < week[0] ? 0 : 7;
+    if(endCol===-1) endCol = occEnd > week[6] ? 6 : -1;
     if(startCol>6 || endCol<0 || startCol>endCol) return '';
+    const thumb = it.image ? `<img class="ev-thumb" src="${esc(it.image)}"/>` : '';
     return `<div class="ev-track">
       <div class="evt-bar ${it.kind}" style="grid-column:${startCol+1} / ${endCol+2}" onmousedown="startDragMove(event,'${it.kind}',${it.idx})">
         <div class="grip grip-l" onmousedown="startDragResize(event,'${it.kind}',${it.idx},'start')"></div>
-        ${esc(it.label)}
-        <span class="ex" onmousedown="event.stopPropagation()" onclick="unscheduleEvent('${it.kind}',${it.idx})">✕</span>
+        ${thumb}<span class="evt-label">${esc(it.label)}</span>
+        <span class="ex" onmousedown="event.stopPropagation()" onclick="jumpToEdit('${it.kind}',${it.idx})" title="Sửa">✎</span>
+        <span class="ex" onmousedown="event.stopPropagation()" onclick="unscheduleEvent('${it.kind}',${it.idx})" title="Bỏ lịch">✕</span>
+        <span class="ex" onmousedown="event.stopPropagation()" onclick="deleteEventItem('${it.kind}',${it.idx})" title="Xoá hẳn">🗑</span>
         <div class="grip grip-r" onmousedown="startDragResize(event,'${it.kind}',${it.idx},'end')"></div>
       </div>
     </div>`;
-  }).join('') || '<div class="ev-empty">Chưa có sự kiện nào trong tuần này — kéo chip ở dưới vào 1 ô ngày.</div>';
+  })).filter(Boolean).join('') || '<div class="ev-empty">Chưa có sự kiện nào trong tuần này — kéo chip ở dưới vào 1 ô ngày.</div>';
 
   const chips = unscheduled.map(it=>
-    `<span class="chip ${it.kind}" draggable="true" ondragstart="onChipDragStart(event,'${it.kind}',${it.idx})">${esc(it.label)}</span>`
+    `<span class="chip ${it.kind}" draggable="true" ondragstart="onChipDragStart(event,'${it.kind}',${it.idx})">${esc(it.label)}
+      <span class="ex" onmousedown="event.stopPropagation()" onclick="jumpToEdit('${it.kind}',${it.idx})" title="Sửa">✎</span>
+      <span class="ex" onmousedown="event.stopPropagation()" onclick="deleteEventItem('${it.kind}',${it.idx})" title="Xoá hẳn">🗑</span>
+    </span>`
   ).join('') || '<span class="hint-small">Không có gì chưa lên lịch.</span>';
 
   return `<div id="events-wrap">
@@ -549,6 +623,10 @@ function renderEvents(){
       ${bars}
       <div class="unscheduled-tray">
         <div class="prev-label" style="text-align:left">📥 Chưa lên lịch (kéo vào 1 ô ngày ở trên)</div>
+        <div style="margin-bottom:8px">
+          <button class="btn" onclick="quickAddQuest()">+ Nhiệm vụ mới</button>
+          <button class="btn" onclick="quickAddCode()">+ Code mới</button>
+        </div>
         ${chips}
       </div>
     </div>
@@ -605,6 +683,31 @@ function unscheduleEvent(kind, idx){
   item.startDate = ''; item.endDate = '';
   refreshEvents();
 }
+function quickAddQuest(){
+  STATE.dailyQuests.push({id:'quest_'+Date.now().toString(36),name:'Nhiệm vụ mới',reward:5,icon:'⭐'});
+  const idx = STATE.dailyQuests.length-1;
+  renderAll();
+  jumpToEdit('quest', idx);
+}
+function quickAddCode(){
+  STATE.redeemCodesList.push({code:'',xu:50,title:'Code mới'});
+  const idx = STATE.redeemCodesList.length-1;
+  renderAll();
+  jumpToEdit('code', idx);
+}
+function jumpToEdit(kind, idx){
+  const id = (kind==='quest'?'quest-item-':'code-item-')+idx;
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.scrollIntoView({behavior:'smooth', block:'center'});
+  el.classList.add('flash');
+  setTimeout(()=>el.classList.remove('flash'), 1500);
+}
+function deleteEventItem(kind, idx){
+  if(!confirm('Xoá hẳn '+(kind==='quest'?'nhiệm vụ':'code')+' này? Không thể hoàn tác.')) return;
+  if(kind==='quest') STATE.dailyQuests.splice(idx,1); else STATE.redeemCodesList.splice(idx,1);
+  renderAll();
+}
 function onChipDragStart(e, kind, idx){ dragChip = {kind, idx}; }
 function onEvDrop(e, dateKey){
   e.preventDefault();
@@ -626,8 +729,11 @@ async function saveAll(){
     const code = (c.code||'').trim().toLowerCase();
     if (!code) return;
     const entry = { xu: Number(c.xu)||0 };
+    if (c.title) entry.title = c.title;
+    if (c.image) entry.image = c.image;
     if (c.startDate) entry.startDate = c.startDate;
     if (c.endDate) entry.endDate = c.endDate;
+    if (c.repeatDays) entry.repeatDays = Number(c.repeatDays);
     redeemCodes[code] = entry;
   });
 
@@ -637,6 +743,7 @@ async function saveAll(){
     dailyQuests: STATE.dailyQuests,
     rewards: STATE.rewards,
     redeemCodes,
+    chestRules: STATE.chestRules,
   };
   if (typedApiKey.trim()) payload.whopApiKey = typedApiKey.trim();
   if ((STATE.whopCompanyId||'').trim()) payload.whopCompanyId = STATE.whopCompanyId.trim();

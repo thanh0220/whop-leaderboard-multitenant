@@ -39,6 +39,7 @@
 
   .track{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;min-height:38px}
   .evt{border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap}
+  .evt-thumb{width:20px;height:20px;border-radius:5px;object-fit:cover;flex-shrink:0}
   .evt small{font-weight:400;opacity:.8;font-size:10.5px}
   .evt.season{background:rgba(244,196,65,.16);border:1px solid rgba(244,196,65,.5);color:var(--gold)}
   .evt.code{background:rgba(255,45,75,.16);border:1px solid rgba(255,45,75,.5);color:#ffb0bd}
@@ -59,6 +60,7 @@
     <a href="/daily.html">📅 Hằng ngày</a>
     <a href="/store.html">🎁 Cửa hàng</a>
     <a href="/events.html" class="on">🗓 Lịch sự kiện</a>
+    <a href="/mailbox.html">📬 Hộp thư</a>
   </div>
   <div class="top"><span class="s">♦</span> Lịch <b>Sự Kiện</b></div>
   <div id="content"><div class="state"><div class="spinner"></div>Đang tải...</div></div>
@@ -102,17 +104,37 @@ function weekDates(todayKey){
   return days;
 }
 function dayCol(dateKey, week){ return week.indexOf(dateKey); } // -1 nếu ngoài tuần
+function addDays(dateKey, n){ const d=new Date(dateKey+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function dayDelta(a,b){ return Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/86400000); }
 
-function evtRow(item, cls, label){
-  const week = item.__week;
-  let startCol = dayCol(item.startDate, week);
-  let endCol = dayCol(item.endDate, week);
-  // clip vào tuần hiện tại: nếu mốc nằm ngoài tuần ở 1 phía, kéo về biên tuần
-  if(startCol===-1) startCol = item.startDate < week[0] ? 0 : 7;
-  if(endCol===-1) endCol = item.endDate > week[6] ? 6 : -1;
-  if(startCol>6 || endCol<0 || startCol>endCol) return ''; // hoàn toàn ngoài tuần này
-  // grid-column đặt rõ vị trí, không cần ô lấp đầy ở các cột còn lại trong .track
-  return `<div class="track"><div class="evt ${cls}" style="grid-column:${startCol+1} / ${endCol+2}">${label}</div></div>`;
+// Lặp lại: quét vài chu kỳ quanh tuần đang xem, trả về [start,end] của các
+// lần lặp có chạm vào tuần hiển thị (không lặp = đúng 1 lần).
+function occurrencesInWeek(item, week){
+  if(!item.startDate || !item.endDate) return [];
+  const start = item.startDate, end = item.endDate;
+  if(!item.repeatDays) return [[start,end]];
+  const winLen = dayDelta(start, end);
+  const results = [];
+  let k = Math.floor(dayDelta(start, week[0]) / item.repeatDays) - 1;
+  for(let n=0; n<4; n++, k++){
+    const occStart = addDays(start, k*item.repeatDays);
+    const occEnd = addDays(occStart, winLen);
+    if(occEnd >= week[0] && occStart <= week[6]) results.push([occStart, occEnd]);
+  }
+  return results;
+}
+
+function evtRows(item, week, cls, label){
+  const thumb = item.image ? `<img class="evt-thumb" src="${esc(item.image)}"/>` : '';
+  return occurrencesInWeek(item, week).map(([occStart,occEnd])=>{
+    let startCol = dayCol(occStart, week);
+    let endCol = dayCol(occEnd, week);
+    // clip vào tuần hiện tại: nếu mốc nằm ngoài tuần ở 1 phía, kéo về biên tuần
+    if(startCol===-1) startCol = occStart < week[0] ? 0 : 7;
+    if(endCol===-1) endCol = occEnd > week[6] ? 6 : -1;
+    if(startCol>6 || endCol<0 || startCol>endCol) return ''; // hoàn toàn ngoài tuần này
+    return `<div class="track"><div class="evt ${cls}" style="grid-column:${startCol+1} / ${endCol+2}">${thumb}${label}</div></div>`;
+  }).filter(Boolean).join('');
 }
 
 function render(d){
@@ -126,9 +148,9 @@ function render(d){
     return `<div class="head-cell ${isToday?'today':''}">${dowLabel[i]}<div class="dd">${dd}/${m}</div></div>`;
   }).join('');
 
-  const seasonRow = evtRow({...d.season, __week:week}, 'season', `🏆 ${esc(d.season.label||'Mùa giải')}`);
-  const codeRows = (d.codes||[]).map(c=>evtRow({...c, __week:week}, 'code', `🔑 Code "${esc(c.code)}" <small>+${c.xu} xu</small>`)).filter(Boolean).join('');
-  const questRows = (d.quests||[]).map(q=>evtRow({...q, __week:week}, 'quest', `${esc(q.icon||'⭐')} ${esc(q.name)} <small>+${q.reward} xu</small>`)).filter(Boolean).join('');
+  const seasonRow = evtRows(d.season, week, 'season', `🏆 ${esc(d.season.label||'Mùa giải')}`);
+  const codeRows = (d.codes||[]).map(c=>evtRows(c, week, 'code', `🔑 ${esc(c.title||'Mã khuyến mãi')} <small>+${c.xu} xu</small>`)).join('');
+  const questRows = (d.quests||[]).map(q=>evtRows(q, week, 'quest', `${esc(q.icon||'⭐')} ${esc(q.name)} <small>+${q.reward} xu</small>`)).join('');
 
   const html = `
     <div class="legend">
