@@ -28,11 +28,15 @@ export const handler = async (event) => {
     if (s && s.day === today && Array.isArray(s.done)) st.done = s.done;
   } catch (_) {}
 
+  // Nhiệm vụ không set startDate/endDate = luôn hoạt động (mặc định cũ).
+  // Có set thì chỉ active trong khung ngày đó (so theo utcDayKey, dạng "YYYY-MM-DD").
+  const isActive = (q) => (!q.startDate || today >= q.startDate) && (!q.endDate || today <= q.endDate);
+
   if (event.httpMethod === "GET") {
     return json(200, {
       locked: !(await isPaidTier(companyId)),
       today,
-      quests: DAILY_QUESTS.map((q) => ({ ...q, done: st.done.includes(q.id) })),
+      quests: DAILY_QUESTS.map((q) => ({ ...q, done: st.done.includes(q.id), active: isActive(q) })),
     });
   }
 
@@ -46,6 +50,7 @@ export const handler = async (event) => {
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
   const q = DAILY_QUESTS.find((x) => x.id === body.questId);
   if (!q) return json(400, { error: "Nhiệm vụ không hợp lệ." });
+  if (!isActive(q)) return json(400, { error: "Nhiệm vụ này hiện chưa/không còn hoạt động." });
   if (st.done.includes(q.id)) return json(409, { error: "Nhiệm vụ này đã hoàn thành hôm nay." });
 
   st.done.push(q.id);
