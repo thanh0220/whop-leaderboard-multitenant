@@ -42,11 +42,6 @@ export const DEFAULT_TENANT = {
     10, 10, 10, 10, 10,
     10, 10, 10, 10, 200,
   ],
-  dailyQuests: [
-    { id: "visit",  name: "Visit the app today",       reward: 1, icon: "👋" },
-    { id: "share",  name: "Share your referral link",  reward: 5, icon: "🔗" },
-    { id: "engage", name: "Comment or react to a post", reward: 3, icon: "💬" },
-  ],
   seasonTopRewards: [
     { rank: "🥇 Top 1", prize: "2,000 pts" },
     { rank: "🥈 Top 2", prize: "1,000 pts" },
@@ -61,7 +56,13 @@ export const DEFAULT_TENANT = {
   redeemCodes: {},
   // Lịch sự kiện độc lập (live stream, khuyến mãi, AMA, bảo trì...) — KHÔNG
   // gắn với Nhiệm vụ/Code, chỉ để thông báo/hiển thị trên public/events.html.
-  events: [],
+  // Luôn đúng 3 ô (ảnh + tên + 1 ngày duy nhất) — admin sửa trực tiếp trên ô,
+  // không có form cài đặt riêng, không thêm/xoá được.
+  events: [
+    { id: "event_1", name: "Sự kiện 1", image: "", date: "" },
+    { id: "event_2", name: "Sự kiện 2", image: "", date: "" },
+    { id: "event_3", name: "Sự kiện 3", image: "", date: "" },
+  ],
   // Rương Liên Minh: khi 1 member mua hàng thật trên Whop (webhook
   // payment_succeeded — xem webhook.mjs), TOÀN BỘ member khác trong kênh
   // nhận 1 rương. Tier chọn theo số tiền USD của giao dịch (đã đổi qua `fx`).
@@ -76,6 +77,10 @@ export const DEFAULT_TENANT = {
       silver: { min: 20,  max: 50 },
       gold:   { min: 100, max: 300 },
     },
+    // Rương riêng phát thẳng cho CHÍNH người vừa mua hàng (ngoài rương cộng
+    // đồng ở trên) — đảm bảo có, khoảng xu cao hơn rõ rệt — củng cố ngay lúc
+    // họ dễ refund nhất (vừa trả tiền) rằng quyết định mua là đúng.
+    buyerReward: { min: 80, max: 200 },
     expiryHours: 48,
   },
 };

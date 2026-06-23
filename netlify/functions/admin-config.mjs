@@ -16,7 +16,6 @@ const ALLOWED_KEYS = [
   "points",
   "fx",
   "checkinRewards",
-  "dailyQuests",
   "seasonTopRewards",
   "rewards",
   "redeemCodes",
@@ -57,7 +56,6 @@ export const handler = async (event) => {
       points: cfg.points,
       fx: cfg.fx,
       checkinRewards: cfg.checkinRewards,
-      dailyQuests: cfg.dailyQuests,
       seasonTopRewards: cfg.seasonTopRewards,
       rewards: cfg.rewards,
       redeemCodes: cfg.redeemCodes,
@@ -88,7 +86,7 @@ export const handler = async (event) => {
     if (Object.prototype.hasOwnProperty.call(body, k)) partial[k] = body[k];
   }
   // Validate nhẹ hình dạng dữ liệu — tránh lưu nhầm kiểu sai làm vỡ trang member.
-  for (const k of ["checkinRewards", "dailyQuests", "seasonTopRewards", "rewards", "events"]) {
+  for (const k of ["checkinRewards", "seasonTopRewards", "rewards", "events"]) {
     if (k in partial && !Array.isArray(partial[k])) {
       return json(400, { error: `${k} phải là 1 mảng (array).` });
     }

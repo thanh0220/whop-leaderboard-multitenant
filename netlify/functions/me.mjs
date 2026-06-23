@@ -91,14 +91,6 @@ export const handler = async (event) => {
       : ck.streak;
     const nextReward = cfg.checkinRewards[((nextStreak - 1) % cfg.checkinRewards.length + cfg.checkinRewards.length) % cfg.checkinRewards.length];
 
-    // ---- daily quests state ----
-    let qst = { day: today, done: [] };
-    try {
-      const s = await store.get(tenantKey("quests", companyId, userId), { type: "json" });
-      if (s && s.day === today && Array.isArray(s.done)) qst.done = s.done;
-    } catch (_) {}
-    const quests = cfg.dailyQuests.map((q) => ({ ...q, done: qst.done.includes(q.id) }));
-
     // username để chào
     let username = userId;
     try {
@@ -115,7 +107,6 @@ export const handler = async (event) => {
       paidUsd, referrals, months, bonus, history,
       rewards: cfg.rewards, points: cfg.points,
       checkin: { today, streak: ck.streak, canClaim: checkinCanClaim, nextStreak, nextReward, calendar: cfg.checkinRewards },
-      quests,
       season: { ...seasonInfo(), topRewards: cfg.seasonTopRewards },
       branding: cfg.branding,
     });

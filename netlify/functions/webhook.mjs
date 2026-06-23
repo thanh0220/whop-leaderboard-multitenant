@@ -106,16 +106,15 @@ export const handler = async (event) => {
     const tier = pickTier(usd, rules.thresholds);
     const xu = rollXu(rules.rewardRange[tier.tier]);
 
+    const buyerUserId = data.user_id || (typeof data.user === "string" ? data.user : data.user?.id) || null;
+
     let buyerName = data.user?.username || data.user?.name || pickUsername(data.user) || data.user_id || "Một thành viên";
-    if (!data.user?.username && (data.user_id || data.user)) {
+    if (!data.user?.username && buyerUserId) {
       try {
-        const uid = data.user_id || (typeof data.user === "string" ? data.user : null);
-        if (uid) {
-          const r = await fetch(`https://api.whop.com/api/v1/users/${uid}`, {
-            headers: { Authorization: `Bearer ${cfg.whopApiKey}` },
-          });
-          if (r.ok) { const u = await r.json(); buyerName = pickUsername(u) || buyerName; }
-        }
+        const r = await fetch(`https://api.whop.com/api/v1/users/${buyerUserId}`, {
+          headers: { Authorization: `Bearer ${cfg.whopApiKey}` },
+        });
+        if (r.ok) { const u = await r.json(); buyerName = pickUsername(u) || buyerName; }
       } catch (_) {}
     }
 
@@ -133,22 +132,44 @@ export const handler = async (event) => {
       claimed: false,
     };
 
+    async function appendMailbox(userId, entry) {
+      const key = tenantKey("mailbox", tenantId, userId);
+      let list = [];
+      try {
+        const s = await store.get(key, { type: "json" });
+        if (Array.isArray(s)) list = s;
+      } catch (_) {}
+      list = list.filter((e) => !e.claimed || new Date(e.expiresAt).getTime() > now - 14 * 86400000);
+      list.unshift(entry);
+      list = list.slice(0, 50);
+      await store.setJSON(key, list);
+    }
+
     await Promise.allSettled(
-      members.map(async (m) => {
-        const key = tenantKey("mailbox", tenantId, m.userId);
-        let list = [];
-        try {
-          const s = await store.get(key, { type: "json" });
-          if (Array.isArray(s)) list = s;
-        } catch (_) {}
-        list = list.filter((e) => !e.claimed || new Date(e.expiresAt).getTime() > now - 14 * 86400000);
-        list.unshift({ id: `${eventId || now}_${m.userId}`, ...entryBase });
-        list = list.slice(0, 50);
-        await store.setJSON(key, list);
-      })
+      members.map((m) =>
+        appendMailbox(m.userId, { id: `${eventId || now}_${m.userId}`, ...entryBase })
+      )
     );
 
-    return json(200, { ok: true, tenantId, tier: tier.tier, xu, grantedTo: members.length });
+    // Rương "Cảm ơn đã mua hàng" — phát THẲNG cho chính người mua, ngoài
+    // rương cộng đồng ở trên (đúng lúc dễ refund nhất sau khi vừa trả tiền).
+    let buyerXu = null;
+    if (buyerUserId) {
+      buyerXu = rollXu(rules.buyerReward);
+      await appendMailbox(buyerUserId, {
+        id: `${eventId || now}_thanks_${buyerUserId}`,
+        tier: "buyer",
+        label: "🎉 Cảm ơn đã mua hàng!",
+        icon: "🎉",
+        xu: buyerXu,
+        buyerName,
+        createdAt: new Date(now).toISOString(),
+        expiresAt,
+        claimed: false,
+      });
+    }
+
+    return json(200, { ok: true, tenantId, tier: tier.tier, xu, buyerXu, grantedTo: members.length });
   } catch (err) {
     return json(500, { error: err.message });
   }
