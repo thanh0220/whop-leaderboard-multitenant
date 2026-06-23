@@ -43,13 +43,10 @@ export const handler = async (event) => {
 
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
-  const { whopApiKey, whopCompanyId, setupSecret, newSetupSecret } = body;
+  const { whopApiKey, whopCompanyId } = body;
 
-  if (cfg.setupSecret) {
-    if (setupSecret !== cfg.setupSecret) {
-      return json(403, { error: "Sai mật khẩu Settings hiện tại." });
-    }
-  }
+  // Tạm bỏ yêu cầu mật khẩu Settings trong giai đoạn test — sẽ thêm lại bảo
+  // vệ thật theo quyền admin của Whop (checkAccess) ở giai đoạn sau.
   if (!whopApiKey || !String(whopApiKey).trim()) {
     return json(400, { error: "Vui lòng nhập Company API key." });
   }
@@ -60,7 +57,6 @@ export const handler = async (event) => {
   const updated = await saveTenantConfig(companyId, {
     whopApiKey: String(whopApiKey).trim(),
     whopCompanyId: String(whopCompanyId).trim(),
-    setupSecret: newSetupSecret ? String(newSetupSecret).trim() : (cfg.setupSecret || null),
   });
 
   return json(200, { ok: true, configured: true, whopCompanyId: updated.whopCompanyId });
