@@ -23,15 +23,38 @@ export const handler = async (event) => {
 
   if (debug) {
     const tokenHeader = h["x-whop-user-token"] || h["X-Whop-User-Token"];
-    const cookie = h["cookie"] || h["Cookie"] || "";
+
+    // Decode (KHÔNG verify chữ ký) phần payload của JWT để soi xem Whop có
+    // nhúng companyId/experienceId ngay trong token không — đây là cách giải
+    // quyết "query string rỗng" mà không cần đoán thêm.
+    let tokenPayload = null;
+    if (tokenHeader) {
+      try {
+        const parts = String(tokenHeader).split(".");
+        if (parts[1]) {
+          const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+          tokenPayload = JSON.parse(Buffer.from(b64, "base64").toString("utf8"));
+        }
+      } catch (_) {}
+    }
+
+    // Mọi header bắt đầu bằng x-whop hoặc liên quan host — đây là nơi khả
+    // năng cao nhất Whop gắn companyId/experienceId khi query string trống.
+    const relevantHeaders = {};
+    Object.keys(h).forEach((k) => {
+      const lk = k.toLowerCase();
+      if (lk.startsWith("x-whop") || lk === "host" || lk === "x-forwarded-host" || lk === "referer" || lk === "origin") {
+        relevantHeaders[k] = h[k];
+      }
+    });
+
     return json(200, {
       debug: true,
       headerNames: Object.keys(h),
+      relevantHeaders,
       queryParams: event.queryStringParameters || {},
       hasTokenHeader: !!tokenHeader,
-      tokenHeaderPreview: tokenHeader ? String(tokenHeader).slice(0, 14) + "…" : null,
-      cookiePresent: !!cookie,
-      cookiePreview: cookie ? String(cookie).slice(0, 120) : null,
+      tokenPayload,
       appIdSet: !!(process.env.NEXT_PUBLIC_WHOP_APP_ID || process.env.WHOP_APP_ID),
       appKeySet: !!process.env.WHOP_APP_API_KEY,
     });
