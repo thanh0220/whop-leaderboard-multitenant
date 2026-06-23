@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#070910;--cyan:#27e3ff;--gold:#f4c441;--red:#ff2d4b;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3)}
+  :root{--bg:#070910;--cyan:#27e3ff;--gold:#f4c441;--silver:#cbd5e1;--bronze:#e1955a;--diamond:#9beaff;--red:#ff2d4b;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3)}
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:30px 18px 100px;
     background:radial-gradient(120% 70% at 50% -10%,rgba(255,45,75,.13),var(--bg) 55%),var(--bg);background-attachment:fixed}
@@ -60,6 +60,64 @@
   .save-bar{position:fixed;left:0;right:0;bottom:0;padding:12px 18px;background:rgba(7,9,16,.95);
     border-top:1px solid rgba(255,255,255,.1);display:flex;justify-content:center;gap:10px;z-index:20;backdrop-filter:blur(6px)}
   .save-bar .btn.big{margin:0;max-width:400px}
+
+  /* ===== Live preview (mirrors store.html / index.html / daily.html markup+CSS) ===== */
+  .edit-row{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:start;margin-top:10px}
+  @media(max-width:680px){.edit-row{grid-template-columns:1fr}}
+  .prev-col{position:sticky;top:70px}
+  .prev-label{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;text-align:center;font-family:'Oswald',sans-serif}
+
+  .pv-card{position:relative;background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:0;display:flex;flex-direction:column;overflow:hidden}
+  .pv-card .thumb2{position:relative;width:100%;aspect-ratio:1/1;background:#0a0f18 center/cover no-repeat;border-bottom:1px solid rgba(255,255,255,.06)}
+  .pv-card .body2{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .pv-card h3{font-size:15px;font-weight:700;line-height:1.3}
+  .pv-card p{font-size:12.5px;color:var(--muted);flex:1;line-height:1.5}
+  .pv-badge{position:absolute;top:10px;left:10px;font-family:'Oswald',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:5px 9px;border-radius:6px;backdrop-filter:blur(4px);z-index:2}
+  .pv-badge.hot{background:rgba(255,45,75,.18);color:#ffb0bd;border:1px solid rgba(255,45,75,.5)}
+  .pv-badge.new{background:rgba(39,227,255,.18);color:var(--cyan);border:1px solid rgba(39,227,255,.5)}
+  .pv-badge.vip{background:rgba(244,196,65,.18);color:var(--gold);border:1px solid rgba(244,196,65,.5)}
+  .pv-badge.bestseller{background:rgba(178,102,255,.2);color:#d5b8ff;border:1px solid rgba(178,102,255,.5)}
+  .pv-badge.limited{background:rgba(255,45,75,.18);color:#ffb0bd;border:1px solid rgba(255,45,75,.5)}
+  .pv-stock{position:absolute;top:10px;right:10px;font-family:'Oswald',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:5px 9px;border-radius:6px;background:rgba(10,15,24,.7);color:#ffb0bd;border:1px solid rgba(255,45,75,.45);backdrop-filter:blur(4px);z-index:2}
+  .pv-cost-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:2px}
+  .pv-cost{font-family:'Oswald',sans-serif;font-weight:700;color:var(--gold);font-size:18px;letter-spacing:.04em}
+  .pv-price-anchor{font-size:11px;color:var(--muted);letter-spacing:.04em}
+  .pv-price-anchor s{color:rgba(255,255,255,.55)}
+  .pv-price-anchor b{color:var(--cyan);font-weight:600}
+  .pv-btn{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:12px;font-weight:600;
+    padding:10px;border-radius:9px;border:1px solid var(--line2);background:rgba(39,227,255,.1);color:var(--cyan);text-align:center;margin-top:4px}
+  .pv-btn.primary{background:linear-gradient(135deg,rgba(244,196,65,.18),rgba(39,227,255,.18));border-color:rgba(244,196,65,.5);color:var(--gold)}
+  .pv-toggle{margin-top:6px;font-size:10px;padding:6px 10px}
+
+  .pv-back{position:relative;display:flex;flex-direction:column;background:linear-gradient(165deg,#0e1622 0%,#1a0a2e 100%);
+    border:1px solid rgba(244,196,65,.55);border-radius:16px;box-shadow:0 0 0 1px rgba(244,196,65,.18) inset;padding:18px 16px;overflow:hidden}
+  .pv-fb-hdr{text-align:center;position:relative;z-index:1}
+  .pv-fb-tag{display:inline-block;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.2em;padding:4px 10px;border-radius:6px;background:rgba(244,196,65,.18);color:var(--gold);border:1px solid rgba(244,196,65,.4)}
+  .pv-fb-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;color:#fff;margin-top:8px;letter-spacing:.04em;line-height:1.25}
+  .pv-fb-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;position:relative;z-index:1;margin:12px 0;width:100%}
+  .pv-fb-code{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;color:#fff;letter-spacing:.14em;background:#0a0f18;border:1.5px dashed var(--gold);border-radius:10px;padding:12px 14px;text-align:center;width:100%;word-break:break-all}
+  .pv-fb-copy{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.12em;text-transform:uppercase;background:transparent;border:1px solid rgba(244,196,65,.5);color:var(--gold);padding:7px 14px;border-radius:8px;width:100%}
+  .pv-fb-link{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;background:linear-gradient(135deg,rgba(178,102,255,.18),rgba(244,196,65,.12));border:1px solid rgba(178,102,255,.5);color:#fff;font-weight:600;font-size:12.5px;width:100%;box-sizing:border-box}
+  .pv-fb-link small{display:block;font-size:10px;font-weight:400;color:rgba(255,255,255,.55);margin-top:2px}
+
+  .pv-prize{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:11px 13px}
+  .pv-prize .pp{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+  .pv-prize .pxu{font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;line-height:1}
+  .pv-prize.r1 .pp,.pv-prize.r1 .pxu{color:var(--gold)}
+  .pv-prize.r2 .pp,.pv-prize.r2 .pxu{color:var(--silver)}
+  .pv-prize.r3 .pp,.pv-prize.r3 .pxu{color:var(--bronze)}
+  .pv-prize.r4 .pp,.pv-prize.r4 .pxu,.pv-prize.r5 .pp,.pv-prize.r5 .pxu,.pv-prize.r6 .pp,.pv-prize.r6 .pxu{color:var(--diamond)}
+
+  .pv-quest{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:11px}
+  .pv-quest .ic{font-size:20px}
+  .pv-quest .info{flex:1;min-width:0}
+  .pv-quest .nm{font-size:13px;font-weight:600;color:#fff;margin-bottom:2px}
+  .pv-quest .rw{font-family:'Oswald',sans-serif;font-size:11px;color:var(--gold);letter-spacing:.05em}
+
+  .pv-day{position:relative;aspect-ratio:1;border-radius:8px;border:1px solid rgba(255,255,255,.08);
+    background:rgba(255,255,255,.02);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin-top:4px}
+  .pv-day .n{font-size:8px;color:var(--muted);letter-spacing:.04em}
+  .pv-day .r{font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;color:#fff}
 </style>
 </head>
 <body>
@@ -80,6 +138,51 @@
 <script>
 const $=id=>document.getElementById(id);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmt(n){return Number(n||0).toLocaleString('vi-VN');}
+
+// ===== Preview render (thuần, không đụng DOM) — mirror đúng markup store.html/index.html/daily.html =====
+const BADGE_LABEL={hot:'🔥 Hot',new:'⚡ Mới',vip:'👑 VIP',bestseller:'⭐ Bán chạy',limited:'⏳ Giới hạn'};
+
+function storeCardHtml(r){
+  const thumb=r.image?`<div class="thumb2" style="background-image:url('${esc(r.image)}')"></div>`:`<div class="thumb2" style="background:linear-gradient(135deg,#1a2236,#0a0f18)"></div>`;
+  const badge=r.badge?`<span class="pv-badge ${esc(r.badge)}">${BADGE_LABEL[r.badge]||r.badge}</span>`:'';
+  const stockPill=(r.stock!=null&&r.stock<=10)?`<span class="pv-stock">Còn ${r.stock}</span>`:'';
+  const priceAnchor=r.originalPrice?`<div class="pv-price-anchor"><s>${esc(r.originalPrice)}</s> · <b>tiết kiệm 100%</b></div>`:'';
+  return `<div class="pv-card">
+    ${thumb}${badge}${stockPill}
+    <div class="body2">
+      <h3>${esc(r.name||'(Chưa đặt tên)')}</h3>
+      <p>${esc(r.desc||'')}</p>
+      <div class="pv-cost-row"><span class="pv-cost">${fmt(r.cost)} XU</span>${priceAnchor}</div>
+      <div class="pv-btn ${(r.tier>=4)?'primary':''}">🎁 Đổi ngay</div>
+    </div>
+  </div>`;
+}
+function storeBackHtml(r){
+  const p=r.payload||{kind:'code',code:''};
+  let backBody='';
+  if(p.kind==='ea'){
+    backBody=`<div class="pv-fb-link"><span style="font-size:18px">📥</span><span>Tải file<small>${esc(p.label||'')}</small></span></div>
+      <div class="pv-fb-link"><span style="font-size:18px">🛠</span><span>Hướng dẫn Setup<small>Cài đặt &amp; kích hoạt</small></span></div>`;
+  }else if(p.kind==='link'){
+    backBody=`<div class="pv-fb-link"><span style="font-size:18px">🔗</span><span>Mở phần thưởng<small>${esc(p.label||'')}</small></span></div>`;
+  }else{
+    backBody=`<div class="pv-fb-code">${esc(p.code||'')}</div><div class="pv-fb-copy">📋 Sao chép mã</div>`;
+  }
+  return `<div class="pv-back">
+    <div class="pv-fb-hdr"><span class="pv-fb-tag">🎉 Đã đổi</span><div class="pv-fb-title">${esc(r.name||'')}</div></div>
+    <div class="pv-fb-body">${backBody}</div>
+  </div>`;
+}
+function seasonTileHtml(r,i){
+  return `<div class="pv-prize r${i+1}"><div class="pp">${esc(r.rank||'')}</div><div class="pxu">🪙 ${esc(r.prize||'')}</div></div>`;
+}
+function questCardHtml(q){
+  return `<div class="pv-quest"><div class="ic">${esc(q.icon||'⭐')}</div><div class="info"><div class="nm">${esc(q.name||'(chưa đặt tên)')}</div><div class="rw">+${fmt(q.reward)} xu</div></div></div>`;
+}
+function dayCellHtml(v,i){
+  return `<div class="pv-day"><div class="n">Ngày ${i+1}</div><div class="r">+${fmt(v)}</div></div>`;
+}
 
 function tenantQS(){
   const u = new URL(location.href);
@@ -171,11 +274,19 @@ function renderConn(){
 // ===== #season =====
 function renderSeason(){
   const rows = (STATE.seasonTopRewards||[]).map((r,i)=>`
-    <div class="row2">
-      <div><label>Hạng</label><input value="${esc(r.rank)}" oninput="setPath(STATE,'seasonTopRewards.${i}.rank',this.value)"/></div>
-      <div><label>Giải thưởng</label><input value="${esc(r.prize)}" oninput="setPath(STATE,'seasonTopRewards.${i}.prize',this.value)"/></div>
+    <div class="edit-row">
+      <div>
+        <div class="row2">
+          <div><label>Hạng</label><input value="${esc(r.rank)}" oninput="setPath(STATE,'seasonTopRewards.${i}.rank',this.value);$('prev-season-${i}').innerHTML=seasonTileHtml(STATE.seasonTopRewards[${i}],${i})"/></div>
+          <div><label>Giải thưởng</label><input value="${esc(r.prize)}" oninput="setPath(STATE,'seasonTopRewards.${i}.prize',this.value);$('prev-season-${i}').innerHTML=seasonTileHtml(STATE.seasonTopRewards[${i}],${i})"/></div>
+        </div>
+        <button class="btn del" onclick="STATE.seasonTopRewards.splice(${i},1);renderAll()">🗑 Xoá hạng này</button>
+      </div>
+      <div class="prev-col">
+        <div class="prev-label">Preview</div>
+        <div id="prev-season-${i}">${seasonTileHtml(r,i)}</div>
+      </div>
     </div>
-    <button class="btn del" onclick="STATE.seasonTopRewards.splice(${i},1);renderAll()">🗑 Xoá hạng này</button>
   `).join('<hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:10px 0">');
   return `
     <div class="sect" id="season">🏆 Mùa Giải</div>
@@ -190,7 +301,8 @@ function renderDaily(){
   const cells = (STATE.checkinRewards||[]).map((v,i)=>`
     <div class="cell">
       <label>Ngày ${i+1}</label>
-      <input type="number" value="${v}" oninput="setPath(STATE,'checkinRewards.${i}',Number(this.value)||0)"/>
+      <input type="number" value="${v}" oninput="setPath(STATE,'checkinRewards.${i}',Number(this.value)||0);$('prev-day-${i}').innerHTML=dayCellHtml(STATE.checkinRewards[${i}],${i})"/>
+      <div id="prev-day-${i}">${dayCellHtml(v,i)}</div>
     </div>`).join('');
   return `
     <div class="sect" id="daily">📅 Điểm Danh Hằng Ngày</div>
@@ -204,15 +316,23 @@ function renderDaily(){
 function renderQuests(){
   const rows = (STATE.dailyQuests||[]).map((q,i)=>`
     <div class="item">
-      <div class="row2">
-        <div><label>ID (không đổi nếu đã có)</label><input value="${esc(q.id)}" oninput="setPath(STATE,'dailyQuests.${i}.id',this.value)"/></div>
-        <div><label>Icon</label><input value="${esc(q.icon)}" oninput="setPath(STATE,'dailyQuests.${i}.icon',this.value)"/></div>
+      <div class="edit-row">
+        <div>
+          <div class="row2">
+            <div><label>ID (không đổi nếu đã có)</label><input value="${esc(q.id)}" oninput="setPath(STATE,'dailyQuests.${i}.id',this.value)"/></div>
+            <div><label>Icon</label><input value="${esc(q.icon)}" oninput="setPath(STATE,'dailyQuests.${i}.icon',this.value);$('prev-quest-${i}').innerHTML=questCardHtml(STATE.dailyQuests[${i}])"/></div>
+          </div>
+          <label>Tên nhiệm vụ</label>
+          <input value="${esc(q.name)}" oninput="setPath(STATE,'dailyQuests.${i}.name',this.value);$('prev-quest-${i}').innerHTML=questCardHtml(STATE.dailyQuests[${i}])"/>
+          <label>Xu thưởng</label>
+          <input type="number" value="${q.reward}" oninput="setPath(STATE,'dailyQuests.${i}.reward',Number(this.value)||0);$('prev-quest-${i}').innerHTML=questCardHtml(STATE.dailyQuests[${i}])"/>
+          <button class="btn del" onclick="STATE.dailyQuests.splice(${i},1);renderAll()">🗑 Xoá nhiệm vụ</button>
+        </div>
+        <div class="prev-col">
+          <div class="prev-label">Preview</div>
+          <div id="prev-quest-${i}">${questCardHtml(q)}</div>
+        </div>
       </div>
-      <label>Tên nhiệm vụ</label>
-      <input value="${esc(q.name)}" oninput="setPath(STATE,'dailyQuests.${i}.name',this.value)"/>
-      <label>Xu thưởng</label>
-      <input type="number" value="${q.reward}" oninput="setPath(STATE,'dailyQuests.${i}.reward',Number(this.value)||0)"/>
-      <button class="btn del" onclick="STATE.dailyQuests.splice(${i},1);renderAll()">🗑 Xoá nhiệm vụ</button>
     </div>`).join('');
   return `
     <div class="sect" id="quests">✅ Nhiệm Vụ Hằng Ngày</div>
@@ -227,56 +347,74 @@ function payloadFields(p, i){
   const kind = p.kind || 'code';
   if (kind === 'link') return `
     <label>Link mở khi đổi quà</label>
-    <input value="${esc(p.url||'')}" oninput="setPath(STATE,'rewards.${i}.payload.url',this.value)"/>
+    <input value="${esc(p.url||'')}" oninput="setPath(STATE,'rewards.${i}.payload.url',this.value);refreshStorePreview(${i})"/>
     <label>Label nút</label>
-    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'rewards.${i}.payload.label',this.value)"/>`;
+    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'rewards.${i}.payload.label',this.value);refreshStorePreview(${i})"/>`;
   if (kind === 'ea') return `
     <label>Link file (vd: EA bot / sản phẩm tải về)</label>
-    <input value="${esc(p.ea||'')}" oninput="setPath(STATE,'rewards.${i}.payload.ea',this.value)"/>
+    <input value="${esc(p.ea||'')}" oninput="setPath(STATE,'rewards.${i}.payload.ea',this.value);refreshStorePreview(${i})"/>
     <label>Link hướng dẫn setup</label>
-    <input value="${esc(p.setup||'')}" oninput="setPath(STATE,'rewards.${i}.payload.setup',this.value)"/>
+    <input value="${esc(p.setup||'')}" oninput="setPath(STATE,'rewards.${i}.payload.setup',this.value);refreshStorePreview(${i})"/>
     <label>Label nút</label>
-    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'rewards.${i}.payload.label',this.value)"/>`;
+    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'rewards.${i}.payload.label',this.value);refreshStorePreview(${i})"/>`;
   return `
     <label>Mã code nhận được</label>
-    <input value="${esc(p.code||'')}" oninput="setPath(STATE,'rewards.${i}.payload.code',this.value)"/>`;
+    <input value="${esc(p.code||'')}" oninput="setPath(STATE,'rewards.${i}.payload.code',this.value);refreshStorePreview(${i})"/>`;
 }
 
+function refreshStorePreview(i){
+  const r = STATE.rewards[i];
+  const el = $('prev-store-'+i);
+  if (el.dataset.face === 'back') el.innerHTML = storeBackHtml(r);
+  else el.innerHTML = storeCardHtml(r);
+}
+function toggleStoreFace(i){
+  const el = $('prev-store-'+i);
+  el.dataset.face = el.dataset.face === 'back' ? 'front' : 'back';
+  refreshStorePreview(i);
+}
 function renderStore(){
   const cards = (STATE.rewards||[]).map((r,i)=>{
     const p = r.payload || (r.payload = { kind: 'code', code: '' });
     return `
     <details class="item">
       <summary>${esc(r.name||'(Chưa đặt tên)')} — ${r.cost||0} xu</summary>
-      <div style="margin-top:10px">
-        <label>Tên quà</label>
-        <input value="${esc(r.name)}" oninput="setPath(STATE,'rewards.${i}.name',this.value)"/>
-        <div class="row2">
-          <div><label>Giá (xu)</label><input type="number" value="${r.cost||0}" oninput="setPath(STATE,'rewards.${i}.cost',Number(this.value)||0)"/></div>
-          <div><label>Tồn kho (để trống = không giới hạn)</label><input type="number" value="${r.stock??''}" oninput="setPath(STATE,'rewards.${i}.stock',this.value===''?null:Number(this.value))"/></div>
-        </div>
-        <label>Mô tả</label>
-        <textarea oninput="setPath(STATE,'rewards.${i}.desc',this.value)">${esc(r.desc)}</textarea>
-        <label>Ảnh quà (dán link ảnh)</label>
-        <img class="thumb" id="thumb-${i}" src="${esc(r.image||'')}" alt="" style="${r.image?'':'display:none'}"/>
-        <input value="${esc(r.image||'')}" placeholder="https://..." oninput="setPath(STATE,'rewards.${i}.image',this.value);const t=$('thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none'"/>
-        <div class="hint-small">Tự host ảnh ở nơi khác (Imgur, Cloudinary free, link sản phẩm có sẵn...) rồi dán URL vào đây.</div>
-        <div class="row2">
-          <div><label>Badge</label>
-            <select onchange="setPath(STATE,'rewards.${i}.badge',this.value)">
-              ${['','hot','new','vip','bestseller','limited'].map(b=>`<option value="${b}" ${r.badge===b?'selected':''}>${b||'(không có)'}</option>`).join('')}
-            </select>
+      <div class="edit-row">
+        <div>
+          <label>Tên quà</label>
+          <input value="${esc(r.name)}" oninput="setPath(STATE,'rewards.${i}.name',this.value);refreshStorePreview(${i})"/>
+          <div class="row2">
+            <div><label>Giá (xu)</label><input type="number" value="${r.cost||0}" oninput="setPath(STATE,'rewards.${i}.cost',Number(this.value)||0);refreshStorePreview(${i})"/></div>
+            <div><label>Tồn kho (để trống = không giới hạn)</label><input type="number" value="${r.stock??''}" oninput="setPath(STATE,'rewards.${i}.stock',this.value===''?null:Number(this.value));refreshStorePreview(${i})"/></div>
           </div>
-          <div><label>Giá gốc hiển thị (vd $97)</label><input value="${esc(r.originalPrice||'')}" oninput="setPath(STATE,'rewards.${i}.originalPrice',this.value)"/></div>
+          <label>Mô tả</label>
+          <textarea oninput="setPath(STATE,'rewards.${i}.desc',this.value);refreshStorePreview(${i})">${esc(r.desc)}</textarea>
+          <label>Ảnh quà (dán link ảnh)</label>
+          <img class="thumb" id="thumb-${i}" src="${esc(r.image||'')}" alt="" style="${r.image?'':'display:none'}"/>
+          <input value="${esc(r.image||'')}" placeholder="https://..." oninput="setPath(STATE,'rewards.${i}.image',this.value);const t=$('thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none';refreshStorePreview(${i})"/>
+          <div class="hint-small">Tự host ảnh ở nơi khác (Imgur, Cloudinary free, link sản phẩm có sẵn...) rồi dán URL vào đây.</div>
+          <div class="row2">
+            <div><label>Badge</label>
+              <select onchange="setPath(STATE,'rewards.${i}.badge',this.value);refreshStorePreview(${i})">
+                ${['','hot','new','vip','bestseller','limited'].map(b=>`<option value="${b}" ${r.badge===b?'selected':''}>${b||'(không có)'}</option>`).join('')}
+              </select>
+            </div>
+            <div><label>Giá gốc hiển thị (vd $97)</label><input value="${esc(r.originalPrice||'')}" oninput="setPath(STATE,'rewards.${i}.originalPrice',this.value);refreshStorePreview(${i})"/></div>
+          </div>
+          <label>Loại quà sau khi đổi</label>
+          <select onchange="setPath(STATE,'rewards.${i}.payload.kind',this.value);renderAll()">
+            <option value="code" ${p.kind==='code'?'selected':''}>Mã code</option>
+            <option value="link" ${p.kind==='link'?'selected':''}>Link (file/trang đích)</option>
+            <option value="ea" ${p.kind==='ea'?'selected':''}>File + hướng dẫn setup riêng</option>
+          </select>
+          ${payloadFields(p, i)}
+          <button class="btn del" onclick="STATE.rewards.splice(${i},1);renderAll()">🗑 Xoá quà này</button>
         </div>
-        <label>Loại quà sau khi đổi</label>
-        <select onchange="setPath(STATE,'rewards.${i}.payload.kind',this.value);renderAll()">
-          <option value="code" ${p.kind==='code'?'selected':''}>Mã code</option>
-          <option value="link" ${p.kind==='link'?'selected':''}>Link (file/trang đích)</option>
-          <option value="ea" ${p.kind==='ea'?'selected':''}>File + hướng dẫn setup riêng</option>
-        </select>
-        ${payloadFields(p, i)}
-        <button class="btn del" onclick="STATE.rewards.splice(${i},1);renderAll()">🗑 Xoá quà này</button>
+        <div class="prev-col">
+          <div class="prev-label">Preview</div>
+          <div id="prev-store-${i}">${storeCardHtml(r)}</div>
+          <button class="btn pv-toggle" onclick="toggleStoreFace(${i})">🔄 Xem mặt sau</button>
+        </div>
       </div>
     </details>`;
   }).join('');
