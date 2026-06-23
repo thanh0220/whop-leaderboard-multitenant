@@ -8,42 +8,79 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#070910;--cyan:#27e3ff;--gold:#f4c441;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3)}
+  :root{--bg:#070910;--cyan:#27e3ff;--gold:#f4c441;--red:#ff2d4b;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3)}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:30px 18px;
+  body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:30px 18px 100px;
     background:radial-gradient(120% 70% at 50% -10%,rgba(255,45,75,.13),var(--bg) 55%),var(--bg);background-attachment:fixed}
-  .wrap{max-width:520px;margin:0 auto}
+  .wrap{max-width:760px;margin:0 auto}
   h1{font-family:'Oswald',sans-serif;font-size:20px;letter-spacing:.06em;margin-bottom:6px}
-  p.hint{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:22px}
-  .panel{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px}
-  label{display:block;font-size:12px;letter-spacing:.05em;color:var(--gold);margin:14px 0 6px;text-transform:uppercase;font-family:'Oswald',sans-serif}
+  p.hint{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px}
+  .nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:10}
+  .nav a{font-family:'Oswald',sans-serif;letter-spacing:.06em;text-transform:uppercase;font-size:11px;
+    padding:7px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);
+    color:var(--muted);text-decoration:none}
+  .nav a:hover{border-color:var(--line2);color:var(--cyan)}
+  .sect{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:14px;color:var(--gold);margin:26px 0 12px;scroll-margin-top:60px}
+  .panel{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px;margin-bottom:8px}
+  label{display:block;font-size:11px;letter-spacing:.04em;color:var(--gold);margin:10px 0 4px;text-transform:uppercase;font-family:'Oswald',sans-serif}
   label:first-of-type{margin-top:0}
-  input{width:100%;padding:11px 13px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
-    background:#070b16;color:var(--text);font:500 14px 'Be Vietnam Pro',sans-serif;outline:none}
-  input:focus{border-color:var(--cyan)}
-  .hint-small{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}
-  button{margin-top:18px;width:100%;padding:12px;border-radius:10px;border:1px solid var(--line2);
-    background:rgba(39,227,255,.12);color:var(--cyan);font:700 13px 'Oswald',sans-serif;letter-spacing:.08em;
+  input,select,textarea{width:100%;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.12);
+    background:#070b16;color:var(--text);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none}
+  textarea{min-height:60px;resize:vertical}
+  input:focus,select:focus,textarea:focus{border-color:var(--cyan)}
+  .hint-small{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .btn{margin-top:10px;padding:9px 14px;border-radius:8px;border:1px solid var(--line2);
+    background:rgba(39,227,255,.12);color:var(--cyan);font:700 11.5px 'Oswald',sans-serif;letter-spacing:.06em;
     text-transform:uppercase;cursor:pointer}
-  button:hover:not(:disabled){background:rgba(39,227,255,.22)}
-  button:disabled{opacity:.5;cursor:not-allowed}
-  .msg{margin-top:12px;font-size:13px;min-height:1.2em}
+  .btn:hover:not(:disabled){background:rgba(39,227,255,.22)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.del{border-color:rgba(255,45,75,.4);background:rgba(255,45,75,.1);color:#ffb0bd}
+  .btn.big{width:100%;margin-top:18px;padding:13px;font-size:13px}
+  .item{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:10px;background:rgba(255,255,255,.02)}
+  .item-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .item-head b{font-size:13px}
+  details.item summary{cursor:pointer;font-weight:600;font-size:13px;list-style:none}
+  details.item summary::-webkit-details-marker{display:none}
+  details.item summary::before{content:'▸ ';color:var(--cyan)}
+  details.item[open] summary::before{content:'▾ '}
+  .msg{margin-top:10px;font-size:13px;min-height:1.2em}
   .msg.ok{color:#7ee787}
   .msg.err{color:#ff8896}
   .state{text-align:center;padding:40px 0;color:var(--muted)}
-  .status{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:999px;margin-bottom:14px}
+  .status{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:999px;margin-bottom:10px}
   .status.on{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.4)}
   .status.off{background:rgba(255,45,75,.12);color:#ffb0bd;border:1px solid rgba(255,45,75,.4)}
+  .calgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+  .calgrid .cell{text-align:center}
+  .calgrid .cell label{margin:0 0 2px;font-size:9px}
+  .calgrid input{padding:6px;text-align:center;font-size:12px}
+  @media(max-width:560px){.calgrid{grid-template-columns:repeat(5,1fr)}.row2{grid-template-columns:1fr}}
+  .thumb{width:64px;height:64px;border-radius:8px;background:#0a0f18;object-fit:cover;display:block;margin-bottom:6px;border:1px solid rgba(255,255,255,.1)}
+  .save-bar{position:fixed;left:0;right:0;bottom:0;padding:12px 18px;background:rgba(7,9,16,.95);
+    border-top:1px solid rgba(255,255,255,.1);display:flex;justify-content:center;gap:10px;z-index:20;backdrop-filter:blur(6px)}
+  .save-bar .btn.big{margin:0;max-width:400px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>⚙️ Settings — Kết nối Whop</h1>
-  <p class="hint">Dán Company API key + Company ID của bạn để app lấy đúng dữ liệu thành viên/thanh toán thật của community này. Chỉ admin nên mở trang này — đừng chia sẻ link này cho member.</p>
+  <h1>⚙️ Settings — Quản trị Community</h1>
+  <p class="hint">Chỉ admin nên mở trang này — đừng chia sẻ link này cho member.</p>
+  <div class="nav">
+    <a href="#conn">🔌 Kết nối</a>
+    <a href="#season">🏆 Mùa giải</a>
+    <a href="#daily">📅 Điểm danh</a>
+    <a href="#quests">✅ Nhiệm vụ</a>
+    <a href="#store">🎁 Cửa hàng</a>
+    <a href="#codes">🔑 Code</a>
+  </div>
   <div id="content"><div class="state">Đang tải...</div></div>
 </div>
+
 <script>
 const $=id=>document.getElementById(id);
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
 function tenantQS(){
   const u = new URL(location.href);
   const exp = u.searchParams.get('experienceId') || '';
@@ -56,11 +93,23 @@ function tenantQS(){
 }
 function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
 
-// Whop cần vài giây sau khi trang vừa load để gắn token xác thực vào request
-// (có vẻ qua 1 lớp chặn kiểu Service Worker, không tức thì) — gọi API ngay
-// lúc parse xong script sẽ bị "Không xác định được người dùng" dù token thực
-// ra vẫn hoạt động bình thường vài giây sau. Tự thử lại nhiều lần trước khi
-// báo lỗi thật.
+// STATE = toàn bộ config tenant đang chỉnh trong bộ nhớ. Input đơn giản
+// (text/number/textarea) ghi trực tiếp vào STATE qua setPath() KHÔNG render
+// lại — tránh mất focus/con trỏ khi đang gõ. Hành động cấu trúc (thêm/xoá
+// dòng, đổi loại payload, upload ảnh xong) mới gọi renderAll().
+let STATE = null;
+let CONFIGURED = false;
+let typedApiKey = ''; // ô API key không bind vào STATE (nhạy cảm) — phải giữ
+                       // riêng 1 biến, không thì renderAll() do section khác
+                       // gọi sẽ xoá mất giá trị đang gõ trong ô này.
+
+function setPath(obj, path, value){
+  const parts = path.split('.');
+  let cur = obj;
+  for (let i=0;i<parts.length-1;i++) cur = cur[parts[i]];
+  cur[parts[parts.length-1]] = value;
+}
+
 async function loadOnce(){
   const r = await tenantFetch('/.netlify/functions/admin-config');
   const j = await r.json();
@@ -73,59 +122,253 @@ async function load(){
   for (let i = 0; i < maxTries; i++) {
     try{
       const j = await loadOnce();
-      render(j);
+      CONFIGURED = j.configured;
+      typedApiKey = '';
+      STATE = {
+        whopCompanyId: j.whopCompanyId || '',
+        seasonTopRewards: j.seasonTopRewards || [],
+        checkinRewards: j.checkinRewards || [],
+        dailyQuests: j.dailyQuests || [],
+        rewards: j.rewards || [],
+        redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,xu])=>({code,xu})),
+      };
+      renderAll();
       return;
     }catch(e){
       lastErr = e;
-      if (i === 0) $('content').innerHTML = `<div class="state">Đang chờ Whop xác thực... (${i+1}/${maxTries})</div>`;
-      else $('content').innerHTML = `<div class="state">Đang chờ Whop xác thực... (${i+1}/${maxTries})</div>`;
+      $('content').innerHTML = `<div class="state">Đang chờ Whop xác thực... (${i+1}/${maxTries})</div>`;
       await new Promise(res=>setTimeout(res,1200));
     }
   }
   $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${lastErr.message}</div></div>`;
 }
 
-function render(j){
-  const statusHtml = j.configured
-    ? `<span class="status on">✅ Đã kết nối — Company ID: ${j.whopCompanyId}</span>`
+function renderAll(){
+  $('content').innerHTML =
+    renderConn() + renderSeason() + renderDaily() + renderQuests() + renderStore() + renderCodes() +
+    `<div class="save-bar"><button class="btn big" id="save-all">💾 Lưu tất cả</button></div>`;
+  $('save-all').onclick = saveAll;
+}
+
+// ===== #conn =====
+function renderConn(){
+  const statusHtml = CONFIGURED
+    ? `<span class="status on">✅ Đã kết nối — Company ID: ${esc(STATE.whopCompanyId)}</span>`
     : `<span class="status off">⚠ Chưa kết nối</span>`;
-  $('content').innerHTML = `
+  return `
+    <div class="sect" id="conn">🔌 Kết nối Whop</div>
     <div class="panel">
       ${statusHtml}
-      <label>Company API key</label>
-      <input id="api-key" type="password" placeholder="apik_..." autocomplete="off"/>
+      <label>Company API key (để trống nếu không đổi)</label>
+      <input id="conn-key" type="password" placeholder="apik_..." autocomplete="off" value="${esc(typedApiKey)}" oninput="typedApiKey=this.value"/>
       <div class="hint-small">Lấy tại Whop của bạn: Settings → Developer → API keys.</div>
       <label>Company ID</label>
-      <input id="company-id" type="text" placeholder="biz_..." autocomplete="off"/>
+      <input id="conn-id" type="text" value="${esc(STATE.whopCompanyId)}" oninput="STATE.whopCompanyId=this.value" autocomplete="off"/>
       <div class="hint-small">Xem trong URL khi mở Dashboard business của bạn: whop.com/dashboard/<b>biz_xxx</b>/</div>
-      <button id="save-btn">💾 Lưu cấu hình</button>
-      <div class="msg" id="msg"></div>
     </div>`;
+}
 
-  $('save-btn').onclick = async () => {
-    const btn = $('save-btn');
-    const msg = $('msg');
-    btn.disabled = true; const old = btn.textContent; btn.textContent = 'Đang lưu...';
-    msg.textContent=''; msg.className='msg';
-    try{
-      const body = {
-        whopApiKey: $('api-key').value.trim(),
-        whopCompanyId: $('company-id').value.trim(),
-      };
+// ===== #season =====
+function renderSeason(){
+  const rows = (STATE.seasonTopRewards||[]).map((r,i)=>`
+    <div class="row2">
+      <div><label>Hạng</label><input value="${esc(r.rank)}" oninput="setPath(STATE,'seasonTopRewards.${i}.rank',this.value)"/></div>
+      <div><label>Giải thưởng</label><input value="${esc(r.prize)}" oninput="setPath(STATE,'seasonTopRewards.${i}.prize',this.value)"/></div>
+    </div>
+    <button class="btn del" onclick="STATE.seasonTopRewards.splice(${i},1);renderAll()">🗑 Xoá hạng này</button>
+  `).join('<hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:10px 0">');
+  return `
+    <div class="sect" id="season">🏆 Mùa Giải</div>
+    <div class="panel">
+      ${rows || '<p class="hint-small">Chưa có hạng nào.</p>'}
+      <button class="btn" onclick="STATE.seasonTopRewards.push({rank:'🏅 Top mới',prize:''});renderAll()">+ Thêm hạng</button>
+    </div>`;
+}
 
-      const r = await tenantFetch('/.netlify/functions/admin-config', {
-        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
-      });
-      const jj = await r.json();
-      if(!r.ok) throw new Error(jj.error||('HTTP '+r.status));
-      msg.textContent = '✅ Đã lưu thành công!'; msg.className='msg ok';
-      setTimeout(load, 600);
-    }catch(e){
-      msg.textContent = '⚠ '+e.message; msg.className='msg err';
-    }finally{
-      btn.disabled=false; btn.textContent=old;
-    }
+// ===== #daily (checkinRewards — 30 ô cố định) =====
+function renderDaily(){
+  const cells = (STATE.checkinRewards||[]).map((v,i)=>`
+    <div class="cell">
+      <label>Ngày ${i+1}</label>
+      <input type="number" value="${v}" oninput="setPath(STATE,'checkinRewards.${i}',Number(this.value)||0)"/>
+    </div>`).join('');
+  return `
+    <div class="sect" id="daily">📅 Điểm Danh Hằng Ngày</div>
+    <div class="panel">
+      <p class="hint-small" style="margin-bottom:10px">Số xu cho mỗi ngày trong chu kỳ 30 ngày (lặp lại khi hết chuỗi).</p>
+      <div class="calgrid">${cells}</div>
+    </div>`;
+}
+
+// ===== #quests =====
+function renderQuests(){
+  const rows = (STATE.dailyQuests||[]).map((q,i)=>`
+    <div class="item">
+      <div class="row2">
+        <div><label>ID (không đổi nếu đã có)</label><input value="${esc(q.id)}" oninput="setPath(STATE,'dailyQuests.${i}.id',this.value)"/></div>
+        <div><label>Icon</label><input value="${esc(q.icon)}" oninput="setPath(STATE,'dailyQuests.${i}.icon',this.value)"/></div>
+      </div>
+      <label>Tên nhiệm vụ</label>
+      <input value="${esc(q.name)}" oninput="setPath(STATE,'dailyQuests.${i}.name',this.value)"/>
+      <label>Xu thưởng</label>
+      <input type="number" value="${q.reward}" oninput="setPath(STATE,'dailyQuests.${i}.reward',Number(this.value)||0)"/>
+      <button class="btn del" onclick="STATE.dailyQuests.splice(${i},1);renderAll()">🗑 Xoá nhiệm vụ</button>
+    </div>`).join('');
+  return `
+    <div class="sect" id="quests">✅ Nhiệm Vụ Hằng Ngày</div>
+    <div class="panel">
+      ${rows || '<p class="hint-small">Chưa có nhiệm vụ nào.</p>'}
+      <button class="btn" onclick="STATE.dailyQuests.push({id:'quest_'+Date.now().toString(36),name:'',reward:1,icon:'⭐'});renderAll()">+ Thêm nhiệm vụ</button>
+    </div>`;
+}
+
+// ===== #store (rewards) =====
+function payloadFields(p, i){
+  const kind = p.kind || 'code';
+  if (kind === 'link') return `
+    <label>Link mở khi đổi quà</label>
+    <input value="${esc(p.url||'')}" oninput="setPath(STATE,'rewards.${i}.payload.url',this.value)"/>
+    <label>Label nút</label>
+    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'rewards.${i}.payload.label',this.value)"/>`;
+  if (kind === 'ea') return `
+    <label>Link file (vd: EA bot / sản phẩm tải về)</label>
+    <input value="${esc(p.ea||'')}" oninput="setPath(STATE,'rewards.${i}.payload.ea',this.value)"/>
+    <label>Link hướng dẫn setup</label>
+    <input value="${esc(p.setup||'')}" oninput="setPath(STATE,'rewards.${i}.payload.setup',this.value)"/>
+    <label>Label nút</label>
+    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'rewards.${i}.payload.label',this.value)"/>`;
+  return `
+    <label>Mã code nhận được</label>
+    <input value="${esc(p.code||'')}" oninput="setPath(STATE,'rewards.${i}.payload.code',this.value)"/>`;
+}
+
+function renderStore(){
+  const cards = (STATE.rewards||[]).map((r,i)=>{
+    const p = r.payload || (r.payload = { kind: 'code', code: '' });
+    return `
+    <details class="item">
+      <summary>${esc(r.name||'(Chưa đặt tên)')} — ${r.cost||0} xu</summary>
+      <div style="margin-top:10px">
+        <label>Tên quà</label>
+        <input value="${esc(r.name)}" oninput="setPath(STATE,'rewards.${i}.name',this.value)"/>
+        <div class="row2">
+          <div><label>Giá (xu)</label><input type="number" value="${r.cost||0}" oninput="setPath(STATE,'rewards.${i}.cost',Number(this.value)||0)"/></div>
+          <div><label>Tồn kho (để trống = không giới hạn)</label><input type="number" value="${r.stock??''}" oninput="setPath(STATE,'rewards.${i}.stock',this.value===''?null:Number(this.value))"/></div>
+        </div>
+        <label>Mô tả</label>
+        <textarea oninput="setPath(STATE,'rewards.${i}.desc',this.value)">${esc(r.desc)}</textarea>
+        <label>Ảnh quà (tối đa 3MB)</label>
+        ${r.image ? `<img class="thumb" src="${esc(r.image)}" alt=""/>` : ''}
+        <input type="file" accept="image/*" onchange="handleImageUpload(event,${i})"/>
+        <div class="hint-small" id="upload-status-${i}"></div>
+        <input style="margin-top:6px" value="${esc(r.image||'')}" placeholder="hoặc dán URL ảnh trực tiếp" oninput="setPath(STATE,'rewards.${i}.image',this.value)"/>
+        <div class="row2">
+          <div><label>Badge</label>
+            <select onchange="setPath(STATE,'rewards.${i}.badge',this.value)">
+              ${['','hot','new','vip','bestseller','limited'].map(b=>`<option value="${b}" ${r.badge===b?'selected':''}>${b||'(không có)'}</option>`).join('')}
+            </select>
+          </div>
+          <div><label>Giá gốc hiển thị (vd $97)</label><input value="${esc(r.originalPrice||'')}" oninput="setPath(STATE,'rewards.${i}.originalPrice',this.value)"/></div>
+        </div>
+        <label>Loại quà sau khi đổi</label>
+        <select onchange="setPath(STATE,'rewards.${i}.payload.kind',this.value);renderAll()">
+          <option value="code" ${p.kind==='code'?'selected':''}>Mã code</option>
+          <option value="link" ${p.kind==='link'?'selected':''}>Link (file/trang đích)</option>
+          <option value="ea" ${p.kind==='ea'?'selected':''}>File + hướng dẫn setup riêng</option>
+        </select>
+        ${payloadFields(p, i)}
+        <button class="btn del" onclick="STATE.rewards.splice(${i},1);renderAll()">🗑 Xoá quà này</button>
+      </div>
+    </details>`;
+  }).join('');
+  return `
+    <div class="sect" id="store">🎁 Cửa Hàng Đổi Quà</div>
+    <div class="panel">
+      ${cards || '<p class="hint-small">Chưa có quà nào trong cửa hàng.</p>'}
+      <button class="btn" onclick="STATE.rewards.push({id:'reward_'+Date.now().toString(36),name:'',cost:100,desc:'',image:'',badge:'',originalPrice:'',stock:null,tier:1,payload:{kind:'code',code:''}});renderAll()">+ Thêm quà mới</button>
+    </div>`;
+}
+
+async function handleImageUpload(ev, idx){
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  const statusEl = $('upload-status-'+idx);
+  if (file.size > 3*1024*1024) {
+    if (statusEl) statusEl.textContent = '⚠ File quá lớn (tối đa 3MB).';
+    return;
+  }
+  if (statusEl) statusEl.textContent = 'Đang tải lên...';
+  try{
+    const dataUrl = await new Promise((resolve,reject)=>{
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = reject;
+      fr.readAsDataURL(file);
+    });
+    const dataBase64 = dataUrl.split(',')[1];
+    const r = await tenantFetch('/.netlify/functions/upload-image', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ filename:file.name, contentType:file.type, dataBase64 })
+    });
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    setPath(STATE, 'rewards.'+idx+'.image', j.url);
+    renderAll();
+  }catch(e){
+    if (statusEl) statusEl.textContent = '⚠ '+e.message;
+  }
+}
+
+// ===== #codes =====
+function renderCodes(){
+  const rows = (STATE.redeemCodesList||[]).map((c,i)=>`
+    <div class="row2">
+      <div><label>Code</label><input value="${esc(c.code)}" oninput="setPath(STATE,'redeemCodesList.${i}.code',this.value)"/></div>
+      <div><label>Xu nhận được</label><input type="number" value="${c.xu}" oninput="setPath(STATE,'redeemCodesList.${i}.xu',Number(this.value)||0)"/></div>
+    </div>
+    <button class="btn del" onclick="STATE.redeemCodesList.splice(${i},1);renderAll()">🗑 Xoá code</button>
+  `).join('<hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:10px 0">');
+  return `
+    <div class="sect" id="codes">🔑 Code Đặc Biệt</div>
+    <div class="panel">
+      ${rows || '<p class="hint-small">Chưa có code nào.</p>'}
+      <button class="btn" onclick="STATE.redeemCodesList.push({code:'',xu:0});renderAll()">+ Thêm code</button>
+    </div>`;
+}
+
+// ===== Lưu tất cả =====
+async function saveAll(){
+  const btn = $('save-all');
+  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Đang lưu...';
+
+  const redeemCodes = {};
+  (STATE.redeemCodesList||[]).forEach(c=>{
+    const code = (c.code||'').trim().toLowerCase();
+    if (code) redeemCodes[code] = Number(c.xu)||0;
+  });
+
+  const payload = {
+    seasonTopRewards: STATE.seasonTopRewards,
+    checkinRewards: STATE.checkinRewards,
+    dailyQuests: STATE.dailyQuests,
+    rewards: STATE.rewards,
+    redeemCodes,
   };
+  if (typedApiKey.trim()) payload.whopApiKey = typedApiKey.trim();
+  if ((STATE.whopCompanyId||'').trim()) payload.whopCompanyId = STATE.whopCompanyId.trim();
+
+  try{
+    const r = await tenantFetch('/.netlify/functions/admin-config', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    btn.textContent = '✅ Đã lưu!';
+    setTimeout(load, 700);
+  }catch(e){
+    alert('⚠ Lưu lỗi: '+e.message);
+    btn.disabled = false; btn.textContent = old;
+  }
 }
 
 setTimeout(load, 300);
