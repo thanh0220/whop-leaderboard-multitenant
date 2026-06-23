@@ -267,6 +267,7 @@ async function load(){
         redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>
           typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),
         chestRules: j.chestRules || {thresholds:[],rewardRange:{},expiryHours:48},
+        events: j.events || [],
       };
       renderAll();
       return;
@@ -368,7 +369,7 @@ function renderQuests(){
           </div>
           <label>Lặp lại mỗi (số ngày, để trống = không lặp)</label>
           <input type="number" min="1" value="${esc(q.repeatDays||'')}" oninput="setPath(STATE,'dailyQuests.${i}.repeatDays',this.value?Number(this.value):'')"/>
-          <div class="hint-small">Đặt ngày để nhiệm vụ này hiện trên 🗓 Lịch sự kiện như 1 sự kiện giới hạn thời gian. Lặp lại = tái diễn mỗi N ngày, độ dài mỗi lần giữ nguyên theo khoảng Bắt đầu→Kết thúc.</div>
+          <div class="hint-small">Để trống ngày = nhiệm vụ luôn hoạt động. Đặt ngày để giới hạn thời gian hoạt động; lặp lại = tái diễn mỗi N ngày, độ dài mỗi lần giữ nguyên theo khoảng Bắt đầu→Kết thúc.</div>
           <button class="btn del" onclick="STATE.dailyQuests.splice(${i},1);renderAll()">🗑 Xoá nhiệm vụ</button>
         </div>
         <div class="prev-col">
@@ -488,7 +489,7 @@ function renderCodes(){
     </div>
     <label>Lặp lại mỗi (số ngày, để trống = không lặp)</label>
     <input type="number" min="1" value="${esc(c.repeatDays||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.repeatDays',this.value?Number(this.value):'')"/>
-    <div class="hint-small">Đặt ngày để code này hiện trên 🗓 Lịch sự kiện như 1 khuyến mãi giới hạn thời gian. Lặp lại = tái diễn mỗi N ngày.</div>
+    <div class="hint-small">Để trống ngày = code dùng được ngay, không hết hạn. Đặt ngày để giới hạn thời gian dùng được; lặp lại = tái diễn mỗi N ngày.</div>
     <button class="btn del" onclick="STATE.redeemCodesList.splice(${i},1);renderAll()">🗑 Xoá code</button>
     </div>
   `).join('<hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:10px 0">');
@@ -530,9 +531,9 @@ function renderChests(){
     </div>`;
 }
 
-// ===== #events — lịch kéo-thả (cùng dữ liệu STATE.dailyQuests/redeemCodesList, chỉ là khung nhìn khác) =====
+// ===== #events — lịch sự kiện độc lập (STATE.events — KHÔNG gắn Nhiệm vụ/Code) =====
 let eventsWeekOffset = 0;
-let dragChip = null; // {kind, idx} của chip đang kéo (drop lần đầu lên lịch)
+let dragChip = null; // idx của chip đang kéo (drop lần đầu lên lịch)
 
 function evWeekDates(offset){
   const todayKey = new Date().toISOString().slice(0,10);
@@ -547,12 +548,6 @@ function addDays(dateKey, n){
   return d.toISOString().slice(0,10);
 }
 function dayDelta(a,b){ return Math.round((new Date(b+'T00:00:00Z') - new Date(a+'T00:00:00Z'))/86400000); }
-
-function evItems(){
-  const quests = (STATE.dailyQuests||[]).map((q,i)=>({kind:'quest',idx:i,label:(q.icon||'⭐')+' '+(q.name||'(chưa đặt tên)'),image:q.image,startDate:q.startDate,endDate:q.endDate,repeatDays:q.repeatDays}));
-  const codes = (STATE.redeemCodesList||[]).map((c,i)=>({kind:'code',idx:i,label:'🔑 '+(c.title||c.code||'(chưa đặt code)'),image:c.image,startDate:c.startDate,endDate:c.endDate,repeatDays:c.repeatDays}));
-  return [...quests, ...codes];
-}
 
 // Lặp lại: quét vài chu kỳ quanh tuần đang xem, trả về danh sách [start,end]
 // của các lần lặp có chạm vào tuần hiển thị (không lặp = đúng 1 lần).
@@ -581,7 +576,7 @@ function renderEvents(){
     return `<div class="ev-head-cell ${isToday?'today':''}" ondragover="event.preventDefault()" ondrop="onEvDrop(event,'${dk}')">${dowLabel[i]}<div class="dd">${dd}/${m}</div></div>`;
   }).join('');
 
-  const items = evItems();
+  const items = (STATE.events||[]).map((e,i)=>({idx:i,label:(e.time?`🕒 ${esc(e.time)} `:'')+(esc(e.name)||'(chưa đặt tên)'),image:e.image,startDate:e.startDate,endDate:e.endDate,repeatDays:e.repeatDays}));
   const scheduled = items.filter(it=>it.startDate && it.endDate);
   const unscheduled = items.filter(it=>!(it.startDate && it.endDate));
 
@@ -593,27 +588,50 @@ function renderEvents(){
     if(startCol>6 || endCol<0 || startCol>endCol) return '';
     const thumb = it.image ? `<img class="ev-thumb" src="${esc(it.image)}"/>` : '';
     return `<div class="ev-track">
-      <div class="evt-bar ${it.kind}" style="grid-column:${startCol+1} / ${endCol+2}" onmousedown="startDragMove(event,'${it.kind}',${it.idx})">
-        <div class="grip grip-l" onmousedown="startDragResize(event,'${it.kind}',${it.idx},'start')"></div>
-        ${thumb}<span class="evt-label">${esc(it.label)}</span>
-        <span class="ex" onmousedown="event.stopPropagation()" onclick="jumpToEdit('${it.kind}',${it.idx})" title="Sửa">✎</span>
-        <span class="ex" onmousedown="event.stopPropagation()" onclick="unscheduleEvent('${it.kind}',${it.idx})" title="Bỏ lịch">✕</span>
-        <span class="ex" onmousedown="event.stopPropagation()" onclick="deleteEventItem('${it.kind}',${it.idx})" title="Xoá hẳn">🗑</span>
-        <div class="grip grip-r" onmousedown="startDragResize(event,'${it.kind}',${it.idx},'end')"></div>
+      <div class="evt-bar quest" style="grid-column:${startCol+1} / ${endCol+2}" onmousedown="startDragMove(event,${it.idx})">
+        <div class="grip grip-l" onmousedown="startDragResize(event,${it.idx},'start')"></div>
+        ${thumb}<span class="evt-label">${it.label}</span>
+        <span class="ex" onmousedown="event.stopPropagation()" onclick="jumpToEdit(${it.idx})" title="Sửa">✎</span>
+        <span class="ex" onmousedown="event.stopPropagation()" onclick="unscheduleEvent(${it.idx})" title="Bỏ lịch">✕</span>
+        <span class="ex" onmousedown="event.stopPropagation()" onclick="deleteEventItem(${it.idx})" title="Xoá hẳn">🗑</span>
+        <div class="grip grip-r" onmousedown="startDragResize(event,${it.idx},'end')"></div>
       </div>
     </div>`;
-  })).filter(Boolean).join('') || '<div class="ev-empty">Chưa có sự kiện nào trong tuần này — kéo chip ở dưới vào 1 ô ngày.</div>';
+  })).filter(Boolean).join('') || '<div class="ev-empty">Chưa có sự kiện nào trong tuần này — kéo chip ở dưới vào 1 ô ngày, hoặc bấm "+ Sự kiện mới".</div>';
 
   const chips = unscheduled.map(it=>
-    `<span class="chip ${it.kind}" draggable="true" ondragstart="onChipDragStart(event,'${it.kind}',${it.idx})">${esc(it.label)}
-      <span class="ex" onmousedown="event.stopPropagation()" onclick="jumpToEdit('${it.kind}',${it.idx})" title="Sửa">✎</span>
-      <span class="ex" onmousedown="event.stopPropagation()" onclick="deleteEventItem('${it.kind}',${it.idx})" title="Xoá hẳn">🗑</span>
+    `<span class="chip quest" draggable="true" ondragstart="onChipDragStart(event,${it.idx})">${it.label}
+      <span class="ex" onmousedown="event.stopPropagation()" onclick="jumpToEdit(${it.idx})" title="Sửa">✎</span>
+      <span class="ex" onmousedown="event.stopPropagation()" onclick="deleteEventItem(${it.idx})" title="Xoá hẳn">🗑</span>
     </span>`
   ).join('') || '<span class="hint-small">Không có gì chưa lên lịch.</span>';
+
+  const editList = (STATE.events||[]).map((e,i)=>`
+    <div class="item" id="event-item-${i}">
+      <label>Tên sự kiện</label>
+      <input value="${esc(e.name)}" oninput="setPath(STATE,'events.${i}.name',this.value)"/>
+      <label>Mô tả</label>
+      <textarea oninput="setPath(STATE,'events.${i}.desc',this.value)">${esc(e.desc)}</textarea>
+      <div class="row2">
+        <div><label>Giờ bắt đầu (không bắt buộc)</label><input type="time" value="${esc(e.time||'')}" oninput="setPath(STATE,'events.${i}.time',this.value)"/></div>
+        <div><label>Link (không bắt buộc)</label><input value="${esc(e.link||'')}" placeholder="https://..." oninput="setPath(STATE,'events.${i}.link',this.value)"/></div>
+      </div>
+      <label>Ảnh (dán link ảnh, không bắt buộc)</label>
+      <img class="thumb" id="event-thumb-${i}" src="${esc(e.image||'')}" alt="" style="${e.image?'':'display:none'}"/>
+      <input value="${esc(e.image||'')}" placeholder="https://..." oninput="setPath(STATE,'events.${i}.image',this.value);const t=$('event-thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none'"/>
+      <div class="row2">
+        <div><label>Bắt đầu</label><input type="date" value="${esc(e.startDate||'')}" oninput="setPath(STATE,'events.${i}.startDate',this.value)"/></div>
+        <div><label>Kết thúc</label><input type="date" value="${esc(e.endDate||'')}" oninput="setPath(STATE,'events.${i}.endDate',this.value)"/></div>
+      </div>
+      <label>Lặp lại mỗi (số ngày, để trống = không lặp)</label>
+      <input type="number" min="1" value="${esc(e.repeatDays||'')}" oninput="setPath(STATE,'events.${i}.repeatDays',this.value?Number(this.value):'')"/>
+      <button class="btn del" onclick="STATE.events.splice(${i},1);renderAll()">🗑 Xoá sự kiện</button>
+    </div>`).join('');
 
   return `<div id="events-wrap">
     <div class="sect" id="events">🗓 Sự Kiện</div>
     <div class="panel">
+      <p class="hint-small" style="margin-bottom:10px">Lịch sự kiện độc lập (live, khuyến mãi, AMA, bảo trì...) — không liên quan Nhiệm vụ/Code/thưởng.</p>
       <div class="events-nav">
         <button class="btn" onclick="eventsWeekOffset--;refreshEvents()">‹ Tuần trước</button>
         <span class="lbl">${week[0].slice(8,10)}/${week[0].slice(5,7)} — ${week[6].slice(8,10)}/${week[6].slice(5,7)}</span>
@@ -623,24 +641,22 @@ function renderEvents(){
       ${bars}
       <div class="unscheduled-tray">
         <div class="prev-label" style="text-align:left">📥 Chưa lên lịch (kéo vào 1 ô ngày ở trên)</div>
-        <div style="margin-bottom:8px">
-          <button class="btn" onclick="quickAddQuest()">+ Nhiệm vụ mới</button>
-          <button class="btn" onclick="quickAddCode()">+ Code mới</button>
-        </div>
         ${chips}
       </div>
+    </div>
+    <div class="panel" style="margin-top:8px">
+      <button class="btn" onclick="quickAddEvent()">+ Sự kiện mới</button>
+      ${editList}
     </div>
   </div>`;
 }
 function refreshEvents(){ $('events-wrap').outerHTML = renderEvents(); }
 
-function evItem(kind, idx){ return kind==='quest' ? STATE.dailyQuests[idx] : STATE.redeemCodesList[idx]; }
-
-function startDragMove(e, kind, idx){
+function startDragMove(e, idx){
   e.preventDefault();
   const track = e.currentTarget.closest('.ev-track');
   const cellWidth = track.getBoundingClientRect().width/7;
-  const item = evItem(kind, idx);
+  const item = STATE.events[idx];
   const origStart = item.startDate, origEnd = item.endDate;
   const x0 = e.clientX;
   function onUp(ev){
@@ -654,11 +670,11 @@ function startDragMove(e, kind, idx){
   }
   document.addEventListener('mouseup', onUp);
 }
-function startDragResize(e, kind, idx, edge){
+function startDragResize(e, idx, edge){
   e.preventDefault(); e.stopPropagation();
   const track = e.currentTarget.closest('.ev-track');
   const cellWidth = track.getBoundingClientRect().width/7;
-  const item = evItem(kind, idx);
+  const item = STATE.events[idx];
   const origStart = item.startDate, origEnd = item.endDate;
   const x0 = e.clientX;
   function onUp(ev){
@@ -678,41 +694,34 @@ function startDragResize(e, kind, idx, edge){
   }
   document.addEventListener('mouseup', onUp);
 }
-function unscheduleEvent(kind, idx){
-  const item = evItem(kind, idx);
+function unscheduleEvent(idx){
+  const item = STATE.events[idx];
   item.startDate = ''; item.endDate = '';
   refreshEvents();
 }
-function quickAddQuest(){
-  STATE.dailyQuests.push({id:'quest_'+Date.now().toString(36),name:'Nhiệm vụ mới',reward:5,icon:'⭐'});
-  const idx = STATE.dailyQuests.length-1;
+function quickAddEvent(){
+  STATE.events.push({id:'event_'+Date.now().toString(36),name:'Sự kiện mới',desc:'',time:'',link:'',image:''});
+  const idx = STATE.events.length-1;
   renderAll();
-  jumpToEdit('quest', idx);
+  jumpToEdit(idx);
 }
-function quickAddCode(){
-  STATE.redeemCodesList.push({code:'',xu:50,title:'Code mới'});
-  const idx = STATE.redeemCodesList.length-1;
-  renderAll();
-  jumpToEdit('code', idx);
-}
-function jumpToEdit(kind, idx){
-  const id = (kind==='quest'?'quest-item-':'code-item-')+idx;
-  const el = document.getElementById(id);
+function jumpToEdit(idx){
+  const el = document.getElementById('event-item-'+idx);
   if(!el) return;
   el.scrollIntoView({behavior:'smooth', block:'center'});
   el.classList.add('flash');
   setTimeout(()=>el.classList.remove('flash'), 1500);
 }
-function deleteEventItem(kind, idx){
-  if(!confirm('Xoá hẳn '+(kind==='quest'?'nhiệm vụ':'code')+' này? Không thể hoàn tác.')) return;
-  if(kind==='quest') STATE.dailyQuests.splice(idx,1); else STATE.redeemCodesList.splice(idx,1);
+function deleteEventItem(idx){
+  if(!confirm('Xoá hẳn sự kiện này? Không thể hoàn tác.')) return;
+  STATE.events.splice(idx,1);
   renderAll();
 }
-function onChipDragStart(e, kind, idx){ dragChip = {kind, idx}; }
+function onChipDragStart(e, idx){ dragChip = idx; }
 function onEvDrop(e, dateKey){
   e.preventDefault();
-  if(!dragChip) return;
-  const item = evItem(dragChip.kind, dragChip.idx);
+  if(dragChip == null) return;
+  const item = STATE.events[dragChip];
   item.startDate = dateKey;
   item.endDate = addDays(dateKey, 2);
   dragChip = null;
@@ -744,6 +753,7 @@ async function saveAll(){
     rewards: STATE.rewards,
     redeemCodes,
     chestRules: STATE.chestRules,
+    events: STATE.events,
   };
   if (typedApiKey.trim()) payload.whopApiKey = typedApiKey.trim();
   if ((STATE.whopCompanyId||'').trim()) payload.whopCompanyId = STATE.whopCompanyId.trim();

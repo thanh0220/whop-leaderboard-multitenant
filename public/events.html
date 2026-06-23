@@ -23,12 +23,8 @@
   .top .s{color:var(--red);font-size:18px;text-shadow:0 0 12px rgba(255,45,75,.7)}
   .top b{color:var(--red)}
 
-  .legend{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-  .lg{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;text-align:center}
-  .lg .n{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;line-height:1}
-  .lg .l{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px}
-  .lg.season .n{color:var(--gold)} .lg.code .n{color:var(--red)} .lg.quest .n{color:var(--cyan)}
-  @media(max-width:560px){.legend{grid-template-columns:1fr}}
+  .counter{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .counter b{color:var(--cyan)}
 
   .panel{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px}
   .head-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px}
@@ -38,12 +34,18 @@
   .head-cell.today .dd{color:var(--cyan)}
 
   .track{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;min-height:38px}
-  .evt{border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap}
+  .evt{border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap;
+    background:rgba(39,227,255,.16);border:1px solid rgba(39,227,255,.5);color:var(--cyan)}
   .evt-thumb{width:20px;height:20px;border-radius:5px;object-fit:cover;flex-shrink:0}
   .evt small{font-weight:400;opacity:.8;font-size:10.5px}
-  .evt.season{background:rgba(244,196,65,.16);border:1px solid rgba(244,196,65,.5);color:var(--gold)}
-  .evt.code{background:rgba(255,45,75,.16);border:1px solid rgba(255,45,75,.5);color:#ffb0bd}
-  .evt.quest{background:rgba(39,227,255,.16);border:1px solid rgba(39,227,255,.5);color:var(--cyan)}
+
+  .below{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+  .ev-card{display:flex;gap:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px}
+  .ev-card img{width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0}
+  .ev-card .nm{font-weight:600;font-size:14px;color:#fff}
+  .ev-card .meta{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .ev-card .ds{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .ev-card a.lk{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--cyan);text-decoration:none;display:inline-block;margin-top:6px}
 
   .empty{text-align:center;color:var(--muted);font-size:13px;padding:14px 0}
 
@@ -138,7 +140,8 @@ function evtRows(item, week, cls, label){
 }
 
 function render(d){
-  const today = d.today;
+  const events = d.events || [];
+  const today = new Date().toISOString().slice(0,10);
   const week = weekDates(today);
   const dowLabel=['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
 
@@ -148,21 +151,25 @@ function render(d){
     return `<div class="head-cell ${isToday?'today':''}">${dowLabel[i]}<div class="dd">${dd}/${m}</div></div>`;
   }).join('');
 
-  const seasonRow = evtRows(d.season, week, 'season', `🏆 ${esc(d.season.label||'Mùa giải')}`);
-  const codeRows = (d.codes||[]).map(c=>evtRows(c, week, 'code', `🔑 ${esc(c.title||'Mã khuyến mãi')} <small>+${c.xu} xu</small>`)).join('');
-  const questRows = (d.quests||[]).map(q=>evtRows(q, week, 'quest', `${esc(q.icon||'⭐')} ${esc(q.name)} <small>+${q.reward} xu</small>`)).join('');
+  const rows = events.map(e=>evtRows(e, week, 'evt', `${e.time?`🕒 ${esc(e.time)} `:''}${esc(e.name)}`)).join('');
+
+  const cards = events.map(e=>`
+    <div class="ev-card">
+      ${e.image?`<img src="${esc(e.image)}"/>`:''}
+      <div>
+        <div class="nm">${esc(e.name)}</div>
+        <div class="meta">${e.time?`🕒 ${esc(e.time)} · `:''}${esc(e.startDate)}${e.endDate!==e.startDate?' → '+esc(e.endDate):''}${e.repeatDays?` · lặp mỗi ${e.repeatDays} ngày`:''}</div>
+        ${e.desc?`<div class="ds">${esc(e.desc)}</div>`:''}
+        ${e.link?`<a class="lk" href="${esc(e.link)}" target="_blank" rel="noopener">🔗 Mở link</a>`:''}
+      </div>
+    </div>`).join('');
 
   const html = `
-    <div class="legend">
-      <div class="lg season"><div class="n">1</div><div class="l">🏆 Nổi bật</div></div>
-      <div class="lg code"><div class="n">${(d.codes||[]).length}</div><div class="l">🔑 Lễ hội</div></div>
-      <div class="lg quest"><div class="n">${(d.quests||[]).length}</div><div class="l">✅ Hằng ngày</div></div>
-    </div>
+    <div class="counter">📅 <b>${events.length}</b> sự kiện sắp tới</div>
     <div class="panel">
       <div class="head-row">${headCells}</div>
-      ${seasonRow || '<div class="empty">Không có sự kiện nổi bật trong tuần này.</div>'}
-      ${codeRows || '<div class="empty">Không có code khuyến mãi nào trong tuần này.</div>'}
-      ${questRows || '<div class="empty">Không có nhiệm vụ giới hạn thời gian nào trong tuần này.</div>'}
+      ${rows || '<div class="empty">Không có sự kiện nào trong tuần này.</div>'}
+      <div class="below">${cards || ''}</div>
     </div>`;
   $('content').innerHTML = html;
 }
