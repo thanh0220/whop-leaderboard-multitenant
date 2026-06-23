@@ -257,11 +257,10 @@ function renderStore(){
         </div>
         <label>Mô tả</label>
         <textarea oninput="setPath(STATE,'rewards.${i}.desc',this.value)">${esc(r.desc)}</textarea>
-        <label>Ảnh quà (tối đa 3MB)</label>
-        ${r.image ? `<img class="thumb" src="${esc(r.image)}" alt=""/>` : ''}
-        <input type="file" accept="image/*" onchange="handleImageUpload(event,${i})"/>
-        <div class="hint-small" id="upload-status-${i}"></div>
-        <input style="margin-top:6px" value="${esc(r.image||'')}" placeholder="hoặc dán URL ảnh trực tiếp" oninput="setPath(STATE,'rewards.${i}.image',this.value)"/>
+        <label>Ảnh quà (dán link ảnh)</label>
+        <img class="thumb" id="thumb-${i}" src="${esc(r.image||'')}" alt="" style="${r.image?'':'display:none'}"/>
+        <input value="${esc(r.image||'')}" placeholder="https://..." oninput="setPath(STATE,'rewards.${i}.image',this.value);const t=$('thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none'"/>
+        <div class="hint-small">Tự host ảnh ở nơi khác (Imgur, Cloudinary free, link sản phẩm có sẵn...) rồi dán URL vào đây.</div>
         <div class="row2">
           <div><label>Badge</label>
             <select onchange="setPath(STATE,'rewards.${i}.badge',this.value)">
@@ -287,36 +286,6 @@ function renderStore(){
       ${cards || '<p class="hint-small">Chưa có quà nào trong cửa hàng.</p>'}
       <button class="btn" onclick="STATE.rewards.push({id:'reward_'+Date.now().toString(36),name:'',cost:100,desc:'',image:'',badge:'',originalPrice:'',stock:null,tier:1,payload:{kind:'code',code:''}});renderAll()">+ Thêm quà mới</button>
     </div>`;
-}
-
-async function handleImageUpload(ev, idx){
-  const file = ev.target.files && ev.target.files[0];
-  if (!file) return;
-  const statusEl = $('upload-status-'+idx);
-  if (file.size > 3*1024*1024) {
-    if (statusEl) statusEl.textContent = '⚠ File quá lớn (tối đa 3MB).';
-    return;
-  }
-  if (statusEl) statusEl.textContent = 'Đang tải lên...';
-  try{
-    const dataUrl = await new Promise((resolve,reject)=>{
-      const fr = new FileReader();
-      fr.onload = () => resolve(fr.result);
-      fr.onerror = reject;
-      fr.readAsDataURL(file);
-    });
-    const dataBase64 = dataUrl.split(',')[1];
-    const r = await tenantFetch('/.netlify/functions/upload-image', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ filename:file.name, contentType:file.type, dataBase64 })
-    });
-    const j = await r.json();
-    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
-    setPath(STATE, 'rewards.'+idx+'.image', j.url);
-    renderAll();
-  }catch(e){
-    if (statusEl) statusEl.textContent = '⚠ '+e.message;
-  }
 }
 
 // ===== #codes =====
