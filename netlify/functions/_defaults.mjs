@@ -59,6 +59,9 @@ export const DEFAULT_TENANT = {
   // được ship sẵn sản phẩm của 1 business cụ thể cho mọi tenant khác.
   rewards: [],
   redeemCodes: {},
+  // Lịch sự kiện độc lập (live stream, khuyến mãi, AMA, bảo trì...) — KHÔNG
+  // gắn với Nhiệm vụ/Code, chỉ để thông báo/hiển thị trên public/events.html.
+  events: [],
   // Rương Liên Minh: khi 1 member mua hàng thật trên Whop (webhook
   // payment_succeeded — xem webhook.mjs), TOÀN BỘ member khác trong kênh
   // nhận 1 rương. Tier chọn theo số tiền USD của giao dịch (đã đổi qua `fx`).

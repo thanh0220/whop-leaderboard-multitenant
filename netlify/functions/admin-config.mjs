@@ -22,6 +22,7 @@ const ALLOWED_KEYS = [
   "redeemCodes",
   "unlockAllFeatures",
   "chestRules",
+  "events",
 ];
 
 // GET: trả toàn bộ config tenant (trừ whopApiKey/setupSecret — không bao giờ
@@ -62,6 +63,7 @@ export const handler = async (event) => {
       redeemCodes: cfg.redeemCodes,
       unlockAllFeatures: cfg.unlockAllFeatures,
       chestRules: cfg.chestRules,
+      events: cfg.events,
     });
   }
 
@@ -86,7 +88,7 @@ export const handler = async (event) => {
     if (Object.prototype.hasOwnProperty.call(body, k)) partial[k] = body[k];
   }
   // Validate nhẹ hình dạng dữ liệu — tránh lưu nhầm kiểu sai làm vỡ trang member.
-  for (const k of ["checkinRewards", "dailyQuests", "seasonTopRewards", "rewards"]) {
+  for (const k of ["checkinRewards", "dailyQuests", "seasonTopRewards", "rewards", "events"]) {
     if (k in partial && !Array.isArray(partial[k])) {
       return json(400, { error: `${k} phải là 1 mảng (array).` });
     }
