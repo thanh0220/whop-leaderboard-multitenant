@@ -9,18 +9,24 @@ const APP_API_KEY = process.env.WHOP_APP_API_KEY;
 const whop = WhopServerSdk({ appId: APP_ID, appApiKey: APP_API_KEY });
 
 // Xác thực token Whop gắn trong iframe, trả userId hoặc null.
+// lastVerifyError lưu lỗi thật của lần verify gần nhất (kể cả khi trả null)
+// để debug endpoint soi được nguyên nhân thật — trước đây lỗi bị nuốt mất.
+export let lastVerifyError = null;
 async function verifyUser(event) {
   const h = event.headers || {};
   const token = h["x-whop-user-token"] || h["X-Whop-User-Token"];
-  if (!token) return null;
+  if (!token) { lastVerifyError = "no-token-header"; return null; }
   try {
     const res = await whop.verifyUserToken(new Headers(h));
+    lastVerifyError = null;
     return res?.userId || res?.user_id || null;
-  } catch (_) {
+  } catch (e1) {
     try {
       const res = await whop.verifyUserToken(token);
+      lastVerifyError = null;
       return res?.userId || res?.user_id || null;
-    } catch (_e) {
+    } catch (e2) {
+      lastVerifyError = `attempt1: ${e1?.message || e1}; attempt2: ${e2?.message || e2}`;
       return null;
     }
   }
