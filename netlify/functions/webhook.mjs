@@ -1,4 +1,4 @@
-import { makeWebhookValidator } from "@whop/api";
+import crypto from "node:crypto";
 import { pointsStore, tenantKey } from "./_store.mjs";
 import { getTenantConfig, getTenantIdByRealCompanyId, setTenantTier } from "./_tenant.mjs";
 
@@ -54,13 +54,37 @@ function rollXu(range) {
   return Math.floor(min + Math.random() * (max - min + 1));
 }
 
+// Xác minh chữ ký webhook theo chuẩn Standard Webhooks (3 header riêng:
+// webhook-id/webhook-timestamp/webhook-signature) — KHÔNG dùng
+// makeWebhookValidator() của @whop/api nữa vì bản cài (^0.0.23) chỉ hỗ trợ
+// kiểu ký CŨ (1 header "x-whop-signature" kiểu Stripe) — đã đọc trực tiếp
+// source code package xác nhận, và payload thật từ Whop xác nhận họ đã
+// chuyển sang kiểu 3-header mới, không còn gửi "x-whop-signature" nữa.
+// Chưa xác minh được chắc 100% cách encode secret (docs nói base64, nhưng
+// secret thật trông như hex) — thử cả 2 cách cho an toàn.
+function verifyStandardWebhook(headers, body, secrets) {
+  const id = headers["webhook-id"];
+  const timestamp = headers["webhook-timestamp"];
+  const sigHeader = headers["webhook-signature"];
+  if (!id || !timestamp || !sigHeader) return null;
+
+  const signedContent = `${id}.${timestamp}.${body}`;
+  const sentSigs = sigHeader.split(" ").map((s) => s.split(",")[1]).filter(Boolean);
+
+  for (const secret of secrets) {
+    const stripped = secret.replace(/^whsec_|^ws_/, "");
+    for (const enc of ["base64", "hex"]) {
+      let keyBytes;
+      try { keyBytes = Buffer.from(stripped, enc); } catch (_) { continue; }
+      const computed = crypto.createHmac("sha256", keyBytes).update(signedContent, "utf8").digest("base64");
+      if (sentSigs.includes(computed)) return JSON.parse(body);
+    }
+  }
+  return null;
+}
+
 export const handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "POST only" });
-
-  // Debug tạm: in ra TÊN header thật sự tới được function (không in giá trị
-  // signature/secret) — để xác định header chữ ký có tới hay bị mất giữa
-  // đường (Whop -> Netlify) trước khi đổ lỗi cho secret/webhook.
-  console.log("[webhook] header keys:", JSON.stringify(Object.keys(event.headers || {})));
 
   // 2 webhook ĐỘC LẬP cùng trỏ về function này, mỗi cái 1 secret riêng:
   // - WHOP_WEBHOOK_SECRET: webhook cấp APP (Ranking GTVan → Webhooks) — nhận
@@ -68,32 +92,16 @@ export const handler = async (event) => {
   // - WHOP_WEBHOOK_SECRET_2: webhook cấp COMPANY (Developer → Webhooks ngoài
   //   app) — nhận payment_succeeded khi CHÍNH company này (GTVăn) được trả
   //   tiền, vd admin tenant mua Leaderboard Pro (Flow B, set tier paid).
-  // Không biết request tới từ webhook nào trước khi xác minh, nên thử lần
-  // lượt từng secret — secret nào khớp chữ ký mới là đúng nguồn.
+  // Không biết request tới từ webhook nào trước khi xác minh, nên thử cả 2.
   const secrets = [process.env.WHOP_WEBHOOK_SECRET, process.env.WHOP_WEBHOOK_SECRET_2].filter(Boolean);
   if (secrets.length === 0) {
     return json(500, { error: "Missing WHOP_WEBHOOK_SECRET / WHOP_WEBHOOK_SECRET_2 environment variable." });
   }
 
-  const url = "https://webhook.local/.netlify/functions/webhook";
-  const headers = new Headers();
-  Object.entries(event.headers || {}).forEach(([k, v]) => { if (v != null) headers.set(k, v); });
-
-  let payload = null;
-  let lastErr = null;
-  for (const secret of secrets) {
-    try {
-      const req = new Request(url, { method: "POST", headers, body: event.body });
-      const validate = makeWebhookValidator({ webhookSecret: secret });
-      payload = await validate(req);
-      break;
-    } catch (err) {
-      lastErr = err;
-    }
-  }
+  const payload = verifyStandardWebhook(event.headers || {}, event.body || "", secrets);
   if (!payload) {
-    console.log("[webhook] signature invalid:", lastErr?.message);
-    return json(400, { error: "Invalid webhook signature: " + (lastErr?.message || "unknown") });
+    console.log("[webhook] signature invalid. header keys:", JSON.stringify(Object.keys(event.headers || {})));
+    return json(400, { error: "Invalid webhook signature." });
   }
   console.log("[webhook] payload:", JSON.stringify(payload));
 
