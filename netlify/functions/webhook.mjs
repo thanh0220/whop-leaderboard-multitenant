@@ -57,20 +57,38 @@ function rollXu(range) {
 export const handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "POST only" });
 
-  const secret = process.env.WHOP_WEBHOOK_SECRET;
-  if (!secret) return json(500, { error: "Missing environment variable WHOP_WEBHOOK_SECRET." });
+  // 2 webhook ĐỘC LẬP cùng trỏ về function này, mỗi cái 1 secret riêng:
+  // - WHOP_WEBHOOK_SECRET: webhook cấp APP (Ranking GTVan → Webhooks) — nhận
+  //   payment_succeeded của MEMBER mua hàng từ TENANT (Flow A, phát rương).
+  // - WHOP_WEBHOOK_SECRET_2: webhook cấp COMPANY (Developer → Webhooks ngoài
+  //   app) — nhận payment_succeeded khi CHÍNH company này (GTVăn) được trả
+  //   tiền, vd admin tenant mua Leaderboard Pro (Flow B, set tier paid).
+  // Không biết request tới từ webhook nào trước khi xác minh, nên thử lần
+  // lượt từng secret — secret nào khớp chữ ký mới là đúng nguồn.
+  const secrets = [process.env.WHOP_WEBHOOK_SECRET, process.env.WHOP_WEBHOOK_SECRET_2].filter(Boolean);
+  if (secrets.length === 0) {
+    return json(500, { error: "Missing WHOP_WEBHOOK_SECRET / WHOP_WEBHOOK_SECRET_2 environment variable." });
+  }
 
-  let payload;
-  try {
-    const url = "https://webhook.local/.netlify/functions/webhook";
-    const headers = new Headers();
-    Object.entries(event.headers || {}).forEach(([k, v]) => { if (v != null) headers.set(k, v); });
-    const req = new Request(url, { method: "POST", headers, body: event.body });
-    const validate = makeWebhookValidator({ webhookSecret: secret });
-    payload = await validate(req);
-  } catch (err) {
-    console.log("[webhook] signature invalid:", err.message);
-    return json(400, { error: "Invalid webhook signature: " + err.message });
+  const url = "https://webhook.local/.netlify/functions/webhook";
+  const headers = new Headers();
+  Object.entries(event.headers || {}).forEach(([k, v]) => { if (v != null) headers.set(k, v); });
+
+  let payload = null;
+  let lastErr = null;
+  for (const secret of secrets) {
+    try {
+      const req = new Request(url, { method: "POST", headers, body: event.body });
+      const validate = makeWebhookValidator({ webhookSecret: secret });
+      payload = await validate(req);
+      break;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  if (!payload) {
+    console.log("[webhook] signature invalid:", lastErr?.message);
+    return json(400, { error: "Invalid webhook signature: " + (lastErr?.message || "unknown") });
   }
   console.log("[webhook] payload:", JSON.stringify(payload));
 
