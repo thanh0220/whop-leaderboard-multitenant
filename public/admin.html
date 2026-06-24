@@ -184,6 +184,24 @@
   @keyframes flash-pulse{0%,30%{box-shadow:0 0 0 2px var(--cyan)}100%{box-shadow:0 0 0 0 transparent}}
   .chip.quest{background:rgba(39,227,255,.1);border:1px solid rgba(39,227,255,.4);color:var(--cyan)}
   .chip.code{background:rgba(255,45,75,.1);border:1px solid rgba(255,45,75,.4);color:#ffb0bd}
+
+  /* ===== Khối giới thiệu/hướng dẫn đầu mỗi tab + cảnh báo reward rỗng + mini preview ===== */
+  .intro-card{background:rgba(39,227,255,.06);border:1px solid rgba(39,227,255,.25);border-radius:12px;padding:13px 15px;margin-bottom:14px}
+  .intro-what{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:8px}
+  .intro-steps{margin:0;padding-left:20px;font-size:12.5px;color:var(--muted);line-height:1.8}
+  .intro-steps li{margin-bottom:2px}
+  .reward-empty{background:rgba(255,45,75,.08);border:1px solid rgba(255,45,75,.3);border-radius:12px;padding:14px;text-align:center;margin-bottom:12px}
+  .reward-empty p{font-size:12.5px;color:#ffd0d8;margin-bottom:8px;line-height:1.5}
+  .spin-pct{font-size:11px;color:var(--cyan);margin-top:4px;font-family:'Oswald',sans-serif;letter-spacing:.04em}
+  .mini-preview{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px;margin:8px 0}
+  .mini-preview img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#0a0f18}
+  .mini-preview .ic{width:44px;height:44px;border-radius:8px;background:#0a0f18;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .mini-preview .nm{font-size:13px;font-weight:600}
+  .mini-preview .sub{font-size:10.5px;color:var(--muted);margin-top:1px}
+  .mini-preview.big img,.mini-preview.big .ic{width:64px;height:64px;font-size:30px}
+  .branding-mock{background:#070b16;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px;margin-top:10px}
+  .branding-mock .logo{width:38px;height:38px;border-radius:8px;object-fit:cover;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .branding-mock .nm{font-family:'Oswald',sans-serif;font-weight:700;font-size:14px}
 </style>
 </head>
 <body>
@@ -342,6 +360,39 @@ function toggleRow(checked, onchange, labelOn, labelOff){
   </label>`;
 }
 
+// Khối "cái này là gì + làm theo mấy bước" — đặt ngay đầu mỗi tab, viết bằng
+// câu đơn giản cho người chưa từng dùng app này, không dùng thuật ngữ trần trụi.
+function introBlock(what, steps){
+  return `<div class="intro-card">
+    <p class="intro-what">${what}</p>
+    <ol class="intro-steps">${(steps||[]).map(s=>`<li>${s}</li>`).join('')}</ol>
+  </div>`;
+}
+
+// Cảnh báo khi chưa có reward nào trong Store — Milestones/Spin/Auction đều
+// có thể cần chọn 1 item Store làm quà; nút nhảy thẳng sang tab Store cho đỡ
+// bối rối "dropdown trống nghĩa là gì".
+function rewardEmptyWarning(required){
+  const msg = required
+    ? "⚠ Bạn BẮT BUỘC phải có ít nhất 1 phần thưởng trong 🎁 Reward Store trước khi dùng tính năng này."
+    : "💡 Bạn chưa có phần thưởng nào trong 🎁 Reward Store — vẫn dùng được với xu thường, nhưng thêm 1 món quà thật sẽ hấp dẫn hơn nhiều.";
+  return `<div class="reward-empty">
+    <p>${msg}</p>
+    <button class="btn" type="button" onclick="switchTab('store')">🎁 Đi tới Reward Store</button>
+  </div>`;
+}
+
+// Xem trước nhỏ — "đây là thứ member sẽ thấy" — dùng cho 1 reward cụ thể.
+function miniPreview(reward, big){
+  if (!reward) return '';
+  const visual = reward.image
+    ? `<img src="${esc(reward.image)}" alt=""/>`
+    : `<div class="ic">🎁</div>`;
+  return `<div class="mini-preview${big?' big':''}">${visual}
+    <div><div class="nm">${esc(reward.name||'(Unnamed)')}</div><div class="sub">👀 Member sẽ thấy đúng món này</div></div>
+  </div>`;
+}
+
 function switchTab(id){
   activeTab = id;
   history.replaceState(null, '', '#'+id);
@@ -382,6 +433,10 @@ function renderConn(){
   return `
     <div class="sect" id="conn">🔌 Connect Whop</div>
     <div class="panel">
+      ${introBlock(
+        "This links the app to YOUR Whop community so it can read your real members and payments. Without this, nothing else in this app will work.",
+        ["Open your Whop dashboard → Settings → Developer → API keys → create a new key", "Copy that key and your Company ID, paste them below", "Click Save all at the bottom of the page"]
+      )}
       ${statusHtml}
       <label>Company API key (leave blank to keep current)</label>
       <input id="conn-key" type="password" placeholder="apik_..." autocomplete="off" value="${esc(typedApiKey)}" oninput="typedApiKey=this.value"/>
@@ -408,6 +463,10 @@ function renderBilling(){
   return `
     <div class="sect" id="billing">💎 Billing</div>
     <div class="panel">
+      ${introBlock(
+        "This is YOUR subscription as the community owner — it upgrades what YOU can do in this admin panel (more events, more rewards, custom branding). It has nothing to do with what members pay for.",
+        ["If you want more event slots, more rewards, and custom branding, click Upgrade now below", "Otherwise you can ignore this tab completely — the free plan already works"]
+      )}
       <div class="pricing-card ${IS_PAID?'is-active':''}">
         <span class="pricing-badge">${IS_PAID?'Active':'Recommended'}</span>
         <div class="pricing-name">Leaderboard Pro</div>
@@ -452,6 +511,16 @@ function closeCheckoutModal(){
 }
 
 // ===== #branding — tuỳ chỉnh thương hiệu, chỉ Paid mới sửa được =====
+function brandingMockHtml(b){
+  const logo = b.logoUrl ? `<img class="logo" src="${esc(b.logoUrl)}" alt="" style="object-fit:cover"/>` : `<div class="logo">🏆</div>`;
+  return `<div class="branding-mock" style="border-color:${esc(b.primaryColor||'#7c3aed')}66">
+    ${logo}<div class="nm" style="color:${esc(b.primaryColor||'#7c3aed')}">${esc(b.displayName||'Your Community')}</div>
+  </div>`;
+}
+function refreshBrandingMock(){
+  const el = $('branding-mock');
+  if (el) el.innerHTML = brandingMockHtml(STATE.branding);
+}
 function renderBranding(){
   const b = STATE.branding || {};
   const dis = IS_PAID ? '' : 'disabled';
@@ -459,13 +528,19 @@ function renderBranding(){
   return `
     <div class="sect" id="branding">🎨 Branding</div>
     <div class="panel">
+      ${introBlock(
+        "This changes the name, color, and logo members see at the top of the leaderboard and other pages — purely cosmetic, it doesn't affect how the app works.",
+        ["Type the name you want members to see", "Pick a color", "Paste a logo image link (optional) — this also removes the small \"Powered by\" badge", "Save all"]
+      )}
       ${lockHint}
       <label>Display name (shown on the leaderboard header)</label>
-      <input ${dis} value="${esc(b.displayName||'')}" oninput="STATE.branding.displayName=this.value"/>
+      <input ${dis} value="${esc(b.displayName||'')}" oninput="STATE.branding.displayName=this.value;refreshBrandingMock()"/>
       <label>Primary color</label>
-      <input ${dis} type="color" value="${esc(b.primaryColor||'#7c3aed')}" oninput="STATE.branding.primaryColor=this.value" style="width:60px;padding:2px;height:36px"/>
+      <input ${dis} type="color" value="${esc(b.primaryColor||'#7c3aed')}" oninput="STATE.branding.primaryColor=this.value;refreshBrandingMock()" style="width:60px;padding:2px;height:36px"/>
       <label>Logo URL (paste an image link — also hides the "Powered by" badge)</label>
-      <input ${dis} value="${esc(b.logoUrl||'')}" placeholder="https://..." oninput="STATE.branding.logoUrl=this.value"/>
+      <input ${dis} value="${esc(b.logoUrl||'')}" placeholder="https://..." oninput="STATE.branding.logoUrl=this.value;refreshBrandingMock()"/>
+      <div class="prev-label" style="margin-top:10px">👀 What members will see</div>
+      <div id="branding-mock">${brandingMockHtml(b)}</div>
     </div>`;
 }
 
@@ -489,6 +564,10 @@ function renderSeason(){
   return `
     <div class="sect" id="season">🏆 Season</div>
     <div class="panel">
+      ${introBlock(
+        "This is just a TEXT list shown to members to announce what the top players will win at the end of the season. The app does NOT automatically give out these prizes — you hand them out yourself when the season ends.",
+        ["Type the rank (e.g. 🥇 Top 1) and what they win", "Save all"]
+      )}
       ${rows || '<p class="hint-small">No ranks yet.</p>'}
       <button class="btn" onclick="STATE.seasonTopRewards.push({rank:'🏅 New rank',prize:''});renderAll()">+ Add rank</button>
     </div>`;
@@ -505,7 +584,10 @@ function renderDaily(){
   return `
     <div class="sect" id="daily">📅 Daily Check-in</div>
     <div class="panel">
-      <p class="hint-small" style="margin-bottom:10px">Coins awarded for each day in the 30-day cycle (repeats once the cycle ends).</p>
+      ${introBlock(
+        "Members get free XU just for opening the app and checking in every day. Day 1 starts the cycle; after Day 30 it loops back to Day 1.",
+        ["Type how many XU to give for each day below (bigger numbers on later days encourage members to keep coming back)", "Save all"]
+      )}
       <div class="calgrid">${cells}</div>
     </div>`;
 }
@@ -594,6 +676,10 @@ function renderStore(){
   return `
     <div class="sect" id="store">🎁 Reward Store</div>
     <div class="panel">
+      ${introBlock(
+        "This is where members spend their XU to get real things — a discount code, a download link, a file. Whatever you add here can also be reused as a prize in Milestones, Lucky Spin, and Auction.",
+        ["Click + Add new reward below", "Give it a name, a price in XU, and pick what members receive (a code, a link, or a file)", "Save all"]
+      )}
       ${cards || '<p class="hint-small">No rewards in the store yet.</p>'}
       ${addRewardOrMsg}
     </div>`;
@@ -625,6 +711,10 @@ function renderCodes(){
   return `
     <div class="sect" id="codes">🔑 Special Codes</div>
     <div class="panel">
+      ${introBlock(
+        "A secret word you give to specific people (in a livestream, DM, giveaway post) — whoever types it into the app gets free XU. Different from the Reward Store: this is a code YOU hand out, not something members buy.",
+        ["Click + Add code below", "Type a secret word and how much XU it gives", "Share that secret word with whoever you want to reward", "Save all"]
+      )}
       ${toggleRow(STATE.codesEnabled, 'STATE.codesEnabled=this.checked;renderAll()', 'Enabled — members can redeem codes.', 'Disabled — members cannot redeem codes right now.')}
       ${rows || '<p class="hint-small">No codes yet.</p>'}
       <button class="btn" onclick="STATE.redeemCodesList.push({code:'',xu:0});renderAll()">+ Add code</button>
@@ -652,6 +742,10 @@ function renderChests(){
   return `
     <div class="sect" id="chests">📬 Community Chest</div>
     <div class="panel">
+      ${introBlock(
+        "Whenever ANY member buys something real on your Whop, EVERY other member gets a free surprise chest of XU in their Mailbox — a fun way to celebrate sales together. The buyer also gets an extra bonus chest just for themselves.",
+        ["Set how much XU each chest tier gives (Wood = small purchase, Gold = big purchase)", "Make sure the Webhook setup at the bottom is done once (ask for help if unsure)", "Save all"]
+      )}
       ${toggleRow(rules.enabled !== false, "setPath(STATE,'chestRules.enabled',this.checked);renderAll()", 'Enabled — purchases trigger a community chest.', 'Disabled — purchases no longer trigger a chest.')}
       <p class="hint-small" style="margin-bottom:10px">When a member buys something on Whop, everyone else in the channel gets a chest in their 📬 Mailbox. The tier depends on the purchase amount; the coin reward is randomized within the range you set below.</p>
       ${rows || '<p class="hint-small">No tiers configured yet.</p>'}
@@ -675,10 +769,12 @@ function renderMilestones(){
   const rewardOptions = (r) => `
     <option value="">— Reward XU directly —</option>
     ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${r.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
-  const rows = (rules.tiers||[]).map((t,i)=>`
+  const rows = (rules.tiers||[]).map((t,i)=>{
+    const reward = t.rewardId ? (STATE.rewards||[]).find(rw=>rw.id===t.rewardId) : null;
+    return `
     <div class="item">
       <div class="row2">
-        <div><label>Deposit threshold (USD)</label><input type="number" min="0" value="${t.thresholdUsd||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.thresholdUsd',Number(this.value)||0)"/></div>
+        <div><label>Member must deposit at least (USD)</label><input type="number" min="0" value="${t.thresholdUsd||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.thresholdUsd',Number(this.value)||0)"/></div>
         <div><label>Milestone name</label><input value="${esc(t.label||'')}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.label',this.value)"/></div>
       </div>
       <div class="row2">
@@ -688,33 +784,57 @@ function renderMilestones(){
         </div>
         ${t.rewardId
           ? '<div><label>&nbsp;</label><div class="hint-small">Members get this Reward Store item for FREE.</div></div>'
-          : `<div><label>XU reward</label><input type="number" min="0" value="${t.xu||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.xu',Number(this.value)||0)"/></div>`}
+          : `<div><label>How much XU to give instead</label><input type="number" min="0" value="${t.xu||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.xu',Number(this.value)||0)"/></div>`}
       </div>
+      ${miniPreview(reward)}
       <button class="btn del" onclick="STATE.milestoneRules.tiers.splice(${i},1);renderAll()">🗑 Delete this milestone</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   return `
     <div class="sect" id="milestones">🎯 Deposit Milestones</div>
     <div class="panel">
+      ${introBlock(
+        "Members slowly add up the real money they spend in your community during a period (e.g. a week). Each time they cross a money milestone you set, they get to claim a reward — automatically, you don't have to do anything.",
+        ["(Optional) Add a reward in 🎁 Store first if you want to give an actual item instead of plain XU", "Click + Add milestone below, set the dollar amount and the reward", "Turn on Enabled, then Save all"]
+      )}
+      ${(STATE.rewards||[]).length===0 ? rewardEmptyWarning(false) : ''}
       ${toggleRow(rules.enabled, "setPath(STATE,'milestoneRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Deposit Milestones page.', "Disabled — members can't see this program.")}
-      <p class="hint-small" style="margin-bottom:10px">Members accumulate the real USD they've deposited (paid through Whop) within a period, then claim rewards as they reach each milestone. If a milestone is linked to a 🎁 Reward Store item, members receive that item for free; otherwise they get the XU amount you set.</p>
-      <label>Period length (days)</label>
+      <label>Resets every (days)</label>
       <input type="number" min="1" value="${rules.periodDays||7}" oninput="setPath(STATE,'milestoneRules.periodDays',Number(this.value)||7)"/>
+      <div class="hint-small" style="margin-bottom:10px">Example: 7 = every week, members' progress goes back to $0 and they can earn the same rewards again.</div>
       ${rows || '<p class="hint-small">No milestones yet.</p>'}
       <button class="btn" onclick="STATE.milestoneRules.tiers.push({thresholdUsd:5,rewardId:null,xu:50,label:'New milestone'});renderAll()">+ Add milestone</button>
     </div>`;
 }
 
 // ===== #spin — Lucky Spin (vé tự động khi nạp tiền thật, hoặc đổi bằng xu) =====
+function spinTotalWeight(){
+  return (STATE.spinRules.prizes||[]).reduce((s,p)=>s+(Number(p.weight)||0),0) || 1;
+}
+function updateSpinPct(){
+  const total = spinTotalWeight();
+  (STATE.spinRules.prizes||[]).forEach((p,i)=>{
+    const el = $('spin-pct-'+i);
+    if (el) el.textContent = '≈ ' + Math.round((Number(p.weight)||0)/total*100) + '% chance to win this';
+  });
+}
 function renderSpin(){
   const rules = STATE.spinRules || {enabled:false,ticketsPerPayment:5,xuCostPerTicket:500,prizes:[]};
   const rewardOptions = (p) => `
     <option value="">— Reward XU directly —</option>
     ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${p.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
-  const rows = (rules.prizes||[]).map((p,i)=>`
+  const total = spinTotalWeight();
+  const rows = (rules.prizes||[]).map((p,i)=>{
+    const reward = p.rewardId ? (STATE.rewards||[]).find(rw=>rw.id===p.rewardId) : null;
+    const pct = Math.round((Number(p.weight)||0)/total*100);
+    return `
     <div class="item">
       <div class="row2">
         <div><label>Prize name</label><input value="${esc(p.label||'')}" oninput="setPath(STATE,'spinRules.prizes.${i}.label',this.value)"/></div>
-        <div><label>Weight (higher = more common)</label><input type="number" min="1" value="${p.weight||1}" oninput="setPath(STATE,'spinRules.prizes.${i}.weight',Number(this.value)||1)"/></div>
+        <div><label>How common (bigger number = wins more often)</label>
+          <input type="number" min="1" value="${p.weight||1}" oninput="setPath(STATE,'spinRules.prizes.${i}.weight',Number(this.value)||1);updateSpinPct()"/>
+          <div class="spin-pct" id="spin-pct-${i}">≈ ${pct}% chance to win this</div>
+        </div>
       </div>
       <div class="row2">
         <div>
@@ -723,20 +843,26 @@ function renderSpin(){
         </div>
         ${p.rewardId
           ? '<div><label>&nbsp;</label><div class="hint-small">Members get this Reward Store item for FREE.</div></div>'
-          : `<div><label>XU reward</label><input type="number" min="0" value="${p.xu||0}" oninput="setPath(STATE,'spinRules.prizes.${i}.xu',Number(this.value)||0)"/></div>`}
+          : `<div><label>XU prize amount</label><input type="number" min="0" value="${p.xu||0}" oninput="setPath(STATE,'spinRules.prizes.${i}.xu',Number(this.value)||0)"/></div>`}
       </div>
+      ${miniPreview(reward)}
       <button class="btn del" onclick="STATE.spinRules.prizes.splice(${i},1);renderAll()">🗑 Delete this prize</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   return `
     <div class="sect" id="spin">🎰 Lucky Spin</div>
     <div class="panel">
+      ${introBlock(
+        "Members spin a wheel to win a random prize. They get free spin tickets automatically when they pay real money, or they can pay XU for extra tickets. Whatever they win is delivered automatically.",
+        ["(Optional) Add a reward in 🎁 Store first if you want a real item as a prize", "Click + Add prize below for each prize on the wheel", "Set how rare each prize is and how many tickets a real payment gives", "Turn on Enabled, then Save all"]
+      )}
+      ${(STATE.rewards||[]).length===0 ? rewardEmptyWarning(false) : ''}
       ${toggleRow(rules.enabled, "setPath(STATE,'spinRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Lucky Spin page.', "Disabled — members can't see this program.")}
-      <p class="hint-small" style="margin-bottom:10px">Every real payment automatically grants free spin tickets. Members can also trade XU for extra tickets. Each spin awards one prize at random (weighted) — delivered automatically, no manual work needed.</p>
       <div class="row2">
-        <div><label>Tickets per payment</label><input type="number" min="0" value="${rules.ticketsPerPayment||0}" oninput="setPath(STATE,'spinRules.ticketsPerPayment',Number(this.value)||0)"/></div>
-        <div><label>XU cost per ticket</label><input type="number" min="0" value="${rules.xuCostPerTicket||0}" oninput="setPath(STATE,'spinRules.xuCostPerTicket',Number(this.value)||0)"/></div>
+        <div><label>Free tickets per real payment</label><input type="number" min="0" value="${rules.ticketsPerPayment||0}" oninput="setPath(STATE,'spinRules.ticketsPerPayment',Number(this.value)||0)"/></div>
+        <div><label>XU price for 1 ticket (if not paying real money)</label><input type="number" min="0" value="${rules.xuCostPerTicket||0}" oninput="setPath(STATE,'spinRules.xuCostPerTicket',Number(this.value)||0)"/></div>
       </div>
-      <div class="hint-small" style="margin:6px 0 10px">Set the XU cost high so depositing real money stays the better deal.</div>
+      <div class="hint-small" style="margin:6px 0 10px">Tip: keep the XU price high so depositing real money stays the better deal for members.</div>
       ${rows || '<p class="hint-small">No prizes yet.</p>'}
       <button class="btn" onclick="STATE.spinRules.prizes.push({id:'prize_'+Date.now().toString(36),label:'New prize',weight:10,rewardId:null,xu:50});renderAll()">+ Add prize</button>
     </div>`;
@@ -745,21 +871,28 @@ function renderSpin(){
 // ===== #auction — 1 vật phẩm duy nhất đấu giá bằng xu =====
 function renderAuction(){
   const rules = STATE.auctionRules || {enabled:false,rewardId:null,startingBid:5000,minIncrement:100,durationHours:48};
+  const reward = rules.rewardId ? (STATE.rewards||[]).find(rw=>rw.id===rules.rewardId) : null;
   const rewardOptions = `
     <option value="">— Pick a Reward Store item —</option>
     ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${rules.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
   return `
     <div class="sect" id="auction">🔨 Auction</div>
     <div class="panel">
+      ${introBlock(
+        "ONE single item that members fight over by bidding XU — like a real auction house. Whoever has the highest bid when time runs out wins it automatically (as long as they still have enough XU).",
+        ["Add the item you want to auction in 🎁 Store first (this is REQUIRED)", "Come back here, pick that item, and set a starting price", "Save all, THEN click Start New Auction below"]
+      )}
+      ${(STATE.rewards||[]).length===0 ? rewardEmptyWarning(true) : ''}
       ${toggleRow(rules.enabled, "setPath(STATE,'auctionRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Auction page.', "Disabled — members can't see this program.")}
-      <p class="hint-small" style="margin-bottom:10px">Members bid XU on ONE item. When time runs out, the highest bidder who still has enough XU automatically wins and receives the item — no manual work needed.</p>
-      <label>Item (from Reward Store)</label>
-      <select onchange="setPath(STATE,'auctionRules.rewardId',this.value||null)">${rewardOptions}</select>
+      <label>Item being auctioned (from Reward Store)</label>
+      <select onchange="setPath(STATE,'auctionRules.rewardId',this.value||null);renderAll()">${rewardOptions}</select>
+      ${miniPreview(reward, true)}
       <div class="row2">
-        <div><label>Starting bid (XU)</label><input type="number" min="0" value="${rules.startingBid||0}" oninput="setPath(STATE,'auctionRules.startingBid',Number(this.value)||0)"/></div>
-        <div><label>Min increment (XU)</label><input type="number" min="1" value="${rules.minIncrement||100}" oninput="setPath(STATE,'auctionRules.minIncrement',Number(this.value)||100)"/></div>
+        <div><label>Starting price — lowest possible bid (XU)</label><input type="number" min="0" value="${rules.startingBid||0}" oninput="setPath(STATE,'auctionRules.startingBid',Number(this.value)||0)"/></div>
+        <div><label>Each new bid must beat the last by at least (XU)</label><input type="number" min="1" value="${rules.minIncrement||100}" oninput="setPath(STATE,'auctionRules.minIncrement',Number(this.value)||100)"/></div>
       </div>
-      <label>Duration (hours)</label>
+      <div class="hint-small" style="margin:4px 0 10px">Example: if the current top bid is 5,000 XU and this is set to 100, the next bid must be at least 5,100 XU.</div>
+      <label>How long the auction runs (hours)</label>
       <input type="number" min="1" value="${rules.durationHours||48}" oninput="setPath(STATE,'auctionRules.durationHours',Number(this.value)||48)"/>
       <div class="hint-small" style="margin:8px 0">⚠ Save all first, THEN start the auction — starting uses the saved settings.</div>
       <button class="btn" onclick="startAuction(this)">🔨 Start New Auction</button>
@@ -870,6 +1003,10 @@ function renderEvents(){
   return `<div id="events-wrap">
     <div class="sect" id="events">🗓 Events</div>
     <div class="panel">
+      ${introBlock(
+        "A simple calendar members see, announcing your livestreams, AMAs, or any event coming up — it doesn't give out any reward by itself, it's just a notice board.",
+        ["Click + Add event slot below", "Type the name, click the picture icon to add an image", "Drag the card onto the day it happens", "Save all"]
+      )}
       ${toggleRow(STATE.eventsEnabled, 'STATE.eventsEnabled=this.checked;refreshEvents()', 'Enabled — the event calendar is visible to members.', 'Disabled — members see an empty event calendar.')}
       <p class="hint-small" style="margin-bottom:10px">Type the name directly, click the image to change it, drag onto the calendar to set a date.</p>
       <div class="events-nav">
