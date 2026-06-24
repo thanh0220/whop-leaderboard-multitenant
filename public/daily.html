@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Điểm Danh Hằng Ngày — Whop Community App</title>
+<title>Daily Check-in — Whop Community App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -75,21 +75,21 @@
 <body>
 <div class="wrap">
   <div class="nav">
-    <a href="/">🏆 Bảng xếp hạng</a>
-    <a href="/daily.html" class="on">📅 Hằng ngày</a>
-    <a href="/store.html">🎁 Cửa hàng</a>
-    <a href="/events.html">🗓 Lịch sự kiện</a>
-    <a href="/mailbox.html">📬 Hộp thư</a>
+    <a href="/">🏆 Leaderboard</a>
+    <a href="/daily.html" class="on">📅 Daily</a>
+    <a href="/store.html">🎁 Store</a>
+    <a href="/events.html">🗓 Events</a>
+    <a href="/mailbox.html">📬 Mailbox</a>
   </div>
-  <div class="top"><span class="s">♦</span> Điểm Danh <b>Hằng Ngày</b></div>
-  <div id="content"><div class="state"><div class="spinner"></div>Đang tải...</div></div>
+  <div class="top"><span class="s">♦</span> Daily <b>Check-in</b></div>
+  <div id="content"><div class="state"><div class="spinner"></div>Loading...</div></div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 const $=id=>document.getElementById(id);
-const fmt=n=>Number(n||0).toLocaleString('vi-VN');
+const fmt=n=>Number(n||0).toLocaleString('en-US');
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2400);}
 
 /* Mọi request gửi kèm experienceId/companyId Whop truyền vào URL khi nhúng
@@ -109,14 +109,14 @@ function tenantFetch(path, opts){
 }
 
 async function load(){
-  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Đang tải...</div>`;
+  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading...</div>`;
   try{
     const r=await tenantFetch('/.netlify/functions/me');
     const j=await r.json();
     if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
     render(j);
   }catch(e){
-    $('content').innerHTML=`<div class="err"><b>⚠ Không tải được dữ liệu:</b> ${e.message}<br><br>Hãy mở trang này bên trong Whop.</div>`;
+    $('content').innerHTML=`<div class="err"><b>⚠ Could not load data:</b> ${e.message}<br><br>Please open this page inside Whop.</div>`;
   }
 }
 
@@ -130,40 +130,40 @@ function calendarHTML(ck){
     if(dayNum<=ck.streak && ck.streak>0 && !ck.canClaim && dayNum<=cur) cls+=' done';
     else if(dayNum<=ck.streak && ck.streak>0 && ck.canClaim===false) cls+=' done';
     if(ck.canClaim && dayNum===ck.nextStreak%cal.length||(ck.canClaim&&dayNum===((ck.nextStreak-1)%cal.length+1))) cls+=' next';
-    return `<div class="${cls}"><div class="n">Ngày ${dayNum}</div><div class="r">+${rw}</div></div>`;
+    return `<div class="${cls}"><div class="n">Day ${dayNum}</div><div class="r">+${rw}</div></div>`;
   }).join('');
 }
 
 function render(d){
   const ck=d.checkin, se=d.season||{};
   const locked = d.tier==='free';
-  const upsell = locked ? `<div class="upsell">🔒 Điểm danh hằng ngày là tính năng <b>trả phí</b>. Nâng cấp trong Whop để mở khoá và bắt đầu tích xu mỗi ngày.</div>` : '';
+  const upsell = locked ? `<div class="upsell">🔒 Daily check-in is a <b>paid</b> feature. Upgrade in Whop to unlock it and start earning XU every day.</div>` : '';
   const html=`
     ${upsell}
     <div class="bal">
-      <div class="b main"><div class="v">${fmt(d.available)}</div><div class="l">🪙 Xu khả dụng</div></div>
-      <div class="b"><div class="v">${fmt(ck.streak)}</div><div class="l">🔥 Chuỗi ngày</div></div>
-      <div class="b"><div class="v">${fmt(d.bonus||0)}</div><div class="l">🎁 Xu thưởng đã nhận</div></div>
+      <div class="b main"><div class="v">${fmt(d.available)}</div><div class="l">🪙 Available XU</div></div>
+      <div class="b"><div class="v">${fmt(ck.streak)}</div><div class="l">🔥 Day streak</div></div>
+      <div class="b"><div class="v">${fmt(d.bonus||0)}</div><div class="l">🎁 Bonus XU earned</div></div>
     </div>
 
-    <div class="sect">📅 Điểm danh hằng ngày</div>
+    <div class="sect">📅 Daily check-in</div>
     <div class="panel ${locked?'locked':''}">
       <div class="streak-head">
-        <div class="streak-big">Chuỗi <span>${ck.streak}</span> ngày</div>
+        <div class="streak-big"><span>${ck.streak}</span>-day streak</div>
         <button class="btn gold" id="claim-ck" ${(locked||!ck.canClaim)?'disabled':''}>
-          ${locked?'🔒 Nâng cấp để mở khoá':(ck.canClaim?`Nhận +${ck.nextReward} xu`:'Đã nhận hôm nay')}
+          ${locked?'🔒 Upgrade to unlock':(ck.canClaim?`Claim +${ck.nextReward} XU`:'Claimed today')}
         </button>
       </div>
       <div class="calendar">${calendarHTML(ck)}</div>
       <p style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center">
-        Đứt chuỗi → reset về ngày 1. Mốc ngày có thưởng lớn 🎉
+        Breaking the streak resets you to day 1. Milestone days have bigger rewards 🎉
       </p>
     </div>
 
-    <div class="sect">🏆 Mùa giải ${se.label||''}</div>
+    <div class="sect">🏆 Season ${se.label||''}</div>
     <div class="panel">
       <div style="text-align:center;margin-bottom:14px">
-        <div style="font-family:'Oswald',sans-serif;font-size:11px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase">Còn lại</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:11px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase">Time left</div>
         <div id="cd" style="font-family:'Oswald',sans-serif;font-size:30px;font-weight:700;color:var(--gold);text-shadow:0 0 16px rgba(244,196,65,.35)">--</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
@@ -181,8 +181,8 @@ function render(d){
       try{
         const r=await tenantFetch('/.netlify/functions/checkin',{method:'POST'});
         const j=await r.json();
-        if(!r.ok) throw new Error(j.error||'Lỗi');
-        toast(j.message||`+${j.reward} xu`);
+        if(!r.ok) throw new Error(j.error||'Error');
+        toast(j.message||`+${j.reward} XU`);
         setTimeout(load,400);
       }catch(e){toast('⚠ '+e.message);$('claim-ck').disabled=false;}
     };

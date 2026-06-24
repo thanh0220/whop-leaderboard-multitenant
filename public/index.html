@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -225,36 +225,36 @@
 <div class="topbar">
   <div class="brand"><span class="suit">♠</span> <span id="brand-name">Leaderboard</span></div>
   <div class="topbar-right">
-    <a href="/daily.html" class="refresh" style="text-decoration:none">📅 Hằng ngày</a>
-    <a href="/store.html" class="refresh" style="text-decoration:none">🎁 Đổi quà</a>
-    <a href="/events.html" class="refresh" style="text-decoration:none">🗓 Lịch sự kiện</a>
-    <a href="/mailbox.html" class="refresh" style="text-decoration:none">📬 Hộp thư</a>
+    <a href="/daily.html" class="refresh" style="text-decoration:none">📅 Daily</a>
+    <a href="/store.html" class="refresh" style="text-decoration:none">🎁 Rewards</a>
+    <a href="/events.html" class="refresh" style="text-decoration:none">🗓 Events</a>
+    <a href="/mailbox.html" class="refresh" style="text-decoration:none">📬 Mailbox</a>
     <span class="updated" id="updated">--</span>
-    <button class="refresh" id="refresh" onclick="loadData()">↻ Làm mới</button>
+    <button class="refresh" id="refresh" onclick="loadData()">↻ Refresh</button>
   </div>
 </div>
 
 <div class="wrap">
   <div class="hero">
     <div class="hero-suits"><span class="r">♥</span> ♠ <span class="r">♦</span> ♣</div>
-    <span class="hero-badge">Bảng xếp hạng cộng đồng</span>
-    <div class="hero-title" id="hero-title">MÙA GIẢI THÁNG NÀY</div>
+    <span class="hero-badge">Community Leaderboard</span>
+    <div class="hero-title" id="hero-title">THIS MONTH'S SEASON</div>
     <div class="hero-stats">
-      <div class="hs"><div class="hv" id="s-members">--</div><div class="hl">Thành viên</div></div>
-      <div class="hs"><div class="hv" id="s-paid">--</div><div class="hl">Hội Viên VIP</div></div>
-      <div class="hs"><div class="hv" id="s-top">--</div><div class="hl">Dẫn đầu</div></div>
+      <div class="hs"><div class="hv" id="s-members">--</div><div class="hl">Members</div></div>
+      <div class="hs"><div class="hv" id="s-paid">--</div><div class="hl">VIP Members</div></div>
+      <div class="hs"><div class="hv" id="s-top">--</div><div class="hl">Leading</div></div>
     </div>
   </div>
 
-  <!-- MÙA GIẢI + GIẢI THƯỞNG + ĐẾM NGƯỢC -->
+  <!-- SEASON + PRIZES + COUNTDOWN -->
   <div class="season">
     <div class="season-top">
-      <div class="season-name">🏆 <span id="season-name">MÙA GIẢI</span></div>
+      <div class="season-name">🏆 <span id="season-name">SEASON</span></div>
       <div class="countdown">
-        <span class="cd-label">Reset sau</span>
-        <div class="cd-box"><b id="cd-d">0</b><span>ngày</span></div>
-        <div class="cd-box"><b id="cd-h">0</b><span>giờ</span></div>
-        <div class="cd-box"><b id="cd-m">0</b><span>phút</span></div>
+        <span class="cd-label">Resets in</span>
+        <div class="cd-box"><b id="cd-d">0</b><span>days</span></div>
+        <div class="cd-box"><b id="cd-h">0</b><span>hours</span></div>
+        <div class="cd-box"><b id="cd-m">0</b><span>min</span></div>
       </div>
     </div>
     <div class="prizes" id="prizes"></div>
@@ -262,24 +262,24 @@
 
   <div class="controls">
     <div class="tabs">
-      <button class="tab active" data-sort="season" onclick="setSort('season',this)">🏆 Mùa Giải</button>
-      <button class="tab" data-sort="paid" onclick="setSort('paid',this)">Hội Viên VIP</button>
-      <button class="tab" data-sort="referrals" onclick="setSort('referrals',this)">Giới thiệu</button>
+      <button class="tab active" data-sort="season" onclick="setSort('season',this)">🏆 Season</button>
+      <button class="tab" data-sort="paid" onclick="setSort('paid',this)">VIP Members</button>
+      <button class="tab" data-sort="referrals" onclick="setSort('referrals',this)">Referrals</button>
     </div>
     <div class="search">
       <span class="ic">🔍</span>
-      <input type="text" id="search" placeholder="Tìm thành viên..." oninput="render()"/>
+      <input type="text" id="search" placeholder="Search members..." oninput="render()"/>
     </div>
   </div>
-  <div class="tab-note">🏆 <b>Mùa Giải</b> = căn cứ duy nhất để trao giải Top 1-6 hàng tháng (mua hàng + giới thiệu chuyển đổi trong tháng).</div>
+  <div class="tab-note">🏆 <b>Season</b> is the sole basis for awarding the monthly Top 1-6 prizes (purchases + converted referrals during the month).</div>
 
   <div class="scope" id="scope" style="display:none">
-    <button id="sc-all" class="on" onclick="setScope('all',this)">Tất cả</button>
-    <button id="sc-month" onclick="setScope('month',this)">Tháng này</button>
+    <button id="sc-all" class="on" onclick="setScope('all',this)">All</button>
+    <button id="sc-month" onclick="setScope('month',this)">This month</button>
   </div>
 
   <div id="content">
-    <div class="state"><div class="spinner"></div><div>Đang tải dữ liệu từ Whop...</div></div>
+    <div class="state"><div class="spinner"></div><div>Loading data from Whop...</div></div>
   </div>
 </div>
 
@@ -305,19 +305,19 @@ function tenantFetch(path, opts){
 const FX = { usd:1, vnd:1/25000, eur:1.08, gbp:1.27, aud:0.66, cad:0.73 };
 /* Bậc danh hiệu theo tổng tiền đã chi (quy ~USD) */
 const TIERS = [
-  { key:'kim_cuong', name:'KIM CƯƠNG', icon:'💎', min:500 },
-  { key:'vang',      name:'VÀNG',      icon:'🥇', min:200 },
-  { key:'bac',       name:'BẠC',       icon:'🥈', min:50  },
-  { key:'dong',      name:'ĐỒNG',      icon:'🥉', min:0.01 },
+  { key:'kim_cuong', name:'DIAMOND', icon:'💎', min:500 },
+  { key:'vang',      name:'GOLD',    icon:'🥇', min:200 },
+  { key:'bac',       name:'SILVER',  icon:'🥈', min:50  },
+  { key:'dong',      name:'BRONZE',  icon:'🥉', min:0.01 },
 ];
 
 let allData = [];
-let affiliateData = []; // bảng affiliate riêng (tab Giới thiệu)
+let affiliateData = []; // separate affiliate dataset (Referrals tab)
 let sortBy = 'season';
-let scope = 'all'; // all | month (chỉ áp dụng tab VIP)
+let scope = 'all'; // all | month (VIP tab only)
 
 const HERO_TITLE = {
-  season:'MÙA GIẢI THÁNG NÀY', paid:'HỘI VIÊN VIP', referrals:'GIỚI THIỆU NHIỀU NHẤT'
+  season:'THIS MONTH\'S SEASON', paid:'VIP MEMBERS', referrals:'TOP REFERRERS'
 };
 
 const AVATAR_COLORS = [['#16202f','#27e3ff'],['#241018','#ff5d74'],['#1a1530','#b69bff'],
@@ -342,7 +342,7 @@ function badge(m){const t=tierOf(m);return t?`<span class="tier ${t.key}">${t.ic
 function metric(m){
   if(sortBy==='season'){
     const total=Math.round(m.seasonScoreMonth||0), ref=Math.round(m.referralUsdMonth||0), own=total-ref;
-    return `💰 ${total.toLocaleString('en-US')}`+(ref>0?` <small style="opacity:.65">(mua ${own} · giới thiệu ${ref})</small>`:'');
+    return `💰 ${total.toLocaleString('en-US')}`+(ref>0?` <small style="opacity:.65">(purchases ${own} · referrals ${ref})</small>`:'');
   }
   return fmtPaid(m);
 }
@@ -375,16 +375,16 @@ function setScope(s,el){
 function render(){
   const q=document.getElementById('search').value.toLowerCase().trim();
 
-  // --- Tab GIỚI THIỆU: bảng affiliate riêng ---
+  // --- Referrals tab: separate affiliate dataset ---
   if(sortBy==='referrals'){
     let data=[...affiliateData];
     if(q) data=data.filter(a=>a.username.toLowerCase().includes(q));
     if(!data.length){
-      document.getElementById('content').innerHTML=`<div class="state">${q?`Không tìm thấy "<b>${q}</b>".`:'Chưa có ai giới thiệu thành công.'}</div>`;
+      document.getElementById('content').innerHTML=`<div class="state">${q?`No results found for "<b>${q}</b>".`:'No one has referred successfully yet.'}</div>`;
       return;
     }
     const top3=data.slice(0,3), rest=data.slice(3);
-    const order=[top3[1],top3[0],top3[2]], cls=['second','first','third'], suits=['♥','♠','♦'], tags=['HẠNG 02','HẠNG 01','HẠNG 03'];
+    const order=[top3[1],top3[0],top3[2]], cls=['second','first','third'], suits=['♥','♠','♦'], tags=['RANK 02','RANK 01','RANK 03'];
     const podium=top3.length?`<div class="podium">${order.map((a,i)=>{
       if(!a) return `<div></div>`;
       const real=a===top3[0]?1:a===top3[1]?2:3;
@@ -396,7 +396,7 @@ function render(){
       return `<div class="pcard ${cls[i]}"><span class="watersuit">${suits[i]}</span>
         <div class="ptag">${tags[i]}</div><div class="ptrophy">${tro}</div>
         ${avEl}<div class="pname">${name}</div>
-        <div class="pamount">${a.referrals} giới thiệu${a.commission>0?' · $'+Number(a.commission).toFixed(2):''}</div></div>`;
+        <div class="pamount">${a.referrals} referrals${a.commission>0?' · $'+Number(a.commission).toFixed(2):''}</div></div>`;
     }).join('')}</div>`:'';
     const list=rest.length?`<div class="list">${rest.map((a,i)=>{
       const name=a.displayName||a.username;
@@ -405,13 +405,13 @@ function render(){
         :`<div class="ravatar" style="background:#16202f;color:#27e3ff">${name.slice(0,2).toUpperCase()}</div>`;
       return `<div class="row"><div class="rank">${i+4}</div>${avEl}
         <div class="rinfo"><div class="rname">${name}</div></div>
-        <div class="ramount">${a.referrals} giới thiệu${a.commission>0?' · $'+Number(a.commission).toFixed(2):''}</div></div>`;
+        <div class="ramount">${a.referrals} referrals${a.commission>0?' · $'+Number(a.commission).toFixed(2):''}</div></div>`;
     }).join('')}</div>`:'';
     document.getElementById('content').innerHTML=podium+list;
     return;
   }
 
-  // --- Các tab khác: lấy từ allData (thành viên) ---
+  // --- Other tabs: from allData (members) ---
   let data=[...allData];
 
   if(sortBy==='season') data=data.filter(m=>Number(m.seasonScoreMonth)>0);
@@ -421,9 +421,9 @@ function render(){
   if(q) data=data.filter(m=>m.username.toLowerCase().includes(q));
 
   if(!data.length){
-    const map={season:'Chưa có ai mua hàng hoặc giới thiệu thành công trong tháng này.',
-      paid:(scope==='month'?'Chưa có ai trả tiền trong tháng này.':'Chưa có Hội Viên VIP nào.')};
-    const msg = q?`Không tìm thấy thành viên nào khớp "<b>${q}</b>".`:(map[sortBy]||'Chưa có dữ liệu.');
+    const map={season:'No one has purchased or referred successfully this month.',
+      paid:(scope==='month'?'No one has paid this month.':'No VIP members yet.')};
+    const msg = q?`No members found matching "<b>${q}</b>".`:(map[sortBy]||'No data yet.');
     document.getElementById('content').innerHTML=`<div class="state">${msg}</div>`;
     return;
   }
@@ -434,7 +434,7 @@ function render(){
   }
 
   const top3=data.slice(0,3), rest=data.slice(3);
-  const order=[top3[1],top3[0],top3[2]], cls=['second','first','third'], suits=['♥','♠','♦'], tags=['HẠNG 02','HẠNG 01','HẠNG 03'];
+  const order=[top3[1],top3[0],top3[2]], cls=['second','first','third'], suits=['♥','♠','♦'], tags=['RANK 02','RANK 01','RANK 03'];
   const podium=top3.length?`<div class="podium">${order.map((m,i)=>{
     if(!m) return `<div></div>`;
     const real=m===top3[0]?1:m===top3[1]?2:3;
@@ -469,8 +469,8 @@ function tickCountdown(){
 
 async function loadData(){
   const btn=document.getElementById('refresh');
-  btn.classList.add('loading');btn.textContent='↻ Đang tải...';
-  document.getElementById('content').innerHTML=`<div class="state"><div class="spinner"></div><div>Đang tải dữ liệu từ Whop...</div></div>`;
+  btn.classList.add('loading');btn.textContent='↻ Loading...';
+  document.getElementById('content').innerHTML=`<div class="state"><div class="spinner"></div><div>Loading data from Whop...</div></div>`;
   try{
     const res=await tenantFetch('/.netlify/functions/whop-data');
     if(!res.ok){ const j=await res.json().catch(()=>({})); throw new Error(j.error||('HTTP '+res.status)); }
@@ -482,17 +482,17 @@ async function loadData(){
     document.getElementById('s-members').textContent=json.stats?.totalMembers ?? allData.length;
     document.getElementById('s-paid').textContent=json.stats?.paidMembers ?? allData.filter(m=>m.paid).length;
     document.getElementById('s-top').textContent=(topPaid&&Number(topPaid.paidAmount)>0?topPaid.username:allData[0]?.username)||'--';
-    document.getElementById('updated').textContent='Cập nhật: '+new Date(json.updatedAt).toLocaleTimeString('vi-VN');
+    document.getElementById('updated').textContent='Updated: '+new Date(json.updatedAt).toLocaleTimeString('en-US');
     document.getElementById('brand-name').textContent=json.branding?.displayName||'Leaderboard';
-    document.getElementById('season-name').textContent=json.season?.label?('MÙA GIẢI '+json.season.label.toUpperCase()):'MÙA GIẢI';
+    document.getElementById('season-name').textContent=json.season?.label?('SEASON '+json.season.label.toUpperCase()):'SEASON';
     const prizes=json.season?.topRewards||[];
     document.getElementById('prizes').innerHTML=prizes.map((p,i)=>
       `<div class="prize r${i+1}"><div class="pp">${p.rank}</div><div class="pxu">🪙 ${p.prize}</div></div>`).join('');
     render();
   }catch(err){
-    document.getElementById('content').innerHTML=`<div class="err">⚠️ Không tải được dữ liệu: <strong>${err.message}</strong><br><small>Hãy mở trang này bên trong Whop để app nhận diện đúng community.</small></div>`;
+    document.getElementById('content').innerHTML=`<div class="err">⚠️ Could not load data: <strong>${err.message}</strong><br><small>Please open this page inside Whop so the app can detect the right community.</small></div>`;
   }finally{
-    btn.classList.remove('loading');btn.textContent='↻ Làm mới';
+    btn.classList.remove('loading');btn.textContent='↻ Refresh';
   }
 }
 
@@ -515,8 +515,8 @@ async function submitCode(){
   const btn=document.getElementById('code-submit');
   const msg=document.getElementById('code-msg');
   const code=(inp.value||'').trim();
-  if(!code){msg.textContent='Vui lòng nhập code.';msg.className='code-msg err';return;}
-  btn.disabled=true;const old=btn.textContent;btn.textContent='Đang xử lý...';
+  if(!code){msg.textContent='Please enter a code.';msg.className='code-msg err';return;}
+  btn.disabled=true;const old=btn.textContent;btn.textContent='Processing...';
   msg.textContent='';msg.className='code-msg';
   try{
     const r=await tenantFetch('/.netlify/functions/redeem-code',{
@@ -525,7 +525,7 @@ async function submitCode(){
     });
     const j=await r.json();
     if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
-    msg.textContent='🎉 '+(j.message||('+'+j.added+' xu'));
+    msg.textContent='🎉 '+(j.message||('+'+j.added+' XU'));
     msg.className='code-msg ok';
     inp.value='';
     loadData();
@@ -541,15 +541,15 @@ document.addEventListener('keydown',(e)=>{
 });
 </script>
 
-<button class="code-fab" onclick="openCodeModal()" aria-label="Nhập code nhận xu">🎟️ Nhập code nhận xu</button>
+<button class="code-fab" onclick="openCodeModal()" aria-label="Redeem a code for XU">🎟️ Redeem Code</button>
 <div class="code-modal" id="code-modal" onclick="if(event.target===this)closeCodeModal()">
   <div class="code-card">
-    <h3>🎟️ Nhập code nhận xu</h3>
-    <p>Nhập mã code để nhận xu thưởng vào tài khoản của bạn.</p>
-    <input id="code-input" type="text" placeholder="VD: abcxyz123" autocomplete="off" onkeydown="if(event.key==='Enter')submitCode()" />
+    <h3>🎟️ Redeem Code</h3>
+    <p>Enter a code to receive bonus XU in your account.</p>
+    <input id="code-input" type="text" placeholder="e.g. abcxyz123" autocomplete="off" onkeydown="if(event.key==='Enter')submitCode()" />
     <div class="code-actions">
-      <button onclick="closeCodeModal()">Đóng</button>
-      <button class="primary" id="code-submit" onclick="submitCode()">Đổi xu</button>
+      <button onclick="closeCodeModal()">Close</button>
+      <button class="primary" id="code-submit" onclick="submitCode()">Redeem</button>
     </div>
     <div class="code-msg" id="code-msg"></div>
   </div>

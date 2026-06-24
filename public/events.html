@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Lịch Sự Kiện — Whop Community App</title>
+<title>Events — Whop Community App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -39,14 +39,6 @@
   .evt-thumb{width:20px;height:20px;border-radius:5px;object-fit:cover;flex-shrink:0}
   .evt small{font-weight:400;opacity:.8;font-size:10.5px}
 
-  .below{display:flex;flex-direction:column;gap:10px;margin-top:14px}
-  .ev-card{display:flex;gap:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px}
-  .ev-card img{width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0}
-  .ev-card .nm{font-weight:600;font-size:14px;color:#fff}
-  .ev-card .meta{font-size:11.5px;color:var(--muted);margin-top:2px}
-  .ev-card .ds{font-size:12.5px;color:var(--muted);margin-top:4px}
-  .ev-card a.lk{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--cyan);text-decoration:none;display:inline-block;margin-top:6px}
-
   .empty{text-align:center;color:var(--muted);font-size:13px;padding:14px 0}
 
   .state{text-align:center;padding:60px 20px;color:var(--muted)}
@@ -58,14 +50,14 @@
 <body>
 <div class="wrap">
   <div class="nav">
-    <a href="/">🏆 Bảng xếp hạng</a>
-    <a href="/daily.html">📅 Hằng ngày</a>
-    <a href="/store.html">🎁 Cửa hàng</a>
-    <a href="/events.html" class="on">🗓 Lịch sự kiện</a>
-    <a href="/mailbox.html">📬 Hộp thư</a>
+    <a href="/">🏆 Leaderboard</a>
+    <a href="/daily.html">📅 Daily</a>
+    <a href="/store.html">🎁 Store</a>
+    <a href="/events.html" class="on">🗓 Events</a>
+    <a href="/mailbox.html">📬 Mailbox</a>
   </div>
-  <div class="top"><span class="s">♦</span> Lịch <b>Sự Kiện</b></div>
-  <div id="content"><div class="state"><div class="spinner"></div>Đang tải...</div></div>
+  <div class="top"><span class="s">♦</span> <b>Events</b></div>
+  <div id="content"><div class="state"><div class="spinner"></div>Loading...</div></div>
 </div>
 
 <script>
@@ -85,14 +77,14 @@ function tenantQS(){
 function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
 
 async function load(){
-  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Đang tải...</div>`;
+  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading...</div>`;
   try{
     const r=await tenantFetch('/.netlify/functions/events');
     const j=await r.json();
     if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
     render(j);
   }catch(e){
-    $('content').innerHTML=`<div class="err"><b>⚠ Không tải được dữ liệu:</b> ${e.message}<br><br>Hãy mở trang này bên trong Whop.</div>`;
+    $('content').innerHTML=`<div class="err"><b>⚠ Could not load data:</b> ${e.message}<br><br>Please open this page inside Whop.</div>`;
   }
 }
 
@@ -106,44 +98,19 @@ function weekDates(todayKey){
   return days;
 }
 function dayCol(dateKey, week){ return week.indexOf(dateKey); } // -1 nếu ngoài tuần
-function addDays(dateKey, n){ const d=new Date(dateKey+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
-function dayDelta(a,b){ return Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/86400000); }
 
-// Lặp lại: quét vài chu kỳ quanh tuần đang xem, trả về [start,end] của các
-// lần lặp có chạm vào tuần hiển thị (không lặp = đúng 1 lần).
-function occurrencesInWeek(item, week){
-  if(!item.startDate || !item.endDate) return [];
-  const start = item.startDate, end = item.endDate;
-  if(!item.repeatDays) return [[start,end]];
-  const winLen = dayDelta(start, end);
-  const results = [];
-  let k = Math.floor(dayDelta(start, week[0]) / item.repeatDays) - 1;
-  for(let n=0; n<4; n++, k++){
-    const occStart = addDays(start, k*item.repeatDays);
-    const occEnd = addDays(occStart, winLen);
-    if(occEnd >= week[0] && occStart <= week[6]) results.push([occStart, occEnd]);
-  }
-  return results;
-}
-
-function evtRows(item, week, cls, label){
+function evtRow(item, week){
+  const col = dayCol(item.date, week);
+  if(col===-1) return ''; // ngoài tuần đang xem
   const thumb = item.image ? `<img class="evt-thumb" src="${esc(item.image)}"/>` : '';
-  return occurrencesInWeek(item, week).map(([occStart,occEnd])=>{
-    let startCol = dayCol(occStart, week);
-    let endCol = dayCol(occEnd, week);
-    // clip vào tuần hiện tại: nếu mốc nằm ngoài tuần ở 1 phía, kéo về biên tuần
-    if(startCol===-1) startCol = occStart < week[0] ? 0 : 7;
-    if(endCol===-1) endCol = occEnd > week[6] ? 6 : -1;
-    if(startCol>6 || endCol<0 || startCol>endCol) return ''; // hoàn toàn ngoài tuần này
-    return `<div class="track"><div class="evt ${cls}" style="grid-column:${startCol+1} / ${endCol+2}">${thumb}${label}</div></div>`;
-  }).filter(Boolean).join('');
+  return `<div class="track"><div class="evt" style="grid-column:${col+1} / ${col+2}">${thumb}${esc(item.name)}</div></div>`;
 }
 
 function render(d){
-  const events = d.events || [];
+  const events = (d.events || []).filter(e=>e.date);
   const today = new Date().toISOString().slice(0,10);
   const week = weekDates(today);
-  const dowLabel=['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+  const dowLabel=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
   const headCells = week.map((dk,i)=>{
     const isToday = dk===today;
@@ -151,25 +118,13 @@ function render(d){
     return `<div class="head-cell ${isToday?'today':''}">${dowLabel[i]}<div class="dd">${dd}/${m}</div></div>`;
   }).join('');
 
-  const rows = events.map(e=>evtRows(e, week, 'evt', `${e.time?`🕒 ${esc(e.time)} `:''}${esc(e.name)}`)).join('');
-
-  const cards = events.map(e=>`
-    <div class="ev-card">
-      ${e.image?`<img src="${esc(e.image)}"/>`:''}
-      <div>
-        <div class="nm">${esc(e.name)}</div>
-        <div class="meta">${e.time?`🕒 ${esc(e.time)} · `:''}${esc(e.startDate)}${e.endDate!==e.startDate?' → '+esc(e.endDate):''}${e.repeatDays?` · lặp mỗi ${e.repeatDays} ngày`:''}</div>
-        ${e.desc?`<div class="ds">${esc(e.desc)}</div>`:''}
-        ${e.link?`<a class="lk" href="${esc(e.link)}" target="_blank" rel="noopener">🔗 Mở link</a>`:''}
-      </div>
-    </div>`).join('');
+  const rows = events.map(e=>evtRow(e, week)).filter(Boolean).join('');
 
   const html = `
-    <div class="counter">📅 <b>${events.length}</b> sự kiện sắp tới</div>
+    <div class="counter">📅 <b>${events.length}</b> upcoming events</div>
     <div class="panel">
       <div class="head-row">${headCells}</div>
-      ${rows || '<div class="empty">Không có sự kiện nào trong tuần này.</div>'}
-      <div class="below">${cards || ''}</div>
+      ${rows || '<div class="empty">No events scheduled this week.</div>'}
     </div>`;
   $('content').innerHTML = html;
 }

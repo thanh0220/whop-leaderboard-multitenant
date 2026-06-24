@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Hộp Thư — Whop Community App</title>
+<title>Mailbox — Whop Community App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -93,115 +93,19 @@
 <body>
 <div class="wrap">
   <div class="nav">
-    <a href="/">🏆 Bảng xếp hạng</a>
-    <a href="/daily.html">📅 Hằng ngày</a>
-    <a href="/store.html">🎁 Cửa hàng</a>
-    <a href="/events.html">🗓 Lịch sự kiện</a>
-    <a href="/mailbox.html" class="on">📬 Hộp thư</a>
+    <a href="/">🏆 Leaderboard</a>
+    <a href="/daily.html">📅 Daily</a>
+    <a href="/store.html">🎁 Store</a>
+    <a href="/events.html">🗓 Events</a>
+    <a href="/mailbox.html" class="on">📬 Mailbox</a>
   </div>
-  <div class="top"><span class="s">♦</span> Hộp <b>Thư</b></div>
-  <div id="content"><div class="state"><div class="spinner"></div>Đang tải...</div></div>
+  <div class="top"><span class="s">♦</span> <b>Mailbox</b></div>
+  <div id="content"><div class="state"><div class="spinner"></div>Loading...</div></div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script type="module">
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
-
-const TIER_COLORS = {
-  wood:  { body:0x8b5a2b, lid:0x9c6a35, stud:0x5c3a1a, clasp:0xcaa56a },
-  silver:{ body:0xc7ccd6, lid:0xd6dae2, stud:0x8b93a3, clasp:0xeef2f8 },
-  gold:  { body:0xf4c441, lid:0xffd966, stud:0xb9860a, clasp:0xfff4cc },
-  buyer: { body:0xb266ff, lid:0xc18bff, stud:0x6b2fa0, clasp:0xe9d4ff },
-};
-
-function buildScene(canvas, tier) {
-  const colors = TIER_COLORS[tier] || TIER_COLORS.wood;
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 10);
-  camera.position.set(1.4, 1.3, 1.8);
-  camera.lookAt(0, 0, 0);
-
-  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-  const dir = new THREE.DirectionalLight(0xffffff, 0.9);
-  dir.position.set(2, 3, 2);
-  scene.add(dir);
-
-  const group = new THREE.Group();
-
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(1.3, 0.7, 0.9),
-    new THREE.MeshStandardMaterial({ color: colors.body, roughness: 0.7 })
-  );
-  body.position.y = -0.05;
-  group.add(body);
-
-  // ổ khóa
-  const clasp = new THREE.Mesh(
-    new THREE.BoxGeometry(0.18, 0.22, 0.1),
-    new THREE.MeshStandardMaterial({ color: colors.clasp, metalness: 0.4, roughness: 0.4 })
-  );
-  clasp.position.set(0, -0.05, 0.5);
-  group.add(clasp);
-
-  // các khối góc trang trí
-  [[-0.6, -0.42], [0.6, -0.42], [-0.6, 0.42], [0.6, 0.42]].forEach(([x, z]) => {
-    const stud = new THREE.Mesh(
-      new THREE.BoxGeometry(0.12, 0.7, 0.12),
-      new THREE.MeshStandardMaterial({ color: colors.stud, roughness: 0.8 })
-    );
-    stud.position.set(x, -0.05, z);
-    group.add(stud);
-  });
-
-  // nắp gắn vào pivot ở mép sau để xoay mở được
-  const pivot = new THREE.Group();
-  pivot.position.set(0, 0.3, -0.45);
-  const lid = new THREE.Mesh(
-    new THREE.BoxGeometry(1.3, 0.32, 0.9),
-    new THREE.MeshStandardMaterial({ color: colors.lid, roughness: 0.65 })
-  );
-  lid.position.set(0, 0.16, 0.45);
-  pivot.add(lid);
-  group.add(pivot);
-
-  group.rotation.y = -0.35;
-  scene.add(group);
-
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-  renderer.setSize(canvas.width, canvas.height, false);
-  renderer.render(scene, camera);
-
-  let rafId = null;
-  function open() {
-    if (rafId) return; // đã/đang mở rồi
-    const start = performance.now();
-    const duration = 650;
-    const from = pivot.rotation.x, to = -1.92; // ~-110deg
-    function tick(now) {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
-      pivot.rotation.x = from + (to - from) * eased;
-      renderer.render(scene, camera);
-      if (t < 1) rafId = requestAnimationFrame(tick);
-      else rafId = null;
-    }
-    rafId = requestAnimationFrame(tick);
-  }
-
-  function dispose() {
-    if (rafId) cancelAnimationFrame(rafId);
-    renderer.dispose();
-    if (renderer.forceContextLoss) renderer.forceContextLoss();
-  }
-
-  return { open, dispose };
-}
-
-window.ChestVoxel = {
-  create(canvas, tier) { return buildScene(canvas, tier); },
-};
-</script>
+<script type="module" src="/chest3d.module.js"></script>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -221,22 +125,22 @@ function tenantQS(){
 function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
 
 async function load(){
-  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Đang tải...</div>`;
+  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading...</div>`;
   try{
     const r=await tenantFetch('/.netlify/functions/mailbox');
     const j=await r.json();
     if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
     render(j.entries||[]);
   }catch(e){
-    $('content').innerHTML=`<div class="err"><b>⚠ Không tải được dữ liệu:</b> ${e.message}<br><br>Hãy mở trang này bên trong Whop.</div>`;
+    $('content').innerHTML=`<div class="err"><b>⚠ Could not load data:</b> ${e.message}<br><br>Please open this page inside Whop.</div>`;
   }
 }
 
 function fmtCountdown(expiresAt){
   const ms = new Date(expiresAt).getTime() - Date.now();
-  if (ms <= 0) return 'Đã hết hạn';
+  if (ms <= 0) return 'Expired';
   const h = Math.floor(ms/3600000), m = Math.floor((ms%3600000)/60000), s = Math.floor((ms%60000)/1000);
-  return `Hết hạn sau ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return `Expires in ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
 const chestRegistry = {};
@@ -246,7 +150,7 @@ function render(entries){
   for (const k in chestRegistry) delete chestRegistry[k];
 
   if (!entries.length){
-    $('content').innerHTML = '<div class="empty">📭 Hộp thư trống. Khi có member nào mua hàng trên Whop, cả kênh sẽ nhận được rương ở đây!</div>';
+    $('content').innerHTML = '<div class="empty">📭 Your mailbox is empty. When a member makes a purchase on Whop, the whole channel will get a chest here!</div>';
     return;
   }
   const sparkAngles = [[-26,-10,-22],[24,-8,18],[-10,-34,-14],[12,-30,26],[-34,-22,-30],[30,-20,32]];
@@ -260,10 +164,10 @@ function render(entries){
       </div>
       <div class="info">
         <div class="label">${esc(e.label)}</div>
-        <div class="desc"><b>${esc(e.buyerName)}</b> đã mua hàng trên Whop</div>
-        ${e.claimed ? '<div class="claimed-tag">✅ Đã nhận +'+e.xu+' xu</div>' : `<div class="exp" data-exp="${esc(e.expiresAt)}">${fmtCountdown(e.expiresAt)}</div>`}
+        <div class="desc"><b>${esc(e.buyerName)}</b> made a purchase on Whop</div>
+        ${e.claimed ? '<div class="claimed-tag">✅ Claimed +'+e.xu+' XU</div>' : `<div class="exp" data-exp="${esc(e.expiresAt)}">${fmtCountdown(e.expiresAt)}</div>`}
       </div>
-      ${e.claimed ? '' : `<button class="btn" onclick="claim('${esc(e.id)}',this)">Nhận</button>`}
+      ${e.claimed ? '' : `<button class="btn" onclick="claim('${esc(e.id)}',this)">Claim</button>`}
       <div class="pop" id="pop-${esc(e.id)}"></div>
     </div>`).join('');
 
@@ -291,9 +195,9 @@ async function claim(id, btn){
     const reqPromise = tenantFetch('/.netlify/functions/mailbox', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({entryId:id})});
     const [r] = await Promise.all([reqPromise, animDone]);
     const j = await r.json();
-    if(!r.ok) throw new Error(j.error||'Lỗi');
+    if(!r.ok) throw new Error(j.error||'Error');
     const pop = $('pop-'+id);
-    pop.textContent = `+${j.xu} xu`;
+    pop.textContent = `+${j.xu} XU`;
     pop.classList.add('show');
     toast(j.message);
     setTimeout(load, 1200);

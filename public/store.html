@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Cửa Hàng Đổi Quà — Whop Community App</title>
+<title>Reward Store — Whop Community App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -121,21 +121,21 @@
 <body>
 <div class="wrap">
   <div class="nav">
-    <a href="/">🏆 Bảng xếp hạng</a>
-    <a href="/daily.html">📅 Hằng ngày</a>
-    <a href="/store.html" class="on">🎁 Cửa hàng</a>
-    <a href="/events.html">🗓 Lịch sự kiện</a>
-    <a href="/mailbox.html">📬 Hộp thư</a>
+    <a href="/">🏆 Leaderboard</a>
+    <a href="/daily.html">📅 Daily</a>
+    <a href="/store.html" class="on">🎁 Store</a>
+    <a href="/events.html">🗓 Events</a>
+    <a href="/mailbox.html">📬 Mailbox</a>
   </div>
-  <div class="top"><span class="s">♦</span> Cửa Hàng <b>Đổi Quà</b></div>
-  <div id="content"><div class="state"><div class="spinner"></div>Đang tải xu của bạn...</div></div>
+  <div class="top"><span class="s">♦</span> Reward <b>Store</b></div>
+  <div id="content"><div class="state"><div class="spinner"></div>Loading your XU...</div></div>
 </div>
 
 
 <script>
 let DATA=null;
 const $=id=>document.getElementById(id);
-function fmt(n){return Number(n||0).toLocaleString('vi-VN');}
+function fmt(n){return Number(n||0).toLocaleString('en-US');}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 /* Mọi request gửi kèm experienceId/companyId Whop truyền vào URL khi nhúng
@@ -178,14 +178,14 @@ function openWhopSignin(ev){
 // không phải sản phẩm của business cụ thể nào (mỗi business tự thêm quà
 // riêng của họ qua trang admin). =====
 const DEMO_REWARDS=[
-  {id:"demo_voucher",name:"Sample Voucher",cost:200,desc:"Ví dụ 1 voucher giảm giá — business tự thêm quà thật trong trang quản trị.",image:null,badge:"new",originalPrice:"$50",stock:null,tier:1,payload:{kind:"code",code:"DEMO123"}},
-  {id:"demo_resource",name:"Sample Resource Pack",cost:500,desc:"Ví dụ 1 tài nguyên đổi bằng link — business tự thêm quà thật trong trang quản trị.",image:null,badge:"hot",originalPrice:"$150",stock:null,tier:2,payload:{kind:"link",url:"#",label:"Mở tài nguyên"}},
-  {id:"demo_coaching",name:"Sample 1-on-1 Slot",cost:1500,desc:"Ví dụ 1 suất coaching giới hạn — business tự thêm quà thật trong trang quản trị.",image:null,badge:"limited",originalPrice:"$300",stock:5,tier:5,payload:{kind:"link",url:"#",label:"Đặt lịch"}}
+  {id:"demo_voucher",name:"Sample Voucher",cost:200,desc:"Example discount voucher — businesses add their real rewards via the admin page.",image:null,badge:"new",originalPrice:"$50",stock:null,tier:1,payload:{kind:"code",code:"DEMO123"}},
+  {id:"demo_resource",name:"Sample Resource Pack",cost:500,desc:"Example resource redeemed via link — businesses add their real rewards via the admin page.",image:null,badge:"hot",originalPrice:"$150",stock:null,tier:2,payload:{kind:"link",url:"#",label:"Open resource"}},
+  {id:"demo_coaching",name:"Sample 1-on-1 Slot",cost:1500,desc:"Example limited coaching slot — businesses add their real rewards via the admin page.",image:null,badge:"limited",originalPrice:"$300",stock:5,tier:5,payload:{kind:"link",url:"#",label:"Book a slot"}}
 ];
 
 function useDemo(){
   DATA={
-    username:"Khách",
+    username:"Guest",
     available:350,
     earned:350,
     spent:0,
@@ -200,35 +200,35 @@ function useDemo(){
 }
 
 async function load(){
-  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Đang tải xu của bạn...</div>`;
+  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading your XU...</div>`;
   try{
     const r=await tenantFetch('/.netlify/functions/me');
     const j=await r.json();
     if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
     DATA=j;render();
   }catch(e){
-    // Không có session Whop → hiện bản DEMO thay vì khối lỗi
+    // No Whop session → show DEMO version instead of an error block
     useDemo();
   }
 }
 
-const BADGE_LABEL={hot:'🔥 Hot',new:'⚡ Mới',vip:'👑 VIP',bestseller:'⭐ Bán chạy',limited:'⏳ Giới hạn'};
+const BADGE_LABEL={hot:'🔥 Hot',new:'⚡ New',vip:'👑 VIP',bestseller:'⭐ Bestseller',limited:'⏳ Limited'};
 
 function render(){
   const d=DATA;
   const locked = d.tier==='free' && !d.demo;
-  const upsell = locked ? `<div class="upsell">🔒 Cửa hàng đổi quà là tính năng <b>trả phí</b>. Nâng cấp trong Whop để mở khoá và bắt đầu đổi xu lấy quà.</div>` : '';
+  const upsell = locked ? `<div class="upsell">🔒 The reward store is a <b>paid</b> feature. Upgrade in Whop to unlock it and start redeeming XU for rewards.</div>` : '';
 
   if(!d.rewards || d.rewards.length===0){
     $('content').innerHTML=`
       ${upsell}
       <div class="bal">
-        <div class="b main"><div class="v" id="v-av">${fmt(d.available)}</div><div class="l">🪙 Xu khả dụng</div></div>
-        <div class="b"><div class="v">${fmt(d.earned)}</div><div class="l">🪙 Tổng tích lũy</div></div>
-        <div class="b"><div class="v">${fmt(d.spent)}</div><div class="l">Đã tiêu</div></div>
+        <div class="b main"><div class="v" id="v-av">${fmt(d.available)}</div><div class="l">🪙 Available XU</div></div>
+        <div class="b"><div class="v">${fmt(d.earned)}</div><div class="l">🪙 Total earned</div></div>
+        <div class="b"><div class="v">${fmt(d.spent)}</div><div class="l">Spent</div></div>
       </div>
-      <div class="state">Cộng đồng này chưa có quà nào trong cửa hàng. Hãy quay lại sau!</div>
-      <div style="text-align:center;margin-top:20px"><a class="lb" href="/index.html">← Về bảng xếp hạng</a></div>`;
+      <div class="state">This community doesn't have any rewards in the store yet. Check back later!</div>
+      <div style="text-align:center;margin-top:20px"><a class="lb" href="/index.html">← Back to leaderboard</a></div>`;
     return;
   }
 
@@ -252,30 +252,30 @@ function render(){
       ? `<div class="thumb" style="background-image:url('${esc(rw.image)}')"></div>`
       : `<div class="thumb" style="background:linear-gradient(135deg,#1a2236,#0a0f18)"></div>`;
     const badge=rw.badge?`<span class="badge ${esc(rw.badge)}">${BADGE_LABEL[rw.badge]||rw.badge}</span>`:'';
-    const stockPill=(!done && rw.stock!=null&&rw.stock<=10)?`<span class="stock-pill">Còn ${rw.stock}</span>`:'';
+    const stockPill=(!done && rw.stock!=null&&rw.stock<=10)?`<span class="stock-pill">${rw.stock} left</span>`:'';
     const priceAnchor=rw.originalPrice
-      ? `<div class="price-anchor"><s>${esc(rw.originalPrice)}</s> · <b>tiết kiệm 100%</b></div>`
+      ? `<div class="price-anchor"><s>${esc(rw.originalPrice)}</s> · <b>save 100%</b></div>`
       : '';
     const progress=(!can && !done && !locked)
       ? `<div class="progress"><i style="width:${pct}%"></i></div>
-         <div class="progress-label"><span>Còn thiếu <b>${fmt(gap)} xu</b></span><span>${pct}%</span></div>`
+         <div class="progress-label"><span>Need <b>${fmt(gap)} more XU</b></span><span>${pct}%</span></div>`
       : '';
     let btnClass, btnLabel, btnDisabled, btnOnclick;
     if(d.demo){
       btnClass = rw.tier>=4 ? 'btn primary' : 'btn';
-      btnLabel = '🔐 Đăng nhập để đổi';
+      btnLabel = '🔐 Sign in to redeem';
       btnDisabled = false;
       btnOnclick = `openWhopSignin(event)`;
-    } else if(locked){ btnClass='btn'; btnLabel='🔒 Nâng cấp để mở khoá'; btnDisabled=true; btnOnclick=''; }
-    else if(done){ btnClass='btn done'; btnLabel='🔄 Lật xem quà'; btnDisabled=false; btnOnclick=`flipCard('${rw.id}',event)`; }
-    else if(can){ btnClass=rw.tier>=4?'btn primary':'btn'; btnLabel='🎁 Đổi ngay'; btnDisabled=false; btnOnclick=`redeem('${rw.id}',this)`; }
-    else { btnClass='btn'; btnLabel='Chưa đủ xu'; btnDisabled=true; btnOnclick=''; }
+    } else if(locked){ btnClass='btn'; btnLabel='🔒 Upgrade to unlock'; btnDisabled=true; btnOnclick=''; }
+    else if(done){ btnClass='btn done'; btnLabel='🔄 Flip to view reward'; btnDisabled=false; btnOnclick=`flipCard('${rw.id}',event)`; }
+    else if(can){ btnClass=rw.tier>=4?'btn primary':'btn'; btnLabel='🎁 Redeem now'; btnDisabled=false; btnOnclick=`redeem('${rw.id}',this)`; }
+    else { btnClass='btn'; btnLabel='Not enough XU'; btnDisabled=true; btnOnclick=''; }
 
     const costHtml = done
       ? `<span class="cost" style="color:#86efac">0 XU</span>
-         <div class="price-anchor done"><s>${fmt(rw.cost)} xu</s> · <b>đã đổi</b></div>`
+         <div class="price-anchor done"><s>${fmt(rw.cost)} XU</s> · <b>redeemed</b></div>`
       : `<span class="cost">${fmt(rw.cost)} XU</span>${priceAnchor}`;
-    const doneBadge = done ? `<span class="done-badge">✅ Đã đổi</span>` : '';
+    const doneBadge = done ? `<span class="done-badge">✅ Redeemed</span>` : '';
 
     const frontInner = `
       <div class="card flip-face flip-front">
@@ -297,28 +297,28 @@ function render(){
     if(p.kind==='ea'){
       backBody = `
         <a class="fb-link" href="${esc(p.ea)}" target="_blank" rel="noopener">
-          <span style="font-size:18px">📥</span><span>Tải file<small>${esc(p.label||'')}</small></span>
+          <span style="font-size:18px">📥</span><span>Download file<small>${esc(p.label||'')}</small></span>
         </a>
         <a class="fb-link" href="${esc(p.setup)}" target="_blank" rel="noopener">
-          <span style="font-size:18px">🛠</span><span>Hướng dẫn Setup<small>Cài đặt &amp; kích hoạt</small></span>
+          <span style="font-size:18px">🛠</span><span>Setup guide<small>Install &amp; activate</small></span>
         </a>`;
     } else if(p.kind==='link'){
       backBody = `<a class="fb-link" href="${esc(p.url)}" target="_blank" rel="noopener">
-          <span style="font-size:18px">🔗</span><span>Mở phần thưởng<small>${esc(p.label||'')}</small></span>
+          <span style="font-size:18px">🔗</span><span>Open reward<small>${esc(p.label||'')}</small></span>
         </a>`;
     } else {
       const code = esc(p.code||'');
       backBody = `<div class="fb-code">${code}</div>
-        <button class="fb-copy" onclick="event.stopPropagation();copyCode('${code}',this)">📋 Sao chép mã</button>`;
+        <button class="fb-copy" onclick="event.stopPropagation();copyCode('${code}',this)">📋 Copy code</button>`;
     }
     const back = `
       <div class="flip-face flip-back">
         <div class="fb-hdr">
-          <span class="fb-tag">🎉 Đã đổi</span>
+          <span class="fb-tag">🎉 Redeemed</span>
           <div class="fb-title">${esc(rw.name)}</div>
         </div>
         <div class="fb-body">${backBody}</div>
-        <button class="btn flip-back-btn" onclick="flipCard('${rw.id}',event)">🔄 Lật lại</button>
+        <button class="btn flip-back-btn" onclick="flipCard('${rw.id}',event)">🔄 Flip back</button>
       </div>`;
 
     return `<div class="flip-card" id="fc-${esc(rw.id)}"><div class="flip-inner">${frontInner}${back}</div></div>`;
@@ -327,33 +327,33 @@ function render(){
   const demoBanner = d.demo ? `
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,rgba(244,196,65,.12),rgba(178,102,255,.12));border:1px solid rgba(244,196,65,.4);border-radius:12px;padding:12px 16px;margin:0 0 14px;font-size:13px;color:#fff">
       <span style="font-size:18px">👀</span>
-      <span style="flex:1;min-width:200px">Bạn đang xem <b style="color:#f4c441">bản demo</b>. Đăng nhập Whop để tích xu thật và đổi quà.</span>
-      <button onclick="openWhopSignin(event)" style="font-family:'Oswald',sans-serif;letter-spacing:.1em;text-transform:uppercase;font-size:12px;font-weight:700;padding:9px 16px;border-radius:9px;border:1px solid rgba(244,196,65,.6);background:linear-gradient(135deg,rgba(244,196,65,.25),rgba(178,102,255,.2));color:#fff;cursor:pointer">🔐 Đăng nhập Whop</button>
+      <span style="flex:1;min-width:200px">You're viewing a <b style="color:#f4c441">demo</b>. Sign in with Whop to earn real XU and redeem rewards.</span>
+      <button onclick="openWhopSignin(event)" style="font-family:'Oswald',sans-serif;letter-spacing:.1em;text-transform:uppercase;font-size:12px;font-weight:700;padding:9px 16px;border-radius:9px;border:1px solid rgba(244,196,65,.6);background:linear-gradient(135deg,rgba(244,196,65,.25),rgba(178,102,255,.2));color:#fff;cursor:pointer">🔐 Sign in with Whop</button>
     </div>` : '';
 
   $('content').innerHTML=`
     ${demoBanner}
     ${upsell}
     <div class="bal">
-      <div class="b main"><div class="v" id="v-av">${fmt(d.available)}</div><div class="l">🪙 Xu khả dụng</div></div>
-      <div class="b"><div class="v">${fmt(d.earned)}</div><div class="l">🪙 Tổng tích lũy</div></div>
-      <div class="b"><div class="v">${fmt(d.spent)}</div><div class="l">Đã tiêu</div></div>
+      <div class="b main"><div class="v" id="v-av">${fmt(d.available)}</div><div class="l">🪙 Available XU</div></div>
+      <div class="b"><div class="v">${fmt(d.earned)}</div><div class="l">🪙 Total earned</div></div>
+      <div class="b"><div class="v">${fmt(d.spent)}</div><div class="l">Spent</div></div>
     </div>
-    <div class="hi">Chào <b>${esc(d.username)}</b> 👋 — bạn có <b>🪙 ${fmt(d.available)}</b> xu. (Đã chi ~$${fmt(d.paidUsd)}, ${fmt(d.referrals)} giới thiệu)</div>
-    <div class="sect">🎁 Quà có thể đổi (${d.rewards.length})</div>
+    <div class="hi">Hi <b>${esc(d.username)}</b> 👋 — you have <b>🪙 ${fmt(d.available)}</b> XU. (Spent ~$${fmt(d.paidUsd)}, ${fmt(d.referrals)} referrals)</div>
+    <div class="sect">🎁 Available rewards (${d.rewards.length})</div>
     <div class="rewards">${rewards}</div>
-    <div style="text-align:center;margin-top:20px"><a class="lb" href="/index.html">← Về bảng xếp hạng</a></div>`;
+    <div style="text-align:center;margin-top:20px"><a class="lb" href="/index.html">← Back to leaderboard</a></div>`;
 }
 
 
 async function redeem(rewardId,btn){
-  btn.disabled=true;btn.textContent='Đang xử lý...';
+  btn.disabled=true;btn.textContent='Processing...';
   try{
     const r=await tenantFetch('/.netlify/functions/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rewardId})});
     const j=await r.json();
     if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
     await load();
-    // Sau khi render lại: tự lật ô quà vừa đổi để hiển thị "lật bài nhận thưởng"
+    // After re-render: auto-flip the just-redeemed card to reveal the reward
     requestAnimationFrame(()=>{
       const el=document.getElementById('fc-'+rewardId);
       if(el){
@@ -362,8 +362,8 @@ async function redeem(rewardId,btn){
       }
     });
   }catch(e){
-    alert('Không đổi được: '+e.message);
-    btn.disabled=false;btn.textContent='🎁 Đổi ngay';
+    alert('Redeem failed: '+e.message);
+    btn.disabled=false;btn.textContent='🎁 Redeem now';
   }
 }
 
@@ -375,11 +375,11 @@ function flipCard(rewardId,ev){
 
 function copyCode(code,btn){
   navigator.clipboard.writeText(code).then(()=>{
-    btn.textContent='✓ Đã sao chép';
+    btn.textContent='✓ Copied';
     btn.classList.add('ok');
-    setTimeout(()=>{btn.textContent='📋 Sao chép mã';btn.classList.remove('ok');},1800);
+    setTimeout(()=>{btn.textContent='📋 Copy code';btn.classList.remove('ok');},1800);
   }).catch(()=>{
-    btn.textContent='Không sao chép được';
+    btn.textContent='Copy failed';
   });
 }
 
