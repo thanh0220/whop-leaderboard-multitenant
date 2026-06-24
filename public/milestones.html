@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Milestones — Whop Community App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070910;--red:#ff2d4b;--cyan:#27e3ff;--gold:#f4c441;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:0 0 60px;
+    background:radial-gradient(120% 70% at 50% -10%,rgba(255,45,75,.13),var(--bg) 55%),var(--bg);background-attachment:fixed}
+  .wrap{max-width:680px;margin:0 auto;padding:22px 18px}
+  .nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .nav a{font-family:'Oswald',sans-serif;letter-spacing:.1em;text-transform:uppercase;font-size:11px;
+    padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.03);color:var(--muted);text-decoration:none;transition:.15s}
+  .nav a.on{border-color:var(--line2);background:rgba(39,227,255,.1);color:var(--cyan);box-shadow:0 0 14px rgba(39,227,255,.25)}
+  .top{display:flex;align-items:center;gap:10px;font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;font-size:16px;margin-bottom:14px}
+  .top .s{color:var(--red);font-size:18px;text-shadow:0 0 12px rgba(255,45,75,.7)}
+  .top b{color:var(--red)}
+
+  .period{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);
+    border-radius:14px;padding:16px;margin-bottom:14px}
+  .period .pt{font-family:'Oswald',sans-serif;font-size:13px;color:var(--muted);letter-spacing:.05em}
+  .period .cd{font-family:'Oswald',sans-serif;font-size:13px;color:var(--cyan);margin-top:2px}
+  .bar{height:14px;border-radius:999px;background:rgba(255,255,255,.06);margin-top:12px;overflow:hidden;position:relative}
+  .bar .fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--gold));border-radius:999px;transition:width .4s ease}
+  .usd-now{font-family:'Oswald',sans-serif;font-size:13px;color:var(--text);margin-top:8px}
+  .usd-now b{color:var(--gold)}
+
+  .tier{display:flex;align-items:center;gap:14px;background:linear-gradient(160deg,#16202f,#0a0f18);
+    border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;margin-bottom:10px;opacity:.5}
+  .tier.unlocked{opacity:1;border-color:rgba(244,196,65,.4)}
+  .tier.claimed{opacity:.65}
+  .tier .icon{font-size:30px;flex-shrink:0}
+  .tier .info{flex:1;min-width:0}
+  .tier .label{font-family:'Oswald',sans-serif;font-weight:700;font-size:14px}
+  .tier .desc{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .btn{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:12px;font-weight:700;
+    padding:10px 18px;border-radius:10px;border:1px solid var(--line2);background:rgba(39,227,255,.1);color:var(--cyan);cursor:pointer;transition:.15s;flex-shrink:0}
+  .btn:hover:not(:disabled){background:rgba(39,227,255,.22);box-shadow:0 0 14px rgba(39,227,255,.3)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .claimed-tag{font-size:11px;color:#86efac;font-family:'Oswald',sans-serif;letter-spacing:.06em}
+
+  .empty{text-align:center;color:var(--muted);font-size:13px;padding:40px 0}
+  .state{text-align:center;padding:60px 20px;color:var(--muted)}
+  .spinner{width:40px;height:40px;border:2px solid rgba(39,227,255,.2);border-top-color:var(--cyan);border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .err{background:rgba(255,45,75,.12);border:1px solid rgba(255,45,75,.4);border-radius:14px;padding:20px;color:#ffd0d8;font-size:14px;line-height:1.6}
+
+  .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
+    background:#0e1622;border:1px solid var(--line2);border-radius:12px;padding:14px 22px;color:var(--cyan);
+    font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:.05em;box-shadow:0 0 30px rgba(39,227,255,.35);transition:.3s;z-index:80}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+  .powered-badge{position:fixed;bottom:10px;right:12px;z-index:60;font-size:11px;color:var(--muted);
+    background:rgba(10,14,24,.7);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:4px 9px;
+    display:none;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="powered-badge" id="powered-badge">⚡ Powered by GTVăn</div>
+<div class="wrap">
+  <div class="nav">
+    <a href="/">🏆 Leaderboard</a>
+    <a href="/daily.html">📅 Daily</a>
+    <a href="/store.html">🎁 Store</a>
+    <a href="/events.html">🗓 Events</a>
+    <a href="/mailbox.html">📬 Mailbox</a>
+    <a href="/milestones.html" class="on">🎯 Milestones</a>
+  </div>
+  <div class="top"><span class="s">♦</span> <b>Milestones</b></div>
+  <div id="content"><div class="state"><div class="spinner"></div>Loading...</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2400);}
+
+function tenantQS(){
+  const u = new URL(location.href);
+  const exp = u.searchParams.get('experienceId') || '';
+  const co  = u.searchParams.get('companyId') || '';
+  const p = new URLSearchParams();
+  if (exp) p.set('experienceId', exp);
+  if (co)  p.set('companyId', co);
+  const s = p.toString();
+  return s ? '?' + s : '';
+}
+function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
+
+let DATA = null;
+
+async function load(){
+  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading...</div>`;
+  try{
+    const r=await tenantFetch('/.netlify/functions/milestones');
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    $('powered-badge').style.display=(j.branding?.logoUrl)?'none':'block';
+    DATA = j;
+    render(j);
+  }catch(e){
+    $('content').innerHTML=`<div class="err"><b>⚠ Could not load data:</b> ${e.message}<br><br>Please open this page inside Whop.</div>`;
+  }
+}
+
+function fmtCountdown(periodEnd){
+  const ms = periodEnd - Date.now();
+  if (ms <= 0) return 'Period ended';
+  const d = Math.floor(ms/86400000), h = Math.floor((ms%86400000)/3600000), m = Math.floor((ms%3600000)/60000);
+  return `Resets in ${d}d ${h}h ${m}m`;
+}
+
+function render(j){
+  if (!j.enabled){
+    $('content').innerHTML = '<div class="empty">🎯 This program is not active yet.</div>';
+    return;
+  }
+  const maxUsd = j.tiers.length ? j.tiers[j.tiers.length-1].thresholdUsd : 0;
+  const pct = maxUsd > 0 ? Math.min(100, (j.usd / maxUsd) * 100) : 0;
+
+  const head = `
+    <div class="period">
+      <div class="pt">Current period</div>
+      <div class="cd">${fmtCountdown(j.periodEnd)}</div>
+      <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
+      <div class="usd-now">Deposited this period: <b>$${j.usd.toFixed(2)}</b></div>
+    </div>`;
+
+  const tiers = j.tiers.map((t, i) => `
+    <div class="tier ${t.unlocked ? 'unlocked' : ''} ${t.claimed ? 'claimed' : ''}">
+      <div class="icon">${esc(t.icon)}</div>
+      <div class="info">
+        <div class="label">${esc(t.label)}</div>
+        <div class="desc">Reach $${t.thresholdUsd} deposited${t.xu ? ' — +'+t.xu+' XU' : ''}</div>
+      </div>
+      ${t.claimed
+        ? '<div class="claimed-tag">✅ Claimed</div>'
+        : `<button class="btn" ${t.unlocked ? '' : 'disabled'} onclick="claim(${i},this)">Claim</button>`}
+    </div>`).join('');
+
+  $('content').innerHTML = head + (tiers || '<div class="empty">No milestones configured yet.</div>');
+}
+
+async function claim(i, btn){
+  btn.disabled = true;
+  try{
+    const r = await tenantFetch('/.netlify/functions/milestones', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({tierIndex:i})});
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error||'Error');
+    toast(j.xu ? `+${j.xu} XU added!` : (j.code ? `Reward unlocked: ${j.code}` : 'Reward claimed!'));
+    setTimeout(load, 800);
+  }catch(e){
+    toast('⚠ '+e.message);
+    btn.disabled = false;
+  }
+}
+
+load();
+</script>
+</body>
+</html>

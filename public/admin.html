@@ -200,6 +200,7 @@
     <a href="#codes" onclick="switchTab('codes');return false">🔑 Codes</a>
     <a href="#events" onclick="switchTab('events');return false">🗓 Events</a>
     <a href="#chests" onclick="switchTab('chests');return false">📬 Community Chest</a>
+    <a href="#milestones" onclick="switchTab('milestones');return false">🎯 Nạp lũy kế</a>
   </div>
   <div id="content"><div class="state">Loading...</div></div>
 </div>
@@ -305,8 +306,11 @@ async function load(){
         rewards: j.rewards || [],
         redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>
           typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),
-        chestRules: j.chestRules || {thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},
+        codesEnabled: j.codesEnabled !== false,
+        chestRules: j.chestRules || {enabled:true,thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},
         events: normalizeEvents(j.events, IS_PAID ? 10 : 2),
+        eventsEnabled: j.eventsEnabled !== false,
+        milestoneRules: j.milestoneRules || {enabled:false,periodDays:7,tiers:[]},
         branding: j.branding || {displayName:'',primaryColor:'#7c3aed',logoUrl:''},
       };
       renderAll();
@@ -324,7 +328,15 @@ const TAB_RENDERERS = {
   conn: renderConn, billing: renderBilling, branding: renderBranding,
   season: renderSeason, daily: renderDaily, store: renderStore,
   codes: renderCodes, events: renderEvents, chests: renderChests,
+  milestones: renderMilestones,
 };
+
+function toggleRow(checked, onchange, labelOn, labelOff){
+  return `<label class="hint-small" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px">
+    <input type="checkbox" style="width:auto" ${checked?'checked':''} onchange="${esc(onchange)}"/>
+    <span>${checked ? '✅ '+labelOn : '⛔ '+labelOff}</span>
+  </label>`;
+}
 
 function switchTab(id){
   activeTab = id;
@@ -609,6 +621,7 @@ function renderCodes(){
   return `
     <div class="sect" id="codes">🔑 Special Codes</div>
     <div class="panel">
+      ${toggleRow(STATE.codesEnabled, 'STATE.codesEnabled=this.checked;renderAll()', 'Enabled — members can redeem codes.', 'Disabled — members cannot redeem codes right now.')}
       ${rows || '<p class="hint-small">No codes yet.</p>'}
       <button class="btn" onclick="STATE.redeemCodesList.push({code:'',xu:0});renderAll()">+ Add code</button>
     </div>`;
@@ -635,6 +648,7 @@ function renderChests(){
   return `
     <div class="sect" id="chests">📬 Community Chest</div>
     <div class="panel">
+      ${toggleRow(rules.enabled !== false, "setPath(STATE,'chestRules.enabled',this.checked);renderAll()", 'Enabled — purchases trigger a community chest.', 'Disabled — purchases no longer trigger a chest.')}
       <p class="hint-small" style="margin-bottom:10px">When a member buys something on Whop, everyone else in the channel gets a chest in their 📬 Mailbox. The tier depends on the purchase amount; the coin reward is randomized within the range you set below.</p>
       ${rows || '<p class="hint-small">No tiers configured yet.</p>'}
       <div class="item">
@@ -648,6 +662,38 @@ function renderChests(){
       <label>Chest claim deadline (hours)</label>
       <input type="number" min="1" value="${rules.expiryHours}" oninput="setPath(STATE,'chestRules.expiryHours',Number(this.value)||48)"/>
       <div class="hint-small">Requires a Webhook on the Whop Dev Dashboard (event <code>payment_succeeded</code>) pointing to <code>/.netlify/functions/webhook</code>, with <code>WHOP_WEBHOOK_SECRET</code> set on Netlify — one-time setup per app.</div>
+    </div>`;
+}
+
+// ===== #milestones — Nạp lũy kế (member tự cộng dồn USD nạp thật trong 1 kỳ) =====
+function renderMilestones(){
+  const rules = STATE.milestoneRules || {enabled:false,periodDays:7,tiers:[]};
+  const rewardOptions = (r) => `
+    <option value="">— Thưởng xu trực tiếp —</option>
+    ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${r.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
+  const rows = (rules.tiers||[]).map((t,i)=>`
+    <div class="item">
+      <div class="row3">
+        <div><label>Mốc USD nạp lũy kế</label><input type="number" min="0" value="${t.thresholdUsd||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.thresholdUsd',Number(this.value)||0)"/></div>
+        <div><label>Icon</label><input value="${esc(t.icon||'🎁')}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.icon',this.value)"/></div>
+        <div><label>Tên mốc</label><input value="${esc(t.label||'')}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.label',this.value)"/></div>
+      </div>
+      <label>Phần thưởng</label>
+      <select onchange="setPath(STATE,'milestoneRules.tiers.${i}.rewardId',this.value||null);renderAll()">${rewardOptions(t)}</select>
+      ${t.rewardId
+        ? '<div class="hint-small">Member sẽ nhận MIỄN PHÍ đúng item này từ Reward Store khi đạt mốc.</div>'
+        : `<label>Số xu thưởng</label><input type="number" min="0" value="${t.xu||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.xu',Number(this.value)||0)"/>`}
+      <button class="btn del" onclick="STATE.milestoneRules.tiers.splice(${i},1);renderAll()">🗑 Xoá mốc này</button>
+    </div>`).join('');
+  return `
+    <div class="sect" id="milestones">🎯 Nạp lũy kế</div>
+    <div class="panel">
+      ${toggleRow(rules.enabled, "setPath(STATE,'milestoneRules.enabled',this.checked);renderAll()", 'Đang bật — member thấy trang Nạp lũy kế.', 'Đang tắt — member không thấy chương trình này.')}
+      <p class="hint-small" style="margin-bottom:10px">Member tự tích lũy số USD đã nạp THẬT (thanh toán qua Whop) trong 1 kỳ, đạt mốc thì claim quà. Mốc nào gắn sẵn 1 item trong 🎁 Reward Store thì member nhận miễn phí item đó (không tốn xu); không gắn thì thưởng thẳng số xu khai báo.</p>
+      <label>Độ dài 1 kỳ (ngày)</label>
+      <input type="number" min="1" value="${rules.periodDays||7}" oninput="setPath(STATE,'milestoneRules.periodDays',Number(this.value)||7)"/>
+      ${rows || '<p class="hint-small">Chưa có mốc nào.</p>'}
+      <button class="btn" onclick="STATE.milestoneRules.tiers.push({thresholdUsd:5,rewardId:null,xu:50,label:'Mốc mới',icon:'🎁'});renderAll()">+ Thêm mốc</button>
     </div>`;
 }
 
@@ -740,6 +786,7 @@ function renderEvents(){
   return `<div id="events-wrap">
     <div class="sect" id="events">🗓 Events</div>
     <div class="panel">
+      ${toggleRow(STATE.eventsEnabled, 'STATE.eventsEnabled=this.checked;refreshEvents()', 'Enabled — the event calendar is visible to members.', 'Disabled — members see an empty event calendar.')}
       <p class="hint-small" style="margin-bottom:10px">Type the name directly, click the image to change it, drag onto the calendar to set a date.</p>
       <div class="events-nav">
         <button class="btn" onclick="eventsWeekOffset--;refreshEvents()">‹ Previous week</button>
@@ -811,8 +858,11 @@ async function saveAll(){
     checkinRewards: STATE.checkinRewards,
     rewards: STATE.rewards,
     redeemCodes,
+    codesEnabled: STATE.codesEnabled,
     chestRules: STATE.chestRules,
     events: STATE.events,
+    eventsEnabled: STATE.eventsEnabled,
+    milestoneRules: STATE.milestoneRules,
     branding: STATE.branding,
   };
   if (typedApiKey.trim()) payload.whopApiKey = typedApiKey.trim();
