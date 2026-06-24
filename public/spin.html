@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lucky Spin — Whop Community App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--cyan:#27e3ff;--gold:#ffd966;--gold2:#f4c441;--green:#22c55e;--muted:#c9b6ff;--text:#fff}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:0 0 60px;
+    background:radial-gradient(120% 80% at 50% -10%,#5a1aa3,#2c0a52 50%,#170433 100%);background-attachment:fixed}
+  .wrap{max-width:680px;margin:0 auto;padding:18px 16px;text-align:center}
+  .nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;text-align:left}
+  .nav a{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:10.5px;
+    padding:7px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.25);
+    background:rgba(0,0,0,.18);color:#e9d9ff;text-decoration:none;transition:.15s}
+  .nav a.on{border-color:#fff;background:rgba(255,255,255,.22);color:#fff;box-shadow:0 0 14px rgba(255,255,255,.3)}
+
+  .hero h1{font-family:'Oswald',sans-serif;font-weight:700;font-size:28px;letter-spacing:.04em;text-transform:uppercase;
+    text-shadow:0 2px 8px rgba(0,0,0,.5)}
+  .hero .sub{font-size:12.5px;color:var(--muted);margin-top:4px}
+
+  .ticket-row{display:flex;align-items:center;justify-content:center;gap:14px;margin:16px 0}
+  .ticket-pill{font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:8px 16px}
+  .buy-btn{font-family:'Oswald',sans-serif;letter-spacing:.05em;text-transform:uppercase;font-size:12px;font-weight:700;
+    padding:9px 16px;border-radius:999px;border:1px solid var(--gold);background:rgba(244,196,65,.15);color:var(--gold);
+    cursor:pointer;transition:.15s}
+  .buy-btn:hover:not(:disabled){background:rgba(244,196,65,.3)}
+  .buy-btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .wheel-wrap{position:relative;width:280px;height:280px;margin:18px auto 22px}
+  .pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);font-size:30px;z-index:5;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+  .wheel{width:100%;height:100%;border-radius:50%;border:6px solid #ffd966;box-shadow:0 0 30px rgba(255,217,102,.4),inset 0 0 20px rgba(0,0,0,.3);
+    position:relative;transition:transform 3.2s cubic-bezier(.12,.67,.1,1)}
+  .slice-label{position:absolute;top:50%;left:50%;transform-origin:0 0;font-family:'Oswald',sans-serif;font-weight:700;
+    font-size:10.5px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);white-space:nowrap}
+  .hub{position:absolute;top:50%;left:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;
+    background:radial-gradient(circle,#fff,#ffd966);box-shadow:0 0 14px rgba(255,217,102,.7);z-index:4;
+    display:flex;align-items:center;justify-content:center;font-size:20px}
+
+  .spin-btn{font-family:'Oswald',sans-serif;letter-spacing:.06em;text-transform:uppercase;font-size:15px;font-weight:700;
+    padding:14px 30px;border-radius:14px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#f72585,#9d4edd);color:#fff;box-shadow:0 4px 0 #6b1a8f,0 8px 18px rgba(0,0,0,.35);transition:.15s}
+  .spin-btn:disabled{opacity:.5;cursor:not-allowed}
+  .spin-btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #6b1a8f}
+
+  .empty{text-align:center;font-size:13px;padding:50px 20px;background:rgba(0,0,0,.25);border-radius:16px;color:#e9d9ff}
+  .state{text-align:center;padding:60px 20px;color:#e9d9ff}
+  .spinner{width:40px;height:40px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;margin:0 auto 14px;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .err{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.25);border-radius:14px;padding:20px;color:#ffd0d8;font-size:14px;line-height:1.6;text-align:left}
+
+  .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
+    background:#2c0a52;border:1px solid var(--gold);border-radius:12px;padding:14px 22px;color:var(--gold);
+    font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:.05em;box-shadow:0 0 30px rgba(244,196,65,.35);transition:.3s;z-index:80}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+  .powered-badge{position:fixed;bottom:10px;right:12px;z-index:60;font-size:11px;color:#e9d9ff;
+    background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:4px 9px;
+    display:none;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="powered-badge" id="powered-badge">⚡ Powered by GTVăn</div>
+<div class="wrap">
+  <div class="nav">
+    <a href="/">🏆 Leaderboard</a>
+    <a href="/daily.html">📅 Daily</a>
+    <a href="/store.html">🎁 Store</a>
+    <a href="/events.html">🗓 Events</a>
+    <a href="/mailbox.html">📬 Mailbox</a>
+    <a href="/milestones.html">🎯 Milestones</a>
+    <a href="/spin.html" class="on">🎰 Lucky Spin</a>
+    <a href="/auction.html">🔨 Auction</a>
+  </div>
+  <div id="content"><div class="state"><div class="spinner"></div>Loading...</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2600);}
+function fmtMoney(n){return Number(n||0).toLocaleString('en-US');}
+
+function tenantQS(){
+  const u = new URL(location.href);
+  const exp = u.searchParams.get('experienceId') || '';
+  const co  = u.searchParams.get('companyId') || '';
+  const p = new URLSearchParams();
+  if (exp) p.set('experienceId', exp);
+  if (co)  p.set('companyId', co);
+  const s = p.toString();
+  return s ? '?' + s : '';
+}
+function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
+
+const SLICE_COLORS = ['#f72585','#9d4edd','#4cc9f0','#06d6a0','#ffd166','#ff6b6b','#4895ef','#7209b7'];
+let DATA = null;
+let currentRotation = 0;
+let slices = [];
+
+function computeSlices(prizes){
+  const total = prizes.reduce((s,p)=>s+(Number(p.weight)||1),0) || 1;
+  let acc = 0;
+  return prizes.map((p,i)=>{
+    const deg = (Number(p.weight)||1) / total * 360;
+    const startDeg = acc, midDeg = acc + deg/2;
+    acc += deg;
+    return { ...p, startDeg, deg, midDeg, color: SLICE_COLORS[i % SLICE_COLORS.length] };
+  });
+}
+
+function wheelGradient(sl){
+  const total = sl.reduce((s,p)=>s+p.deg,0) || 360;
+  let acc = 0;
+  const stops = sl.map(p=>{
+    const from = acc/total*100, to = (acc+p.deg)/total*100;
+    acc += p.deg;
+    return `${p.color} ${from}% ${to}%`;
+  });
+  return `conic-gradient(${stops.join(',')})`;
+}
+
+async function load(){
+  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading...</div>`;
+  try{
+    const r=await tenantFetch('/.netlify/functions/spin');
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    $('powered-badge').style.display='block';
+    DATA = j;
+    render(j);
+  }catch(e){
+    $('content').innerHTML=`<div class="err"><b>⚠ Could not load data:</b> ${e.message}<br><br>Please open this page inside Whop.</div>`;
+  }
+}
+
+function render(j){
+  if (!j.enabled){
+    $('content').innerHTML = '<div class="empty">🎰 Lucky Spin is not active yet. Check back soon!</div>';
+    return;
+  }
+  if (!j.prizes.length){
+    $('content').innerHTML = '<div class="empty">No prizes configured yet.</div>';
+    return;
+  }
+
+  slices = computeSlices(j.prizes);
+  const labels = slices.map(s => `
+    <div class="slice-label" style="transform:rotate(${s.midDeg}deg) translate(0,-104px) rotate(${-s.midDeg}deg)">
+      ${esc(s.label)}${s.xu ? ' +'+fmtMoney(s.xu)+'XU' : ''}
+    </div>`).join('');
+
+  $('content').innerHTML = `
+    <div class="hero">
+      <h1>🎰 Lucky Spin</h1>
+      <div class="sub">Deposit for free tickets, or trade XU for a shot at the jackpot!</div>
+    </div>
+    <div class="ticket-row">
+      <div class="ticket-pill">🎟 ${j.tickets} ticket${j.tickets===1?'':'s'}</div>
+      <button class="buy-btn" id="buy-btn" ${j.xuAvailable < j.xuCostPerTicket ? 'disabled' : ''} onclick="buyTicket(this)">
+        Buy 1 (-${fmtMoney(j.xuCostPerTicket)} XU)
+      </button>
+    </div>
+    <div class="wheel-wrap">
+      <div class="pointer">🔻</div>
+      <div class="wheel" id="wheel" style="background:${wheelGradient(slices)}">${labels}</div>
+      <div class="hub">🎰</div>
+    </div>
+    <button class="spin-btn" id="spin-btn" ${j.tickets<=0?'disabled':''} onclick="doSpin(this)">SPIN (-1 🎟)</button>
+  `;
+}
+
+async function buyTicket(btn){
+  btn.disabled = true;
+  try{
+    const r = await tenantFetch('/.netlify/functions/spin', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'buy'})});
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error||'Error');
+    toast('🎟 Ticket purchased!');
+    setTimeout(load, 500);
+  }catch(e){
+    toast('⚠ '+e.message);
+    btn.disabled = false;
+  }
+}
+
+async function doSpin(btn){
+  btn.disabled = true;
+  $('buy-btn').disabled = true;
+  try{
+    const r = await tenantFetch('/.netlify/functions/spin', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'spin'})});
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error||'Error');
+
+    const won = slices.find(s => s.id === j.prizeId) || slices[0];
+    const desiredMod = (360 - won.midDeg + 360) % 360;
+    const extraSpins = 5 * 360;
+    currentRotation = currentRotation - (currentRotation % 360) + desiredMod + extraSpins;
+    const wheel = $('wheel');
+    wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+    setTimeout(() => {
+      toast(j.xu ? `🎉 You won +${j.xu} XU!` : (j.code ? `🎉 You won: ${won.label}!` : '🎉 You won a prize!'));
+      setTimeout(load, 1200);
+    }, 3300);
+  }catch(e){
+    toast('⚠ '+e.message);
+    btn.disabled = false;
+    $('buy-btn').disabled = false;
+  }
+}
+
+load();
+</script>
+</body>
+</html>

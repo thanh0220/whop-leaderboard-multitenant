@@ -201,6 +201,8 @@
     <a href="#events" onclick="switchTab('events');return false">🗓 Events</a>
     <a href="#chests" onclick="switchTab('chests');return false">📬 Community Chest</a>
     <a href="#milestones" onclick="switchTab('milestones');return false">🎯 Deposit Milestones</a>
+    <a href="#spin" onclick="switchTab('spin');return false">🎰 Lucky Spin</a>
+    <a href="#auction" onclick="switchTab('auction');return false">🔨 Auction</a>
   </div>
   <div id="content"><div class="state">Loading...</div></div>
 </div>
@@ -311,6 +313,8 @@ async function load(){
         events: normalizeEvents(j.events, IS_PAID ? 10 : 2),
         eventsEnabled: j.eventsEnabled !== false,
         milestoneRules: j.milestoneRules || {enabled:false,periodDays:7,tiers:[]},
+        spinRules: j.spinRules || {enabled:false,ticketsPerPayment:5,xuCostPerTicket:500,prizes:[]},
+        auctionRules: j.auctionRules || {enabled:false,rewardId:null,startingBid:5000,minIncrement:100,durationHours:48},
         branding: j.branding || {displayName:'',primaryColor:'#7c3aed',logoUrl:''},
       };
       renderAll();
@@ -328,7 +332,7 @@ const TAB_RENDERERS = {
   conn: renderConn, billing: renderBilling, branding: renderBranding,
   season: renderSeason, daily: renderDaily, store: renderStore,
   codes: renderCodes, events: renderEvents, chests: renderChests,
-  milestones: renderMilestones,
+  milestones: renderMilestones, spin: renderSpin, auction: renderAuction,
 };
 
 function toggleRow(checked, onchange, labelOn, labelOff){
@@ -700,6 +704,83 @@ function renderMilestones(){
     </div>`;
 }
 
+// ===== #spin — Lucky Spin (vé tự động khi nạp tiền thật, hoặc đổi bằng xu) =====
+function renderSpin(){
+  const rules = STATE.spinRules || {enabled:false,ticketsPerPayment:5,xuCostPerTicket:500,prizes:[]};
+  const rewardOptions = (p) => `
+    <option value="">— Reward XU directly —</option>
+    ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${p.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
+  const rows = (rules.prizes||[]).map((p,i)=>`
+    <div class="item">
+      <div class="row2">
+        <div><label>Prize name</label><input value="${esc(p.label||'')}" oninput="setPath(STATE,'spinRules.prizes.${i}.label',this.value)"/></div>
+        <div><label>Weight (higher = more common)</label><input type="number" min="1" value="${p.weight||1}" oninput="setPath(STATE,'spinRules.prizes.${i}.weight',Number(this.value)||1)"/></div>
+      </div>
+      <div class="row2">
+        <div>
+          <label>Reward</label>
+          <select onchange="setPath(STATE,'spinRules.prizes.${i}.rewardId',this.value||null);renderAll()">${rewardOptions(p)}</select>
+        </div>
+        ${p.rewardId
+          ? '<div><label>&nbsp;</label><div class="hint-small">Members get this Reward Store item for FREE.</div></div>'
+          : `<div><label>XU reward</label><input type="number" min="0" value="${p.xu||0}" oninput="setPath(STATE,'spinRules.prizes.${i}.xu',Number(this.value)||0)"/></div>`}
+      </div>
+      <button class="btn del" onclick="STATE.spinRules.prizes.splice(${i},1);renderAll()">🗑 Delete this prize</button>
+    </div>`).join('');
+  return `
+    <div class="sect" id="spin">🎰 Lucky Spin</div>
+    <div class="panel">
+      ${toggleRow(rules.enabled, "setPath(STATE,'spinRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Lucky Spin page.', "Disabled — members can't see this program.")}
+      <p class="hint-small" style="margin-bottom:10px">Every real payment automatically grants free spin tickets. Members can also trade XU for extra tickets. Each spin awards one prize at random (weighted) — delivered automatically, no manual work needed.</p>
+      <div class="row2">
+        <div><label>Tickets per payment</label><input type="number" min="0" value="${rules.ticketsPerPayment||0}" oninput="setPath(STATE,'spinRules.ticketsPerPayment',Number(this.value)||0)"/></div>
+        <div><label>XU cost per ticket</label><input type="number" min="0" value="${rules.xuCostPerTicket||0}" oninput="setPath(STATE,'spinRules.xuCostPerTicket',Number(this.value)||0)"/></div>
+      </div>
+      <div class="hint-small" style="margin:6px 0 10px">Set the XU cost high so depositing real money stays the better deal.</div>
+      ${rows || '<p class="hint-small">No prizes yet.</p>'}
+      <button class="btn" onclick="STATE.spinRules.prizes.push({id:'prize_'+Date.now().toString(36),label:'New prize',weight:10,rewardId:null,xu:50});renderAll()">+ Add prize</button>
+    </div>`;
+}
+
+// ===== #auction — 1 vật phẩm duy nhất đấu giá bằng xu =====
+function renderAuction(){
+  const rules = STATE.auctionRules || {enabled:false,rewardId:null,startingBid:5000,minIncrement:100,durationHours:48};
+  const rewardOptions = `
+    <option value="">— Pick a Reward Store item —</option>
+    ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${rules.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
+  return `
+    <div class="sect" id="auction">🔨 Auction</div>
+    <div class="panel">
+      ${toggleRow(rules.enabled, "setPath(STATE,'auctionRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Auction page.', "Disabled — members can't see this program.")}
+      <p class="hint-small" style="margin-bottom:10px">Members bid XU on ONE item. When time runs out, the highest bidder who still has enough XU automatically wins and receives the item — no manual work needed.</p>
+      <label>Item (from Reward Store)</label>
+      <select onchange="setPath(STATE,'auctionRules.rewardId',this.value||null)">${rewardOptions}</select>
+      <div class="row2">
+        <div><label>Starting bid (XU)</label><input type="number" min="0" value="${rules.startingBid||0}" oninput="setPath(STATE,'auctionRules.startingBid',Number(this.value)||0)"/></div>
+        <div><label>Min increment (XU)</label><input type="number" min="1" value="${rules.minIncrement||100}" oninput="setPath(STATE,'auctionRules.minIncrement',Number(this.value)||100)"/></div>
+      </div>
+      <label>Duration (hours)</label>
+      <input type="number" min="1" value="${rules.durationHours||48}" oninput="setPath(STATE,'auctionRules.durationHours',Number(this.value)||48)"/>
+      <div class="hint-small" style="margin:8px 0">⚠ Save all first, THEN start the auction — starting uses the saved settings.</div>
+      <button class="btn" onclick="startAuction(this)">🔨 Start New Auction</button>
+      <div class="msg" id="auction-status"></div>
+    </div>`;
+}
+
+async function startAuction(btn){
+  btn.disabled = true;
+  try{
+    const r = await tenantFetch('/.netlify/functions/auction', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'start'})});
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error||'Error');
+    $('auction-status').innerHTML = `<span class="msg ok">✅ Auction started — ends ${new Date(j.endsAt).toLocaleString()}.</span>`;
+  }catch(e){
+    $('auction-status').innerHTML = `<span class="msg err">⚠ ${e.message}</span>`;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
 // ===== #events — sự kiện (ảnh + tên + 1 ngày), sửa trực tiếp trên ô, kéo-thả lên lịch =====
 let eventsWeekOffset = 0;
 let dragChip = null; // idx của ô đang kéo (drop lần đầu lên lịch)
@@ -866,6 +947,8 @@ async function saveAll(){
     events: STATE.events,
     eventsEnabled: STATE.eventsEnabled,
     milestoneRules: STATE.milestoneRules,
+    spinRules: STATE.spinRules,
+    auctionRules: STATE.auctionRules,
     branding: STATE.branding,
   };
   if (typedApiKey.trim()) payload.whopApiKey = typedApiKey.trim();
