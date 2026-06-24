@@ -57,6 +57,11 @@ function rollXu(range) {
 export const handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "POST only" });
 
+  // Debug tạm: in ra TÊN header thật sự tới được function (không in giá trị
+  // signature/secret) — để xác định header chữ ký có tới hay bị mất giữa
+  // đường (Whop -> Netlify) trước khi đổ lỗi cho secret/webhook.
+  console.log("[webhook] header keys:", JSON.stringify(Object.keys(event.headers || {})));
+
   // 2 webhook ĐỘC LẬP cùng trỏ về function này, mỗi cái 1 secret riêng:
   // - WHOP_WEBHOOK_SECRET: webhook cấp APP (Ranking GTVan → Webhooks) — nhận
   //   payment_succeeded của MEMBER mua hàng từ TENANT (Flow A, phát rương).
