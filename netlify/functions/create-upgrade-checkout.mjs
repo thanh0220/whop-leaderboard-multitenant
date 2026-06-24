@@ -16,10 +16,10 @@ const json = (code, obj) => ({
 // rồi fetch đúng trang .md thật (không suy đoán qua probe không-auth nữa —
 // lần trước đoán nhầm /api/v2/checkout-sessions, gây lỗi 401):
 //   POST https://api.whop.com/api/v1/checkout_configurations
-//   body: { company_id, plan_id, metadata } — company_id là BẮT BUỘC, là
-//   company CỦA DEV (biz_xxx, set qua WHOP_DEV_COMPANY_ID) — KHÔNG phải
-//   `companyId` lấy từ getAuthContext() dưới đây (đó là tenantId nội bộ của
-//   tenant đang nâng cấp, chỉ dùng trong metadata.tenantId).
+//   body: { plan_id, metadata } — docs nói company_id "required" nhưng đó là
+//   cho nhánh tạo Plan MỚI inline (`plan: {...}`); khi đã có `plan_id` có sẵn
+//   (trường hợp của mình), Whop trả 400 "Cannot provide company_id for this
+//   configuration" nếu vẫn gửi — đã xác nhận bằng lỗi thật, KHÔNG gửi nữa.
 //   response: { id, company_id, mode, purchase_url, ... } — field "id" là
 //   checkout config id, dùng làm `data-whop-checkout-session` ở admin.html.
 //
@@ -35,9 +35,8 @@ export const handler = async (event) => {
 
   const devApiKey = process.env.WHOP_DEV_API_KEY;
   const planId = process.env.WHOP_PRO_PLAN_ID;
-  const devCompanyId = process.env.WHOP_DEV_COMPANY_ID;
-  if (!devApiKey || !planId || !devCompanyId) {
-    return json(500, { error: "Missing WHOP_DEV_API_KEY, WHOP_PRO_PLAN_ID, or WHOP_DEV_COMPANY_ID environment variable." });
+  if (!devApiKey || !planId) {
+    return json(500, { error: "Missing WHOP_DEV_API_KEY or WHOP_PRO_PLAN_ID environment variable." });
   }
 
   try {
@@ -48,7 +47,6 @@ export const handler = async (event) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        company_id: devCompanyId,
         plan_id: planId,
         metadata: { tenantId: companyId },
       }),
