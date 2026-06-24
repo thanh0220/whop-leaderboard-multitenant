@@ -35,6 +35,37 @@
   .chest .label{font-family:'Oswald',sans-serif;font-weight:700;font-size:14px}
   .chest.wood .label{color:var(--bronze)} .chest.silver .label{color:var(--silver)} .chest.gold .label{color:var(--gold)}
   .chest.buyer .label{color:#d5b8ff}
+
+  .chest3d{position:relative;width:52px;height:52px;flex-shrink:0;perspective:160px}
+  .chest3d .chest-visual{position:relative;display:block;width:100%;height:100%;line-height:52px;text-align:center;font-size:30px;
+    transform-style:preserve-3d;transform-origin:50% 80%;transition:transform .15s}
+  .chest3d canvas.chest-visual{line-height:normal;font-size:0}
+  .chest3d::before{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;
+    transform:translate(-50%,-50%) scale(0);opacity:0;pointer-events:none;
+    background:radial-gradient(circle,rgba(244,196,65,.95),rgba(244,196,65,0) 70%);z-index:2}
+  .chest.gold .chest3d::before{background:radial-gradient(circle,rgba(244,196,65,.95),rgba(244,196,65,0) 70%)}
+  .chest.silver .chest3d::before{background:radial-gradient(circle,rgba(203,213,225,.95),rgba(203,213,225,0) 70%)}
+  .chest.wood .chest3d::before{background:radial-gradient(circle,rgba(225,149,90,.95),rgba(225,149,90,0) 70%)}
+  .chest.buyer .chest3d::before{background:radial-gradient(circle,rgba(178,102,255,.95),rgba(178,102,255,0) 70%)}
+  .chest3d.opening::before{animation:burst .7s cubic-bezier(.2,.8,.2,1) forwards}
+  @keyframes burst{0%{transform:translate(-50%,-50%) scale(0);opacity:1}60%{transform:translate(-50%,-50%) scale(7);opacity:.5}100%{transform:translate(-50%,-50%) scale(9);opacity:0}}
+  .chest3d.opening .chest-visual{animation:chestShake .7s cubic-bezier(.2,.8,.2,1)}
+  @keyframes chestShake{
+    0%{transform:rotate(0) translateY(0)}
+    15%{transform:rotate(-8deg) translateY(0)}
+    30%{transform:rotate(7deg) translateY(0)}
+    45%{transform:rotate(-5deg) translateY(-2px)}
+    60%{transform:rotateX(-55deg) translateY(-3px) scale(1.15)}
+    80%{transform:rotateX(-25deg) translateY(-1px) scale(1.1)}
+    100%{transform:rotateX(0) translateY(0) scale(1)}
+  }
+  .spark{position:absolute;left:50%;top:50%;font-size:11px;opacity:0;pointer-events:none;z-index:2}
+  .chest3d.opening .spark{animation:sparkFly .8s cubic-bezier(.15,.7,.3,1) forwards}
+  @keyframes sparkFly{
+    0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}
+    15%{opacity:1}
+    100%{opacity:0;transform:translate(calc(-50% + var(--sx,0px)),calc(-50% + var(--sy,-34px))) scale(1) rotate(var(--sr,30deg))}
+  }
   .chest .desc{font-size:12.5px;color:var(--muted);margin-top:2px}
   .chest .desc b{color:var(--text)}
   .chest .exp{font-size:10.5px;color:var(--muted);margin-top:4px;font-family:'Oswald',sans-serif;letter-spacing:.04em}
@@ -74,6 +105,104 @@
 
 <div class="toast" id="toast"></div>
 
+<script type="module">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+
+const TIER_COLORS = {
+  wood:  { body:0x8b5a2b, lid:0x9c6a35, stud:0x5c3a1a, clasp:0xcaa56a },
+  silver:{ body:0xc7ccd6, lid:0xd6dae2, stud:0x8b93a3, clasp:0xeef2f8 },
+  gold:  { body:0xf4c441, lid:0xffd966, stud:0xb9860a, clasp:0xfff4cc },
+  buyer: { body:0xb266ff, lid:0xc18bff, stud:0x6b2fa0, clasp:0xe9d4ff },
+};
+
+function buildScene(canvas, tier) {
+  const colors = TIER_COLORS[tier] || TIER_COLORS.wood;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 10);
+  camera.position.set(1.4, 1.3, 1.8);
+  camera.lookAt(0, 0, 0);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+  dir.position.set(2, 3, 2);
+  scene.add(dir);
+
+  const group = new THREE.Group();
+
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(1.3, 0.7, 0.9),
+    new THREE.MeshStandardMaterial({ color: colors.body, roughness: 0.7 })
+  );
+  body.position.y = -0.05;
+  group.add(body);
+
+  // ổ khóa
+  const clasp = new THREE.Mesh(
+    new THREE.BoxGeometry(0.18, 0.22, 0.1),
+    new THREE.MeshStandardMaterial({ color: colors.clasp, metalness: 0.4, roughness: 0.4 })
+  );
+  clasp.position.set(0, -0.05, 0.5);
+  group.add(clasp);
+
+  // các khối góc trang trí
+  [[-0.6, -0.42], [0.6, -0.42], [-0.6, 0.42], [0.6, 0.42]].forEach(([x, z]) => {
+    const stud = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.7, 0.12),
+      new THREE.MeshStandardMaterial({ color: colors.stud, roughness: 0.8 })
+    );
+    stud.position.set(x, -0.05, z);
+    group.add(stud);
+  });
+
+  // nắp gắn vào pivot ở mép sau để xoay mở được
+  const pivot = new THREE.Group();
+  pivot.position.set(0, 0.3, -0.45);
+  const lid = new THREE.Mesh(
+    new THREE.BoxGeometry(1.3, 0.32, 0.9),
+    new THREE.MeshStandardMaterial({ color: colors.lid, roughness: 0.65 })
+  );
+  lid.position.set(0, 0.16, 0.45);
+  pivot.add(lid);
+  group.add(pivot);
+
+  group.rotation.y = -0.35;
+  scene.add(group);
+
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(canvas.width, canvas.height, false);
+  renderer.render(scene, camera);
+
+  let rafId = null;
+  function open() {
+    if (rafId) return; // đã/đang mở rồi
+    const start = performance.now();
+    const duration = 650;
+    const from = pivot.rotation.x, to = -1.92; // ~-110deg
+    function tick(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      pivot.rotation.x = from + (to - from) * eased;
+      renderer.render(scene, camera);
+      if (t < 1) rafId = requestAnimationFrame(tick);
+      else rafId = null;
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function dispose() {
+    if (rafId) cancelAnimationFrame(rafId);
+    renderer.dispose();
+    if (renderer.forceContextLoss) renderer.forceContextLoss();
+  }
+
+  return { open, dispose };
+}
+
+window.ChestVoxel = {
+  create(canvas, tier) { return buildScene(canvas, tier); },
+};
+</script>
+
 <script>
 const $=id=>document.getElementById(id);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -110,14 +239,25 @@ function fmtCountdown(expiresAt){
   return `Hết hạn sau ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
+const chestRegistry = {};
+
 function render(entries){
+  Object.values(chestRegistry).forEach(c => { try{ c.dispose(); }catch(_){} });
+  for (const k in chestRegistry) delete chestRegistry[k];
+
   if (!entries.length){
     $('content').innerHTML = '<div class="empty">📭 Hộp thư trống. Khi có member nào mua hàng trên Whop, cả kênh sẽ nhận được rương ở đây!</div>';
     return;
   }
+  const sparkAngles = [[-26,-10,-22],[24,-8,18],[-10,-34,-14],[12,-30,26],[-34,-22,-30],[30,-20,32]];
   $('content').innerHTML = entries.map(e => `
     <div class="chest ${e.tier}" id="chest-${esc(e.id)}">
-      <div class="icon">${esc(e.icon||'🎁')}</div>
+      <div class="chest3d">
+        ${e.claimed
+          ? `<div class="chest-visual">🪙</div>`
+          : `<canvas class="chest-visual" id="cv-${esc(e.id)}" width="52" height="52"></canvas>`}
+        ${sparkAngles.map(([sx,sy,sr])=>`<span class="spark" style="--sx:${sx}px;--sy:${sy}px;--sr:${sr}deg">🪙</span>`).join('')}
+      </div>
       <div class="info">
         <div class="label">${esc(e.label)}</div>
         <div class="desc"><b>${esc(e.buyerName)}</b> đã mua hàng trên Whop</div>
@@ -127,6 +267,14 @@ function render(entries){
       <div class="pop" id="pop-${esc(e.id)}"></div>
     </div>`).join('');
 
+  entries.forEach(e => {
+    if (e.claimed) return;
+    const canvas = $('cv-' + e.id);
+    if (canvas && window.ChestVoxel) {
+      chestRegistry[e.id] = window.ChestVoxel.create(canvas, e.tier);
+    }
+  });
+
   setInterval(()=>{
     document.querySelectorAll('.exp[data-exp]').forEach(el=>{ el.textContent = fmtCountdown(el.dataset.exp); });
   }, 1000);
@@ -134,8 +282,14 @@ function render(entries){
 
 async function claim(id, btn){
   btn.disabled = true;
+  const chestEl = document.getElementById('chest-'+id);
+  const chest3d = chestEl ? chestEl.querySelector('.chest3d') : null;
+  if (chest3d) chest3d.classList.add('opening');
+  chestRegistry[id]?.open();
+  const animDone = new Promise(res => setTimeout(res, 650));
   try{
-    const r = await tenantFetch('/.netlify/functions/mailbox', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({entryId:id})});
+    const reqPromise = tenantFetch('/.netlify/functions/mailbox', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({entryId:id})});
+    const [r] = await Promise.all([reqPromise, animDone]);
     const j = await r.json();
     if(!r.ok) throw new Error(j.error||'Lỗi');
     const pop = $('pop-'+id);
@@ -144,6 +298,7 @@ async function claim(id, btn){
     toast(j.message);
     setTimeout(load, 1200);
   }catch(e){
+    if (chest3d) chest3d.classList.remove('opening');
     toast('⚠ '+e.message);
     btn.disabled = false;
   }
