@@ -70,6 +70,7 @@ function verifyStandardWebhook(headers, body, secrets) {
 
   const signedContent = `${id}.${timestamp}.${body}`;
   const sentSigs = sigHeader.split(" ").map((s) => s.split(",")[1]).filter(Boolean);
+  console.log("[webhook] verify debug — id:", id, "timestamp:", timestamp, "sigHeader:", sigHeader, "bodyLen:", body.length);
 
   for (const secret of secrets) {
     const stripped = secret.replace(/^whsec_|^ws_/, "");
@@ -77,6 +78,7 @@ function verifyStandardWebhook(headers, body, secrets) {
       let keyBytes;
       try { keyBytes = Buffer.from(stripped, enc); } catch (_) { continue; }
       const computed = crypto.createHmac("sha256", keyBytes).update(signedContent, "utf8").digest("base64");
+      console.log(`[webhook] verify debug — secret=${secret.slice(0,6)}... enc=${enc} computed=${computed}`);
       if (sentSigs.includes(computed)) return JSON.parse(body);
     }
   }
