@@ -61,7 +61,7 @@ export const handler = async (event) => {
     return {
       statusCode: 400,
       headers: corsHeaders,
-      body: JSON.stringify({ error: "Không xác định được community (companyId). Hãy mở trang này bên trong Whop." }),
+      body: JSON.stringify({ error: "Could not identify the community (companyId). Please open this page inside Whop." }),
     };
   }
 
@@ -72,7 +72,7 @@ export const handler = async (event) => {
     return {
       statusCode: 500,
       headers: corsHeaders,
-      body: JSON.stringify({ error: `Không lấy được access token cho company: ${err.message}` }),
+      body: JSON.stringify({ error: `Could not get an access token for the company: ${err.message}` }),
     };
   }
   const headers = { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" };
@@ -174,7 +174,7 @@ export const handler = async (event) => {
         const ok =
           amt > 0 && !hasRefund && !isBad && (goodStatus || (!!p.paid_at && status === ""));
 
-        const key = status || "(rỗng)";
+        const key = status || "(empty)";
         if (!statusReport[key]) statusReport[key] = { count: 0, vip: 0, excluded: 0 };
         statusReport[key].count++;
         statusReport[key][ok ? "vip" : "excluded"]++;
@@ -446,7 +446,7 @@ export const handler = async (event) => {
     const _endMs = Date.UTC(_n.getUTCFullYear(), _n.getUTCMonth() + 1, 1);
     const season = {
       seasonKey: `${_n.getUTCFullYear()}-${String(_n.getUTCMonth()+1).padStart(2,'0')}`,
-      label: `Tháng ${String(_n.getUTCMonth()+1).padStart(2,'0')}/${_n.getUTCFullYear()}`,
+      label: `Month ${String(_n.getUTCMonth()+1).padStart(2,'0')}/${_n.getUTCFullYear()}`,
       endsAt: new Date(_endMs).toISOString(),
       secondsLeft: Math.max(0, Math.floor((_endMs - _n.getTime()) / 1000)),
       topRewards: cfg.seasonTopRewards,

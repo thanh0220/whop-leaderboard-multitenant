@@ -59,18 +59,18 @@ export const DEFAULT_TENANT = {
   // Luôn đúng 3 ô (ảnh + tên + 1 ngày duy nhất) — admin sửa trực tiếp trên ô,
   // không có form cài đặt riêng, không thêm/xoá được.
   events: [
-    { id: "event_1", name: "Sự kiện 1", image: "", date: "" },
-    { id: "event_2", name: "Sự kiện 2", image: "", date: "" },
-    { id: "event_3", name: "Sự kiện 3", image: "", date: "" },
+    { id: "event_1", name: "Event 1", image: "", date: "" },
+    { id: "event_2", name: "Event 2", image: "", date: "" },
+    { id: "event_3", name: "Event 3", image: "", date: "" },
   ],
   // Rương Liên Minh: khi 1 member mua hàng thật trên Whop (webhook
   // payment_succeeded — xem webhook.mjs), TOÀN BỘ member khác trong kênh
   // nhận 1 rương. Tier chọn theo số tiền USD của giao dịch (đã đổi qua `fx`).
   chestRules: {
     thresholds: [
-      { tier: "wood",   label: "Rương Gỗ",   icon: "🟫", minUsd: 0 },
-      { tier: "silver", label: "Rương Bạc",  icon: "⬜", minUsd: 20 },
-      { tier: "gold",   label: "Rương Vàng", icon: "🟨", minUsd: 100 },
+      { tier: "wood",   label: "Wood Chest",   icon: "🟫", minUsd: 0 },
+      { tier: "silver", label: "Silver Chest", icon: "⬜", minUsd: 20 },
+      { tier: "gold",   label: "Gold Chest",   icon: "🟨", minUsd: 100 },
     ],
     rewardRange: {
       wood:   { min: 5,   max: 15 },

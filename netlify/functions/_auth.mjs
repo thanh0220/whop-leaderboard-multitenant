@@ -17,7 +17,7 @@ async function verifyUser(event) {
   if (!token) { lastVerifyError = "no-token-header"; return null; }
   try {
     const res = await verifyUserToken(new Headers(h), { appId: APP_ID, dontThrow: true });
-    lastVerifyError = res ? null : "verifyUserToken trả null (token sai/hết hạn)";
+    lastVerifyError = res ? null : "verifyUserToken returned null (invalid or expired token)";
     return res?.userId || null;
   } catch (e) {
     lastVerifyError = e?.message || String(e);

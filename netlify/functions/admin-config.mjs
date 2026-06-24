@@ -43,8 +43,8 @@ export const handler = async (event) => {
   }
 
   const { userId, companyId } = await getAuthContext(event);
-  if (!userId) return json(401, { error: "Không xác định được người dùng." });
-  if (!companyId) return json(400, { error: "Không xác định được community. Hãy mở trang này bên trong Whop." });
+  if (!userId) return json(401, { error: "Could not identify the user." });
+  if (!companyId) return json(400, { error: "Could not identify the community. Please open this page inside Whop." });
 
   const cfg = await getTenantConfig(companyId);
 
@@ -65,7 +65,7 @@ export const handler = async (event) => {
     });
   }
 
-  if (event.httpMethod !== "POST") return json(405, { error: "GET hoặc POST" });
+  if (event.httpMethod !== "POST") return json(405, { error: "GET or POST" });
 
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
@@ -75,27 +75,27 @@ export const handler = async (event) => {
   // trong request này (để các lần lưu CMS khác — vd chỉ sửa rewards — không
   // bị bắt phải gửi lại API key).
   if (whopApiKey !== undefined && !String(whopApiKey).trim()) {
-    return json(400, { error: "Company API key không được để trống." });
+    return json(400, { error: "Company API key cannot be empty." });
   }
   if (whopCompanyId !== undefined && !String(whopCompanyId).trim()) {
-    return json(400, { error: "Company ID không được để trống." });
+    return json(400, { error: "Company ID cannot be empty." });
   }
 
   const partial = {};
   for (const k of ALLOWED_KEYS) {
     if (Object.prototype.hasOwnProperty.call(body, k)) partial[k] = body[k];
   }
-  // Validate nhẹ hình dạng dữ liệu — tránh lưu nhầm kiểu sai làm vỡ trang member.
+  // Light shape validation — avoids saving the wrong type and breaking the member-facing pages.
   for (const k of ["checkinRewards", "seasonTopRewards", "rewards", "events"]) {
     if (k in partial && !Array.isArray(partial[k])) {
-      return json(400, { error: `${k} phải là 1 mảng (array).` });
+      return json(400, { error: `${k} must be an array.` });
     }
   }
   if ("redeemCodes" in partial && (typeof partial.redeemCodes !== "object" || partial.redeemCodes === null || Array.isArray(partial.redeemCodes))) {
-    return json(400, { error: "redeemCodes phải là 1 object dạng { code: số xu }." });
+    return json(400, { error: "redeemCodes must be an object of { code: xu amount }." });
   }
   if ("chestRules" in partial && (typeof partial.chestRules !== "object" || partial.chestRules === null || Array.isArray(partial.chestRules))) {
-    return json(400, { error: "chestRules phải là 1 object." });
+    return json(400, { error: "chestRules must be an object." });
   }
 
   if (whopApiKey) partial.whopApiKey = String(whopApiKey).trim();

@@ -62,10 +62,10 @@ export const handler = async (event) => {
 
   const { userId, companyId } = await getAuthContext(event);
   if (!userId) {
-    return json(401, { error: "Không xác định được người dùng. Hãy mở trang này bên trong Whop." });
+    return json(401, { error: "Could not identify the user. Please open this page inside Whop." });
   }
   if (!companyId) {
-    return json(400, { error: "Không xác định được community (companyId)." });
+    return json(400, { error: "Could not identify the community (companyId)." });
   }
 
   try {

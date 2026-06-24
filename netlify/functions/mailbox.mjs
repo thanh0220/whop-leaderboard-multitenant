@@ -12,8 +12,8 @@ const json = (code, obj) => ({
 
 export const handler = async (event) => {
   const { userId, companyId } = await getAuthContext(event);
-  if (!userId) return json(401, { error: "Không xác định được người dùng." });
-  if (!companyId) return json(400, { error: "Không xác định được community (companyId)." });
+  if (!userId) return json(401, { error: "Could not identify the user." });
+  if (!companyId) return json(400, { error: "Could not identify the community (companyId)." });
 
   const store = pointsStore();
   const key = tenantKey("mailbox", companyId, userId);
@@ -31,14 +31,14 @@ export const handler = async (event) => {
     return json(200, { entries: list });
   }
 
-  if (event.httpMethod !== "POST") return json(405, { error: "GET hoặc POST" });
+  if (event.httpMethod !== "POST") return json(405, { error: "GET or POST" });
 
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
   const entry = list.find((e) => e.id === body.entryId);
-  if (!entry) return json(400, { error: "Rương không hợp lệ hoặc đã hết hạn." });
-  if (entry.claimed) return json(409, { error: "Rương này đã được nhận." });
-  if (new Date(entry.expiresAt).getTime() <= now) return json(400, { error: "Rương đã hết hạn." });
+  if (!entry) return json(400, { error: "Invalid or expired chest." });
+  if (entry.claimed) return json(409, { error: "This chest has already been claimed." });
+  if (new Date(entry.expiresAt).getTime() <= now) return json(400, { error: "This chest has expired." });
 
   entry.claimed = true;
   await store.setJSON(key, list);
@@ -48,5 +48,5 @@ export const handler = async (event) => {
   bonus += entry.xu;
   await store.set(tenantKey("bonus", companyId, userId), String(bonus));
 
-  return json(200, { ok: true, xu: entry.xu, tier: entry.tier, bonusTotal: bonus, message: `+${entry.xu} xu từ ${entry.label}!` });
+  return json(200, { ok: true, xu: entry.xu, tier: entry.tier, bonusTotal: bonus, message: `+${entry.xu} XU from ${entry.label}!` });
 };

@@ -58,7 +58,7 @@ export const handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "POST only" });
 
   const secret = process.env.WHOP_WEBHOOK_SECRET;
-  if (!secret) return json(500, { error: "Thiếu biến môi trường WHOP_WEBHOOK_SECRET." });
+  if (!secret) return json(500, { error: "Missing environment variable WHOP_WEBHOOK_SECRET." });
 
   let payload;
   try {
@@ -69,7 +69,7 @@ export const handler = async (event) => {
     const validate = makeWebhookValidator({ webhookSecret: secret });
     payload = await validate(req);
   } catch (err) {
-    return json(400, { error: "Webhook signature không hợp lệ: " + err.message });
+    return json(400, { error: "Invalid webhook signature: " + err.message });
   }
 
   // Chống xử lý trùng (Whop có thể gửi lại cùng 1 event).
@@ -108,7 +108,7 @@ export const handler = async (event) => {
 
     const buyerUserId = data.user_id || (typeof data.user === "string" ? data.user : data.user?.id) || null;
 
-    let buyerName = data.user?.username || data.user?.name || pickUsername(data.user) || data.user_id || "Một thành viên";
+    let buyerName = data.user?.username || data.user?.name || pickUsername(data.user) || data.user_id || "A member";
     if (!data.user?.username && buyerUserId) {
       try {
         const r = await fetch(`https://api.whop.com/api/v1/users/${buyerUserId}`, {
@@ -159,7 +159,7 @@ export const handler = async (event) => {
       await appendMailbox(buyerUserId, {
         id: `${eventId || now}_thanks_${buyerUserId}`,
         tier: "buyer",
-        label: "🎉 Cảm ơn đã mua hàng!",
+        label: "🎉 Thank you for your purchase!",
         icon: "🎉",
         xu: buyerXu,
         buyerName,

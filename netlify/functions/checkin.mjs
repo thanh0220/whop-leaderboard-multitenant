@@ -21,8 +21,8 @@ function yesterday(dayKey) {
 
 export const handler = async (event) => {
   const { userId, companyId } = await getAuthContext(event);
-  if (!userId) return json(401, { error: "Không xác định được người dùng." });
-  if (!companyId) return json(400, { error: "Không xác định được community (companyId)." });
+  if (!userId) return json(401, { error: "Could not identify the user." });
+  if (!companyId) return json(400, { error: "Could not identify the community (companyId)." });
 
   const cfg = await getTenantConfig(companyId);
   const CHECKIN_REWARDS = cfg.checkinRewards;
@@ -53,15 +53,15 @@ export const handler = async (event) => {
     });
   }
 
-  if (event.httpMethod !== "POST") return json(405, { error: "GET hoặc POST" });
+  if (event.httpMethod !== "POST") return json(405, { error: "GET or POST" });
 
   if (!(await isPaidTier(companyId))) {
-    return json(402, { error: "Check-in là tính năng trả phí. Nâng cấp để mở khoá." });
+    return json(402, { error: "Check-in is a paid feature. Upgrade to unlock it." });
   }
 
   // POST: claim
   if (state.lastDay === today) {
-    return json(409, { error: "Hôm nay bạn đã điểm danh rồi.", streak: state.streak });
+    return json(409, { error: "You've already checked in today.", streak: state.streak });
   }
   const newStreak = state.lastDay === yesterday(today) ? state.streak + 1 : 1;
   const idx = ((newStreak - 1) % CHECKIN_REWARDS.length + CHECKIN_REWARDS.length) % CHECKIN_REWARDS.length;
@@ -80,6 +80,6 @@ export const handler = async (event) => {
     streak: newStreak,
     reward,
     bonusTotal: bonus,
-    message: `+${reward} xu — chuỗi ${newStreak} ngày!`,
+    message: `+${reward} XU — ${newStreak}-day streak!`,
   });
 };

@@ -14,27 +14,27 @@ export const handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "POST only" });
 
   const { userId, companyId } = await getAuthContext(event);
-  if (!userId) return json(401, { error: "Không xác định được người dùng." });
-  if (!companyId) return json(400, { error: "Không xác định được community (companyId)." });
+  if (!userId) return json(401, { error: "Could not identify the user." });
+  if (!companyId) return json(400, { error: "Could not identify the community (companyId)." });
 
   if (!(await isPaidTier(companyId))) {
-    return json(402, { error: "Nhập code là tính năng trả phí. Nâng cấp để mở khoá." });
+    return json(402, { error: "Redeeming codes is a paid feature. Upgrade to unlock it." });
   }
 
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
   const code = String(body.code || "").trim().toLowerCase();
-  if (!code) return json(400, { error: "Vui lòng nhập code." });
+  if (!code) return json(400, { error: "Please enter a code." });
 
   const cfg = await getTenantConfig(companyId);
   const raw = cfg.redeemCodes[code];
-  // Tương thích ngược: code cũ lưu dạng số (xu), code mới lưu dạng object { xu, startDate?, endDate? }.
+  // Backward compatibility: old codes stored as a plain number (XU), new codes stored as an object { xu, startDate?, endDate? }.
   const reward = typeof raw === "number" ? { xu: raw } : raw;
-  if (!reward || !reward.xu) return json(400, { error: "Code không hợp lệ." });
+  if (!reward || !reward.xu) return json(400, { error: "Invalid code." });
 
   const today = utcDayKey();
   if (!isWithinWindow(reward.startDate, reward.endDate, reward.repeatDays, today)) {
-    return json(400, { error: "Code chưa tới ngày sử dụng hoặc đã hết hạn." });
+    return json(400, { error: "This code isn't active yet or has expired." });
   }
 
   const store = pointsStore();
@@ -48,6 +48,6 @@ export const handler = async (event) => {
     code,
     added: reward.xu,
     bonusTotal: bonus,
-    message: `+${reward.xu} xu đã được cộng!`,
+    message: `+${reward.xu} XU added!`,
   });
 };

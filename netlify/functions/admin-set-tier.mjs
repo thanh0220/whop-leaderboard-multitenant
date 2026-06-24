@@ -22,7 +22,7 @@ export const handler = async (event) => {
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
   const { companyId, tier } = body;
   if (!companyId || !["free", "paid"].includes(tier)) {
-    return json(400, { error: 'Cần { companyId, tier: "free"|"paid" }' });
+    return json(400, { error: 'Requires { companyId, tier: "free"|"paid" }' });
   }
 
   await setTenantTier(companyId, tier);

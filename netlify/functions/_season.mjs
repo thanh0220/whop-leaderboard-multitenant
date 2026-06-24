@@ -21,6 +21,6 @@ export function seasonInfo(now = new Date()) {
     seasonKey: seasonKey(now),
     endsAt: new Date(endMs).toISOString(),
     secondsLeft,
-    label: `Tháng ${monthNames[m]}/${y}`,
+    label: `Month ${monthNames[m]}/${y}`,
   };
 }

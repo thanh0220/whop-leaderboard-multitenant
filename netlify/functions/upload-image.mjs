@@ -21,28 +21,28 @@ export const handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "POST only" });
 
   const { userId, companyId } = await getAuthContext(event);
-  if (!userId) return json(401, { error: "Không xác định được người dùng." });
-  if (!companyId) return json(400, { error: "Không xác định được community." });
+  if (!userId) return json(401, { error: "Could not identify the user." });
+  if (!companyId) return json(400, { error: "Could not identify the community." });
 
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
   const { filename, contentType, dataBase64 } = body;
 
   if (!contentType || !String(contentType).startsWith("image/")) {
-    return json(400, { error: "File phải là ảnh (contentType bắt đầu bằng image/)." });
+    return json(400, { error: "File must be an image (contentType must start with image/)." });
   }
   if (!dataBase64) {
-    return json(400, { error: "Thiếu dữ liệu ảnh." });
+    return json(400, { error: "Missing image data." });
   }
 
   let bytes;
   try {
     bytes = Buffer.from(dataBase64, "base64");
   } catch (_) {
-    return json(400, { error: "Dữ liệu ảnh không hợp lệ (không decode được base64)." });
+    return json(400, { error: "Invalid image data (could not decode base64)." });
   }
   if (bytes.length > MAX_IMAGE_BYTES) {
-    return json(400, { error: `Ảnh quá lớn (tối đa ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)}MB).` });
+    return json(400, { error: `Image too large (max ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)}MB).` });
   }
 
   const id = newId();
@@ -53,7 +53,7 @@ export const handler = async (event) => {
       metadata: { contentType, filename: filename || "image", uploadedAt: new Date().toISOString() },
     });
   } catch (err) {
-    return json(500, { error: `Không lưu được ảnh: ${err.message}` });
+    return json(500, { error: `Could not save the image: ${err.message}` });
   }
 
   return json(200, {

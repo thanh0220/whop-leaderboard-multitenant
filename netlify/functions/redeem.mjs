@@ -22,11 +22,11 @@ export const handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "POST only" });
 
   const { userId, companyId } = await getAuthContext(event);
-  if (!userId) return json(401, { error: "Không xác định được người dùng." });
-  if (!companyId) return json(400, { error: "Không xác định được community (companyId)." });
+  if (!userId) return json(401, { error: "Could not identify the user." });
+  if (!companyId) return json(400, { error: "Could not identify the community (companyId)." });
 
   if (!(await isPaidTier(companyId))) {
-    return json(402, { error: "Đổi quà là tính năng trả phí. Nâng cấp để mở khoá." });
+    return json(402, { error: "Redeeming rewards is a paid feature. Upgrade to unlock it." });
   }
 
   let body = {};
@@ -35,7 +35,7 @@ export const handler = async (event) => {
   try {
     const cfg = await getTenantConfig(companyId);
     const reward = cfg.rewards.find((r) => r.id === body.rewardId);
-    if (!reward) return json(400, { error: "Quà không hợp lệ." });
+    if (!reward) return json(400, { error: "Invalid reward." });
 
     const apiKey = await getCompanyAccessToken(companyId);
     const { earned } = await computeEarned(userId, apiKey, companyId, cfg);
@@ -46,7 +46,7 @@ export const handler = async (event) => {
 
     const available = earned - spent;
     if (available < reward.cost) {
-      return json(402, { error: "Không đủ điểm.", available, cost: reward.cost });
+      return json(402, { error: "Not enough points.", available, cost: reward.cost });
     }
 
     const payload = reward.payload || { kind: "code", code: "" };
