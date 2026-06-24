@@ -21,12 +21,16 @@ export const handler = async (event) => {
     return json(402, { error: "Redeeming codes is a paid feature. Upgrade to unlock it." });
   }
 
+  const cfg = await getTenantConfig(companyId);
+  if (cfg.codesEnabled === false) {
+    return json(200, { ok: false, disabled: true, error: "This feature is temporarily disabled." });
+  }
+
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
   const code = String(body.code || "").trim().toLowerCase();
   if (!code) return json(400, { error: "Please enter a code." });
 
-  const cfg = await getTenantConfig(companyId);
   const raw = cfg.redeemCodes[code];
   // Backward compatibility: old codes stored as a plain number (XU), new codes stored as an object { xu, startDate?, endDate? }.
   const reward = typeof raw === "number" ? { xu: raw } : raw;

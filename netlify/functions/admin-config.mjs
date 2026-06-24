@@ -22,8 +22,11 @@ const ALLOWED_KEYS = [
   "seasonTopRewards",
   "rewards",
   "redeemCodes",
+  "codesEnabled",
   "chestRules",
   "events",
+  "eventsEnabled",
+  "milestoneRules",
 ];
 
 // GET: trả toàn bộ config tenant (trừ whopApiKey/setupSecret — không bao giờ
@@ -62,9 +65,12 @@ export const handler = async (event) => {
       seasonTopRewards: cfg.seasonTopRewards,
       rewards: cfg.rewards,
       redeemCodes: cfg.redeemCodes,
+      codesEnabled: cfg.codesEnabled,
       unlockAllFeatures: cfg.unlockAllFeatures,
       chestRules: cfg.chestRules,
       events: cfg.events,
+      eventsEnabled: cfg.eventsEnabled,
+      milestoneRules: cfg.milestoneRules,
     });
   }
 
@@ -99,6 +105,9 @@ export const handler = async (event) => {
   }
   if ("chestRules" in partial && (typeof partial.chestRules !== "object" || partial.chestRules === null || Array.isArray(partial.chestRules))) {
     return json(400, { error: "chestRules must be an object." });
+  }
+  if ("milestoneRules" in partial && (typeof partial.milestoneRules !== "object" || partial.milestoneRules === null || Array.isArray(partial.milestoneRules))) {
+    return json(400, { error: "milestoneRules must be an object." });
   }
 
   // Chặn bypass cap Free/Paid bằng cách gọi API thẳng (UI admin.html đã tự

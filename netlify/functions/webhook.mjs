@@ -154,11 +154,33 @@ export const handler = async (event) => {
     const currency = String(data.currency || "usd").toLowerCase();
     const usd = amount * (cfg.fx[currency] ?? 1);
 
+    const buyerUserId = data.user_id || (typeof data.user === "string" ? data.user : data.user?.id) || null;
+
+    // Nạp lũy kế: cộng dồn USD nạp THẬT của buyer trong kỳ hiện tại, độc lập
+    // hoàn toàn với Rương Liên Minh bên dưới — bật/tắt riêng qua milestoneRules.
+    let milestoneResult = null;
+    if (buyerUserId && cfg.milestoneRules?.enabled) {
+      try {
+        const mKey = tenantKey("milestone-progress", tenantId, buyerUserId);
+        const periodMs = (cfg.milestoneRules.periodDays || 7) * 86400000;
+        const now2 = Date.now();
+        let progress = null;
+        try { progress = await store.get(mKey, { type: "json" }); } catch (_) {}
+        if (!progress || now2 - progress.periodStart >= periodMs) {
+          progress = { periodStart: now2, usd: 0, claimedTiers: [] };
+        }
+        progress.usd += usd;
+        await store.setJSON(mKey, progress);
+        milestoneResult = { usd: progress.usd };
+      } catch (_) {}
+    }
+
     const rules = cfg.chestRules;
+    if (rules?.enabled === false) {
+      return json(200, { ok: true, skipped: "chest-disabled", milestone: milestoneResult });
+    }
     const tier = pickTier(usd, rules.thresholds);
     const xu = rollXu(rules.rewardRange[tier.tier]);
-
-    const buyerUserId = data.user_id || (typeof data.user === "string" ? data.user : data.user?.id) || null;
 
     let buyerName = data.user?.username || data.user?.name || pickUsername(data.user) || data.user_id || "A member";
     if (!data.user?.username && buyerUserId) {
@@ -221,7 +243,7 @@ export const handler = async (event) => {
       });
     }
 
-    return json(200, { ok: true, tenantId, tier: tier.tier, xu, buyerXu, grantedTo: members.length });
+    return json(200, { ok: true, tenantId, tier: tier.tier, xu, buyerXu, grantedTo: members.length, milestone: milestoneResult });
   } catch (err) {
     return json(500, { error: err.message });
   }

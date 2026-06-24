@@ -20,6 +20,10 @@ export const handler = async (event) => {
   const paid = await isPaidTier(companyId);
   const limit = paid ? 10 : 2;
 
+  if (cfg.eventsEnabled === false) {
+    return json(200, { events: [], branding: cfg.branding, isPaid: paid });
+  }
+
   const events = (cfg.events || [])
     .slice(0, limit)
     .filter((e) => e.date)

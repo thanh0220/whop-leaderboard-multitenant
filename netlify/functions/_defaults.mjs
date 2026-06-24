@@ -55,6 +55,11 @@ export const DEFAULT_TENANT = {
   // được ship sẵn sản phẩm của 1 business cụ thể cho mọi tenant khác.
   rewards: [],
   redeemCodes: {},
+  // Công tắc bật/tắt riêng cho Redeem Codes — field RIÊNG (không nhồi vào
+  // trong redeemCodes, vì đó là map động code->reward, nhồi "enabled" vào sẽ
+  // đụng với 1 code thật tên "enabled"). deepMerge ở _tenant.mjs tự thêm field
+  // này cho tenant cũ (chưa từng lưu) mà không cần migration riêng.
+  codesEnabled: true,
   // Lịch sự kiện độc lập (live stream, khuyến mãi, AMA, bảo trì...) — KHÔNG
   // gắn với Nhiệm vụ/Code, chỉ để thông báo/hiển thị trên public/events.html.
   // 2 ô mặc định (khớp giới hạn Free) — admin tự thêm/xoá ô qua admin.html,
@@ -63,10 +68,12 @@ export const DEFAULT_TENANT = {
     { id: "event_1", name: "Event 1", image: "", date: "" },
     { id: "event_2", name: "Event 2", image: "", date: "" },
   ],
+  eventsEnabled: true,
   // Rương Liên Minh: khi 1 member mua hàng thật trên Whop (webhook
   // payment_succeeded — xem webhook.mjs), TOÀN BỘ member khác trong kênh
   // nhận 1 rương. Tier chọn theo số tiền USD của giao dịch (đã đổi qua `fx`).
   chestRules: {
+    enabled: true,
     thresholds: [
       { tier: "wood",   label: "Wood Chest",   icon: "🟫", minUsd: 0 },
       { tier: "silver", label: "Silver Chest", icon: "⬜", minUsd: 20 },
@@ -82,5 +89,18 @@ export const DEFAULT_TENANT = {
     // họ dễ refund nhất (vừa trả tiền) rằng quyết định mua là đúng.
     buyerReward: { min: 80, max: 200 },
     expiryHours: 48,
+  },
+  // Nạp lũy kế: member tự cộng dồn USD đã nạp THẬT trong 1 kỳ (periodDays),
+  // đạt mốc (thresholdUsd) thì claim quà — ưu tiên giao 1 reward có sẵn trong
+  // `rewards` (rewardId) nếu admin gắn, không thì thưởng thẳng xu khai báo
+  // trên tier. Mặc định tắt vì cần admin tự đặt mốc trước khi bật.
+  milestoneRules: {
+    enabled: false,
+    periodDays: 7,
+    tiers: [
+      { thresholdUsd: 5,  rewardId: null, xu: 50,  label: "Mốc 1", icon: "🎁" },
+      { thresholdUsd: 10, rewardId: null, xu: 150, label: "Mốc 2", icon: "🎁" },
+      { thresholdUsd: 20, rewardId: null, xu: 400, label: "Mốc 3", icon: "🎁" },
+    ],
   },
 };
