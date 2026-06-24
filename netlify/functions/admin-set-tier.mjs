@@ -1,4 +1,4 @@
-import { setTenantTier } from "./_tenant.mjs";
+import { setTenantTier, saveTenantConfig } from "./_tenant.mjs";
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -6,10 +6,12 @@ const json = (code, obj) => ({
   body: JSON.stringify(obj),
 });
 
-// Endpoint TẠM, chỉ dùng nội bộ để bạn tự tay set tier 1 tenant test trước
-// khi billing thật được tích hợp (Phase 5). Bảo vệ bằng secret header — không
-// liên quan gì tới quyền admin của business trong Whop. Khi có webhook billing
-// thật, giữ lại endpoint này như cửa hậu cho support/comp account, KHÔNG xoá.
+// Cửa hậu nội bộ cho dev/support — set tier + (tuỳ chọn) cờ unlockAllFeatures
+// cho 1 tenant cụ thể, KHÔNG đi qua billing thật. Bảo vệ bằng secret header,
+// không liên quan quyền admin Whop của business đó. unlockAllFeatures luôn
+// được kiểm tra TRƯỚC tier thật trong isPaidTier() (_tenant.mjs) — tenant nào
+// còn cờ này = true (từ trước khi có billing) sẽ luôn hiện "Paid" dù chưa trả
+// tiền thật; dùng endpoint này để tắt nó đi lúc cần test đúng luồng Free→Paid.
 export const handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "POST only" });
 
@@ -20,11 +22,18 @@ export const handler = async (event) => {
 
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
-  const { companyId, tier } = body;
-  if (!companyId || !["free", "paid"].includes(tier)) {
-    return json(400, { error: 'Requires { companyId, tier: "free"|"paid" }' });
+  const { companyId, tier, unlockAllFeatures } = body;
+  if (!companyId) return json(400, { error: "Requires { companyId }" });
+
+  if (tier !== undefined) {
+    if (!["free", "paid"].includes(tier)) {
+      return json(400, { error: 'tier must be "free" or "paid".' });
+    }
+    await setTenantTier(companyId, tier);
+  }
+  if (unlockAllFeatures !== undefined) {
+    await saveTenantConfig(companyId, { unlockAllFeatures: !!unlockAllFeatures });
   }
 
-  await setTenantTier(companyId, tier);
-  return json(200, { ok: true, companyId, tier });
+  return json(200, { ok: true, companyId, tier, unlockAllFeatures });
 };
