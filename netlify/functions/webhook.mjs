@@ -108,9 +108,15 @@ export const handler = async (event) => {
     } catch (_) {}
   }
 
+  // XÁC NHẬN THẬT từ payload webhook thật (không phải đoán): field "type" gửi
+  // về là "payment.succeeded" (CÓ DẤU CHẤM) — khác với tên "payment_succeeded"
+  // (gạch dưới) hiển thị trên checkbox chọn event ở Whop Dashboard. Giữ cả 2
+  // dạng để an toàn (phòng trường hợp version/nguồn khác dùng gạch dưới).
   const action = payload.action || payload.type;
   console.log("[webhook] action:", action);
-  if (action !== "payment_succeeded") return json(200, { ok: true, skipped: action });
+  if (action !== "payment_succeeded" && action !== "payment.succeeded") {
+    return json(200, { ok: true, skipped: action });
+  }
 
   const data = payload.data || {};
 
