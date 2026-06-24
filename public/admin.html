@@ -409,7 +409,7 @@ async function startUpgrade(){
     const r = await tenantFetch('/.netlify/functions/create-upgrade-checkout', { method:'POST' });
     const j = await r.json();
     if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
-    openCheckoutModal(j.sessionId);
+    openCheckoutModal(j.sessionId, j.planId);
   }catch(e){
     alert('⚠ Could not start checkout: ' + e.message);
   }finally{
@@ -417,14 +417,14 @@ async function startUpgrade(){
   }
 }
 
-function openCheckoutModal(sessionId){
+function openCheckoutModal(sessionId, planId){
   const wrap = document.createElement('div');
   wrap.className = 'checkout-overlay';
   wrap.id = 'checkout-overlay';
   wrap.innerHTML = `
     <div class="checkout-modal">
       <span class="x" onclick="closeCheckoutModal()">✕</span>
-      <div data-whop-checkout-session-id="${esc(sessionId)}" data-whop-checkout-return-url="${esc(location.origin + location.pathname)}"></div>
+      <div data-whop-checkout-session="${esc(sessionId)}" data-whop-checkout-plan-id="${esc(planId)}" data-whop-checkout-return-url="${esc(location.origin + location.pathname)}"></div>
     </div>`;
   wrap.addEventListener('click', (e) => { if (e.target === wrap) closeCheckoutModal(); });
   document.body.appendChild(wrap);
