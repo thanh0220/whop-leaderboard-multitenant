@@ -27,6 +27,8 @@ const ALLOWED_KEYS = [
   "events",
   "eventsEnabled",
   "milestoneRules",
+  "spinRules",
+  "auctionRules",
 ];
 
 // GET: trả toàn bộ config tenant (trừ whopApiKey/setupSecret — không bao giờ
@@ -71,6 +73,8 @@ export const handler = async (event) => {
       events: cfg.events,
       eventsEnabled: cfg.eventsEnabled,
       milestoneRules: cfg.milestoneRules,
+      spinRules: cfg.spinRules,
+      auctionRules: cfg.auctionRules,
     });
   }
 
@@ -108,6 +112,12 @@ export const handler = async (event) => {
   }
   if ("milestoneRules" in partial && (typeof partial.milestoneRules !== "object" || partial.milestoneRules === null || Array.isArray(partial.milestoneRules))) {
     return json(400, { error: "milestoneRules must be an object." });
+  }
+  if ("spinRules" in partial && (typeof partial.spinRules !== "object" || partial.spinRules === null || Array.isArray(partial.spinRules))) {
+    return json(400, { error: "spinRules must be an object." });
+  }
+  if ("auctionRules" in partial && (typeof partial.auctionRules !== "object" || partial.auctionRules === null || Array.isArray(partial.auctionRules))) {
+    return json(400, { error: "auctionRules must be an object." });
   }
 
   // Chặn bypass cap Free/Paid bằng cách gọi API thẳng (UI admin.html đã tự

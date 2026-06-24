@@ -105,4 +105,32 @@ export const DEFAULT_TENANT = {
       { thresholdUsd: 100, rewardId: null, xu: 2000, label: "Diamond Reward", icon: "🎁" },
     ],
   },
+  // Lucky Spin: thanh toán THẬT tự động cộng vé quay (ticketsPerPayment, flat
+  // mỗi lần thanh toán) — member cũng có thể đổi vé bằng xu (xuCostPerTicket,
+  // cố ý đặt đắt để ưu tiên đường nạp tiền thật). Quay random có trọng số
+  // (weight) trong `prizes`, giao thưởng tự động (item Reward Store MIỄN PHÍ
+  // nếu gắn rewardId, không thì cộng thẳng xu) — không cần admin động tay.
+  spinRules: {
+    enabled: false,
+    ticketsPerPayment: 5,
+    xuCostPerTicket: 500,
+    prizes: [
+      { id: "p1", label: "Small Win",  weight: 50, rewardId: null, xu: 20 },
+      { id: "p2", label: "Medium Win", weight: 30, rewardId: null, xu: 80 },
+      { id: "p3", label: "Big Win",    weight: 15, rewardId: null, xu: 300 },
+      { id: "p4", label: "Jackpot",    weight: 5,  rewardId: null, xu: 1000 },
+    ],
+  },
+  // Auction House: 1 vật phẩm DUY NHẤT (admin chọn 1 item có sẵn trong
+  // Reward Store qua rewardId) đem ra đấu giá bằng xu. Đây chỉ là CẤU HÌNH —
+  // state phiên đấu giá đang chạy (giá cao nhất, lịch sử bid, hạn chốt) lưu
+  // riêng ở blob "auction-state:<tenantId>", KHÔNG nằm trong config này, vì
+  // mỗi lần admin bấm "Start New Auction" sẽ tạo state mới — xem auction.mjs.
+  auctionRules: {
+    enabled: false,
+    rewardId: null,
+    startingBid: 5000,
+    minIncrement: 100,
+    durationHours: 48,
+  },
 };
