@@ -8,57 +8,82 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#070910;--red:#ff2d4b;--cyan:#27e3ff;--gold:#f4c441;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3)}
+  :root{--gold:#ffd966;--gold2:#f4c441;--amber:#c89b3c;--dark:#3a2308;--cream:#f3e6c8;--creamtext:#4a3414;--green:#22c55e;--muted:#cbb47a}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:0 0 60px;
-    background:radial-gradient(120% 70% at 50% -10%,rgba(255,45,75,.13),var(--bg) 55%),var(--bg);background-attachment:fixed}
-  .wrap{max-width:680px;margin:0 auto;padding:22px 18px}
-  .nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-  .nav a{font-family:'Oswald',sans-serif;letter-spacing:.1em;text-transform:uppercase;font-size:11px;
-    padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.12);
-    background:rgba(255,255,255,.03);color:var(--muted);text-decoration:none;transition:.15s}
-  .nav a.on{border-color:var(--line2);background:rgba(39,227,255,.1);color:var(--cyan);box-shadow:0 0 14px rgba(39,227,255,.25)}
-  .top{display:flex;align-items:center;gap:10px;font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:.14em;
-    text-transform:uppercase;font-size:16px;margin-bottom:14px}
-  .top .s{color:var(--red);font-size:18px;text-shadow:0 0 12px rgba(255,45,75,.7)}
-  .top b{color:var(--red)}
+  body{font-family:'Be Vietnam Pro',sans-serif;color:#fff;min-height:100vh;padding:0 0 60px;
+    background:
+      repeating-radial-gradient(circle at 20% 15%, rgba(255,224,130,.10) 0 2px, transparent 2px 38px),
+      repeating-radial-gradient(circle at 80% 60%, rgba(255,224,130,.08) 0 2px, transparent 2px 44px),
+      radial-gradient(120% 90% at 50% -10%, #f6cf5e, #c89b3c 45%, #6b4413 80%, #3a2308 100%);
+    background-attachment:fixed}
+  .wrap{max-width:720px;margin:0 auto;padding:18px 16px}
+  .nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .nav a{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:10.5px;
+    padding:7px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.25);
+    background:rgba(0,0,0,.18);color:#ffe9b0;text-decoration:none;transition:.15s}
+  .nav a.on{border-color:#fff;background:rgba(255,255,255,.22);color:#fff;box-shadow:0 0 14px rgba(255,255,255,.3)}
 
-  .period{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);
-    border-radius:14px;padding:16px;margin-bottom:14px}
-  .period .pt{font-family:'Oswald',sans-serif;font-size:13px;color:var(--muted);letter-spacing:.05em}
-  .period .cd{font-family:'Oswald',sans-serif;font-size:13px;color:var(--cyan);margin-top:2px}
-  .bar{height:14px;border-radius:999px;background:rgba(255,255,255,.06);margin-top:12px;overflow:hidden;position:relative}
-  .bar .fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--gold));border-radius:999px;transition:width .4s ease}
-  .usd-now{font-family:'Oswald',sans-serif;font-size:13px;color:var(--text);margin-top:8px}
-  .usd-now b{color:var(--gold)}
+  .hero{text-align:left;margin-bottom:16px}
+  .hero .cta{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.06em;color:#fff7da;
+    text-shadow:0 1px 3px rgba(0,0,0,.5);margin-bottom:2px}
+  .hero h1{font-family:'Oswald',sans-serif;font-weight:700;font-size:30px;letter-spacing:.03em;color:#fff;
+    text-shadow:0 2px 6px rgba(0,0,0,.45);text-transform:uppercase}
+  .hero .dates{font-size:12px;color:#fff0c8;margin-top:6px;opacity:.9}
+  .hero .countdown{font-family:'Oswald',sans-serif;font-size:13px;color:#fff;margin-top:2px;font-weight:600}
+  .hero .countdown b{color:#ffe9a8}
 
-  .tier{display:flex;align-items:center;gap:14px;background:linear-gradient(160deg,#16202f,#0a0f18);
-    border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;margin-bottom:10px;opacity:.5}
-  .tier.unlocked{opacity:1;border-color:rgba(244,196,65,.4)}
-  .tier.claimed{opacity:.65}
-  .tier .icon{font-size:30px;flex-shrink:0}
-  .tier .info{flex:1;min-width:0}
-  .tier .label{font-family:'Oswald',sans-serif;font-weight:700;font-size:14px}
-  .tier .desc{font-size:12.5px;color:var(--muted);margin-top:2px}
-  .btn{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:12px;font-weight:700;
-    padding:10px 18px;border-radius:10px;border:1px solid var(--line2);background:rgba(39,227,255,.1);color:var(--cyan);cursor:pointer;transition:.15s;flex-shrink:0}
-  .btn:hover:not(:disabled){background:rgba(39,227,255,.22);box-shadow:0 0 14px rgba(39,227,255,.3)}
-  .btn:disabled{opacity:.45;cursor:not-allowed}
-  .claimed-tag{font-size:11px;color:#86efac;font-family:'Oswald',sans-serif;letter-spacing:.06em}
+  .track-wrap{overflow-x:auto;padding:6px 2px 18px;margin-bottom:4px}
+  .track{display:flex;align-items:flex-end;gap:6px;min-width:min-content;position:relative}
+  .node{flex:0 0 auto;width:92px;text-align:center;position:relative}
+  .chest-box{width:64px;height:64px;margin:0 auto 6px;position:relative;perspective:300px}
+  .chest-box canvas{width:64px;height:64px;display:block;animation:chestSpin 6s linear infinite}
+  @keyframes chestSpin{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}
+  .node.locked .chest-box{opacity:.4;filter:grayscale(.5)}
+  .node.locked .chest-box canvas{animation:none}
+  .node .amt{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+  .node.locked .amt{color:#e8d4a0;opacity:.75}
+  .node .claimed-mark{font-size:26px;line-height:64px}
 
-  .empty{text-align:center;color:var(--muted);font-size:13px;padding:40px 0}
-  .state{text-align:center;padding:60px 20px;color:var(--muted)}
-  .spinner{width:40px;height:40px;border:2px solid rgba(39,227,255,.2);border-top-color:var(--cyan);border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
+  .bar-row{position:relative;height:16px;margin:0 8px 22px;border-radius:999px;background:rgba(0,0,0,.32);
+    border:1px solid rgba(255,255,255,.25);overflow:visible}
+  .bar-row .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#4ade80,#22c55e);
+    box-shadow:0 0 10px rgba(34,197,94,.6);transition:width .5s ease}
+  .bar-row .marker{position:absolute;top:50%;font-size:18px;transform:translate(-50%,-50%);transition:left .5s ease;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+
+  .panel{background:linear-gradient(160deg,var(--cream),#e9d6a6);border:1px solid rgba(0,0,0,.15);
+    border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+  .panel .pchest{width:56px;height:56px;flex-shrink:0;perspective:300px}
+  .panel .pchest canvas{width:56px;height:56px;display:block;animation:chestSpin 6s linear infinite}
+  .panel .info{flex:1;min-width:0}
+  .panel .label1{font-size:11px;color:#8a6a2e;text-transform:uppercase;letter-spacing:.06em;font-family:'Oswald',sans-serif}
+  .panel .label2{font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--creamtext);margin-top:1px}
+  .panel .progress-txt{font-size:12px;color:#8a6a2e;margin-top:6px}
+  .panel .progress-txt b{color:var(--creamtext)}
+  .cta-btn{font-family:'Oswald',sans-serif;letter-spacing:.06em;text-transform:uppercase;font-size:13px;font-weight:700;
+    padding:13px 22px;border-radius:12px;border:none;cursor:pointer;flex-shrink:0;transition:.15s;
+    background:linear-gradient(135deg,var(--gold),var(--gold2));color:#4a3000;box-shadow:0 3px 0 #b8860a,0 6px 14px rgba(0,0,0,.3)}
+  .cta-btn.ready{background:linear-gradient(135deg,#4ade80,var(--green));color:#06210f;box-shadow:0 3px 0 #15803d,0 6px 14px rgba(0,0,0,.3)}
+  .cta-btn:disabled{opacity:.65;cursor:not-allowed}
+  .cta-btn:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #b8860a}
+
+  .empty{text-align:center;font-size:13px;padding:50px 20px;background:rgba(0,0,0,.22);border-radius:16px;color:#ffe9b0}
+  .state{text-align:center;padding:60px 20px;color:#ffe9b0}
+  .spinner{width:40px;height:40px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .err{background:rgba(255,45,75,.12);border:1px solid rgba(255,45,75,.4);border-radius:14px;padding:20px;color:#ffd0d8;font-size:14px;line-height:1.6}
+  .err{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.25);border-radius:14px;padding:20px;color:#ffd0d8;font-size:14px;line-height:1.6}
 
   .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
-    background:#0e1622;border:1px solid var(--line2);border-radius:12px;padding:14px 22px;color:var(--cyan);
-    font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:.05em;box-shadow:0 0 30px rgba(39,227,255,.35);transition:.3s;z-index:80}
+    background:#2a1c08;border:1px solid var(--gold);border-radius:12px;padding:14px 22px;color:#ffe9a8;
+    font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:.05em;box-shadow:0 0 30px rgba(244,196,65,.35);transition:.3s;z-index:80}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
-  .powered-badge{position:fixed;bottom:10px;right:12px;z-index:60;font-size:11px;color:var(--muted);
-    background:rgba(10,14,24,.7);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:4px 9px;
+  .powered-badge{position:fixed;bottom:10px;right:12px;z-index:60;font-size:11px;color:#fff0c8;
+    background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:4px 9px;
     display:none;pointer-events:none}
+  @media(max-width:480px){
+    .panel{flex-direction:column;align-items:stretch;text-align:center}
+    .panel .pchest{margin:0 auto}
+    .cta-btn{width:100%}
+  }
 </style>
 </head>
 <body>
@@ -72,16 +97,18 @@
     <a href="/mailbox.html">📬 Mailbox</a>
     <a href="/milestones.html" class="on">🎯 Milestones</a>
   </div>
-  <div class="top"><span class="s">♦</span> <b>Milestones</b></div>
   <div id="content"><div class="state"><div class="spinner"></div>Loading...</div></div>
 </div>
 
 <div class="toast" id="toast"></div>
 
+<script type="module" src="/chest3d.module.js"></script>
+
 <script>
 const $=id=>document.getElementById(id);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2400);}
+function fmtMoney(n){return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});}
 
 function tenantQS(){
   const u = new URL(location.href);
@@ -96,6 +123,8 @@ function tenantQS(){
 function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
 
 let DATA = null;
+const TIER_CYCLE = ['wood','silver','gold'];
+function chestTierFor(i){ return TIER_CYCLE[i % TIER_CYCLE.length]; }
 
 async function load(){
   $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading...</div>`;
@@ -114,49 +143,107 @@ async function load(){
 function fmtCountdown(periodEnd){
   const ms = periodEnd - Date.now();
   if (ms <= 0) return 'Period ended';
-  const d = Math.floor(ms/86400000), h = Math.floor((ms%86400000)/3600000), m = Math.floor((ms%3600000)/60000);
-  return `Resets in ${d}d ${h}h ${m}m`;
+  const d = Math.floor(ms/86400000), h = Math.floor((ms%86400000)/3600000), m = Math.floor((ms%3600000)/60000), s = Math.floor((ms%60000)/1000);
+  if (d > 0) return `${d}d ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+const chestRegistry = {};
+function disposeChests(){
+  Object.values(chestRegistry).forEach(c => { try{ c.dispose(); }catch(_){} });
+  for (const k in chestRegistry) delete chestRegistry[k];
 }
 
 function render(j){
+  disposeChests();
+
   if (!j.enabled){
-    $('content').innerHTML = '<div class="empty">🎯 This program is not active yet.</div>';
+    $('content').innerHTML = '<div class="empty">🎯 This program is not active yet. Check back soon!</div>';
     return;
   }
-  const maxUsd = j.tiers.length ? j.tiers[j.tiers.length-1].thresholdUsd : 0;
-  const pct = maxUsd > 0 ? Math.min(100, (j.usd / maxUsd) * 100) : 0;
+  if (!j.tiers.length){
+    $('content').innerHTML = '<div class="empty">No milestones configured yet.</div>';
+    return;
+  }
+
+  const maxUsd = j.tiers[j.tiers.length-1].thresholdUsd || 1;
+  const pct = Math.min(100, (j.usd / maxUsd) * 100);
+
+  const nodes = j.tiers.map((t,i) => {
+    const locked = !t.unlocked;
+    return `
+    <div class="node ${locked?'locked':''}">
+      <div class="chest-box">
+        ${t.claimed
+          ? `<div class="claimed-mark">🪙</div>`
+          : `<canvas id="chest-${i}" width="64" height="64"></canvas>`}
+      </div>
+      <div class="amt">$${fmtMoney(t.thresholdUsd)}</div>
+    </div>`;
+  }).join('');
 
   const head = `
-    <div class="period">
-      <div class="pt">Current period</div>
-      <div class="cd">${fmtCountdown(j.periodEnd)}</div>
-      <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
-      <div class="usd-now">Deposited this period: <b>$${j.usd.toFixed(2)}</b></div>
+    <div class="hero">
+      <div class="cta">Deposit to unlock exclusive rewards!</div>
+      <h1>Deposit Rewards</h1>
+      <div class="dates">Period ends ${new Date(j.periodEnd).toLocaleDateString()}</div>
+      <div class="countdown">Ends in <b>${fmtCountdown(j.periodEnd)}</b></div>
+    </div>
+    <div class="track-wrap">
+      <div class="track">${nodes}</div>
+    </div>
+    <div class="bar-row">
+      <div class="fill" style="width:${pct}%"></div>
+      <div class="marker" style="left:${pct}%">💎</div>
     </div>`;
 
-  const tiers = j.tiers.map((t, i) => `
-    <div class="tier ${t.unlocked ? 'unlocked' : ''} ${t.claimed ? 'claimed' : ''}">
-      <div class="icon">${esc(t.icon)}</div>
-      <div class="info">
-        <div class="label">${esc(t.label)}</div>
-        <div class="desc">Reach $${t.thresholdUsd} deposited${t.xu ? ' — +'+t.xu+' XU' : ''}</div>
-      </div>
-      ${t.claimed
-        ? '<div class="claimed-tag">✅ Claimed</div>'
-        : `<button class="btn" ${t.unlocked ? '' : 'disabled'} onclick="claim(${i},this)">Claim</button>`}
-    </div>`).join('');
+  const nextIdx = j.tiers.findIndex(t => !t.claimed);
+  let panel;
+  if (nextIdx === -1){
+    panel = `<div class="empty">🎉 All milestones claimed this period! Come back next period.</div>`;
+  } else {
+    const t = j.tiers[nextIdx];
+    const ready = t.unlocked;
+    const need = Math.max(0, t.thresholdUsd - j.usd);
+    panel = `
+      <div class="panel">
+        <div class="pchest"><canvas id="chest-panel" width="56" height="56"></canvas></div>
+        <div class="info">
+          <div class="label1">${ready ? "You've unlocked:" : 'Unlock next:'}</div>
+          <div class="label2">${esc(t.label)}</div>
+          <div class="progress-txt">Progress: <b>$${fmtMoney(j.usd)} / $${fmtMoney(t.thresholdUsd)}</b></div>
+        </div>
+        <button class="cta-btn ${ready?'ready':''}" ${ready?'':'disabled'} onclick="claim(${nextIdx},this)">
+          ${ready ? '🎁 Claim' : `Need $${fmtMoney(need)} more`}
+        </button>
+      </div>`;
+  }
 
-  $('content').innerHTML = head + (tiers || '<div class="empty">No milestones configured yet.</div>');
+  $('content').innerHTML = head + panel;
+
+  j.tiers.forEach((t,i) => {
+    if (t.claimed) return;
+    const canvas = $('chest-'+i);
+    if (canvas && window.ChestVoxel) chestRegistry['n'+i] = window.ChestVoxel.create(canvas, chestTierFor(i));
+  });
+  if (nextIdx !== -1 && !j.tiers[nextIdx].claimed){
+    const canvas = $('chest-panel');
+    if (canvas && window.ChestVoxel) chestRegistry['panel'] = window.ChestVoxel.create(canvas, chestTierFor(nextIdx));
+  }
 }
 
 async function claim(i, btn){
   btn.disabled = true;
+  const animDone = new Promise(res => setTimeout(res, 650));
+  chestRegistry['panel']?.open();
+  chestRegistry['n'+i]?.open();
   try{
-    const r = await tenantFetch('/.netlify/functions/milestones', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({tierIndex:i})});
+    const reqPromise = tenantFetch('/.netlify/functions/milestones', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({tierIndex:i})});
+    const [r] = await Promise.all([reqPromise, animDone]);
     const j = await r.json();
     if(!r.ok) throw new Error(j.error||'Error');
     toast(j.xu ? `+${j.xu} XU added!` : (j.code ? `Reward unlocked: ${j.code}` : 'Reward claimed!'));
-    setTimeout(load, 800);
+    setTimeout(load, 900);
   }catch(e){
     toast('⚠ '+e.message);
     btn.disabled = false;

@@ -200,7 +200,7 @@
     <a href="#codes" onclick="switchTab('codes');return false">🔑 Codes</a>
     <a href="#events" onclick="switchTab('events');return false">🗓 Events</a>
     <a href="#chests" onclick="switchTab('chests');return false">📬 Community Chest</a>
-    <a href="#milestones" onclick="switchTab('milestones');return false">🎯 Nạp lũy kế</a>
+    <a href="#milestones" onclick="switchTab('milestones');return false">🎯 Deposit Milestones</a>
   </div>
   <div id="content"><div class="state">Loading...</div></div>
 </div>
@@ -665,35 +665,35 @@ function renderChests(){
     </div>`;
 }
 
-// ===== #milestones — Nạp lũy kế (member tự cộng dồn USD nạp thật trong 1 kỳ) =====
+// ===== #milestones — Deposit Milestones (members accumulate real USD spent in a period) =====
 function renderMilestones(){
   const rules = STATE.milestoneRules || {enabled:false,periodDays:7,tiers:[]};
   const rewardOptions = (r) => `
-    <option value="">— Thưởng xu trực tiếp —</option>
+    <option value="">— Reward XU directly —</option>
     ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${r.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
   const rows = (rules.tiers||[]).map((t,i)=>`
     <div class="item">
       <div class="row3">
-        <div><label>Mốc USD nạp lũy kế</label><input type="number" min="0" value="${t.thresholdUsd||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.thresholdUsd',Number(this.value)||0)"/></div>
+        <div><label>Deposit threshold (USD)</label><input type="number" min="0" value="${t.thresholdUsd||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.thresholdUsd',Number(this.value)||0)"/></div>
         <div><label>Icon</label><input value="${esc(t.icon||'🎁')}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.icon',this.value)"/></div>
-        <div><label>Tên mốc</label><input value="${esc(t.label||'')}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.label',this.value)"/></div>
+        <div><label>Milestone name</label><input value="${esc(t.label||'')}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.label',this.value)"/></div>
       </div>
-      <label>Phần thưởng</label>
+      <label>Reward</label>
       <select onchange="setPath(STATE,'milestoneRules.tiers.${i}.rewardId',this.value||null);renderAll()">${rewardOptions(t)}</select>
       ${t.rewardId
-        ? '<div class="hint-small">Member sẽ nhận MIỄN PHÍ đúng item này từ Reward Store khi đạt mốc.</div>'
-        : `<label>Số xu thưởng</label><input type="number" min="0" value="${t.xu||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.xu',Number(this.value)||0)"/>`}
-      <button class="btn del" onclick="STATE.milestoneRules.tiers.splice(${i},1);renderAll()">🗑 Xoá mốc này</button>
+        ? '<div class="hint-small">Members will receive this Reward Store item for FREE when they reach this milestone.</div>'
+        : `<label>XU reward</label><input type="number" min="0" value="${t.xu||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.xu',Number(this.value)||0)"/>`}
+      <button class="btn del" onclick="STATE.milestoneRules.tiers.splice(${i},1);renderAll()">🗑 Delete this milestone</button>
     </div>`).join('');
   return `
-    <div class="sect" id="milestones">🎯 Nạp lũy kế</div>
+    <div class="sect" id="milestones">🎯 Deposit Milestones</div>
     <div class="panel">
-      ${toggleRow(rules.enabled, "setPath(STATE,'milestoneRules.enabled',this.checked);renderAll()", 'Đang bật — member thấy trang Nạp lũy kế.', 'Đang tắt — member không thấy chương trình này.')}
-      <p class="hint-small" style="margin-bottom:10px">Member tự tích lũy số USD đã nạp THẬT (thanh toán qua Whop) trong 1 kỳ, đạt mốc thì claim quà. Mốc nào gắn sẵn 1 item trong 🎁 Reward Store thì member nhận miễn phí item đó (không tốn xu); không gắn thì thưởng thẳng số xu khai báo.</p>
-      <label>Độ dài 1 kỳ (ngày)</label>
+      ${toggleRow(rules.enabled, "setPath(STATE,'milestoneRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Deposit Milestones page.', "Disabled — members can't see this program.")}
+      <p class="hint-small" style="margin-bottom:10px">Members accumulate the real USD they've deposited (paid through Whop) within a period, then claim rewards as they reach each milestone. If a milestone is linked to a 🎁 Reward Store item, members receive that item for free; otherwise they get the XU amount you set.</p>
+      <label>Period length (days)</label>
       <input type="number" min="1" value="${rules.periodDays||7}" oninput="setPath(STATE,'milestoneRules.periodDays',Number(this.value)||7)"/>
-      ${rows || '<p class="hint-small">Chưa có mốc nào.</p>'}
-      <button class="btn" onclick="STATE.milestoneRules.tiers.push({thresholdUsd:5,rewardId:null,xu:50,label:'Mốc mới',icon:'🎁'});renderAll()">+ Thêm mốc</button>
+      ${rows || '<p class="hint-small">No milestones yet.</p>'}
+      <button class="btn" onclick="STATE.milestoneRules.tiers.push({thresholdUsd:5,rewardId:null,xu:50,label:'New milestone',icon:'🎁'});renderAll()">+ Add milestone</button>
     </div>`;
 }
 
