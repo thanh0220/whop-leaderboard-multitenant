@@ -20,6 +20,9 @@
     padding:7px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);
     color:var(--muted);text-decoration:none}
   .nav a:hover{border-color:var(--line2);color:var(--cyan)}
+  .nav a.active{border-color:var(--gold);color:var(--gold);background:rgba(244,196,65,.12)}
+  .tab-panel{animation:tabIn .25s ease}
+  @keyframes tabIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
   .sect{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:14px;color:var(--gold);margin:26px 0 12px;scroll-margin-top:60px}
   .panel{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px;margin-bottom:8px}
   label{display:block;font-size:11px;letter-spacing:.04em;color:var(--gold);margin:10px 0 4px;text-transform:uppercase;font-family:'Oswald',sans-serif}
@@ -188,15 +191,15 @@
   <h1>⚙️ Settings — Community Admin</h1>
   <p class="hint">Only admins should open this page — don't share this link with members.</p>
   <div class="nav">
-    <a href="#conn">🔌 Connect</a>
-    <a href="#billing">💎 Billing</a>
-    <a href="#branding">🎨 Branding</a>
-    <a href="#season">🏆 Season</a>
-    <a href="#daily">📅 Check-in</a>
-    <a href="#store">🎁 Store</a>
-    <a href="#codes">🔑 Codes</a>
-    <a href="#events">🗓 Events</a>
-    <a href="#chests">📬 Community Chest</a>
+    <a href="#conn" onclick="switchTab('conn');return false">🔌 Connect</a>
+    <a href="#billing" onclick="switchTab('billing');return false">💎 Billing</a>
+    <a href="#branding" onclick="switchTab('branding');return false">🎨 Branding</a>
+    <a href="#season" onclick="switchTab('season');return false">🏆 Season</a>
+    <a href="#daily" onclick="switchTab('daily');return false">📅 Check-in</a>
+    <a href="#store" onclick="switchTab('store');return false">🎁 Store</a>
+    <a href="#codes" onclick="switchTab('codes');return false">🔑 Codes</a>
+    <a href="#events" onclick="switchTab('events');return false">🗓 Events</a>
+    <a href="#chests" onclick="switchTab('chests');return false">📬 Community Chest</a>
   </div>
   <div id="content"><div class="state">Loading...</div></div>
 </div>
@@ -268,6 +271,7 @@ function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
 let STATE = null;
 let CONFIGURED = false;
 let IS_PAID = false;
+let activeTab = (location.hash||'#conn').slice(1);
 let typedApiKey = ''; // ô API key không bind vào STATE (nhạy cảm) — phải giữ
                        // riêng 1 biến, không thì renderAll() do section khác
                        // gọi sẽ xoá mất giá trị đang gõ trong ô này.
@@ -316,12 +320,31 @@ async function load(){
   $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${lastErr.message}</div></div>`;
 }
 
+const TAB_RENDERERS = {
+  conn: renderConn, billing: renderBilling, branding: renderBranding,
+  season: renderSeason, daily: renderDaily, store: renderStore,
+  codes: renderCodes, events: renderEvents, chests: renderChests,
+};
+
+function switchTab(id){
+  activeTab = id;
+  history.replaceState(null, '', '#'+id);
+  renderAll();
+}
+function applyNavActive(){
+  document.querySelectorAll('.nav a').forEach(a=>{
+    a.classList.toggle('active', a.getAttribute('href') === '#'+activeTab);
+  });
+}
+
 function renderAll(){
+  const fn = TAB_RENDERERS[activeTab] || renderConn;
   $('content').innerHTML =
-    renderConn() + renderBilling() + renderBranding() + renderSeason() + renderDaily() + renderStore() + renderCodes() + renderEvents() + renderChests() +
+    `<div class="tab-panel">${fn()}</div>` +
     `<div class="save-bar"><button class="btn big" id="save-all">💾 Save all</button></div>`;
   $('save-all').onclick = saveAll;
-  initChestPreviews();
+  applyNavActive();
+  if (activeTab === 'chests') initChestPreviews();
 }
 
 // Rương 3D dùng làm preview tĩnh (không animate) cho mỗi tier — dispose canvas cũ
