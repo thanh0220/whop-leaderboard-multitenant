@@ -673,16 +673,19 @@ function renderMilestones(){
     ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${r.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
   const rows = (rules.tiers||[]).map((t,i)=>`
     <div class="item">
-      <div class="row3">
+      <div class="row2">
         <div><label>Deposit threshold (USD)</label><input type="number" min="0" value="${t.thresholdUsd||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.thresholdUsd',Number(this.value)||0)"/></div>
-        <div><label>Icon</label><input value="${esc(t.icon||'🎁')}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.icon',this.value)"/></div>
         <div><label>Milestone name</label><input value="${esc(t.label||'')}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.label',this.value)"/></div>
       </div>
-      <label>Reward</label>
-      <select onchange="setPath(STATE,'milestoneRules.tiers.${i}.rewardId',this.value||null);renderAll()">${rewardOptions(t)}</select>
-      ${t.rewardId
-        ? '<div class="hint-small">Members will receive this Reward Store item for FREE when they reach this milestone.</div>'
-        : `<label>XU reward</label><input type="number" min="0" value="${t.xu||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.xu',Number(this.value)||0)"/>`}
+      <div class="row2">
+        <div>
+          <label>Reward</label>
+          <select onchange="setPath(STATE,'milestoneRules.tiers.${i}.rewardId',this.value||null);renderAll()">${rewardOptions(t)}</select>
+        </div>
+        ${t.rewardId
+          ? '<div><label>&nbsp;</label><div class="hint-small">Members get this Reward Store item for FREE.</div></div>'
+          : `<div><label>XU reward</label><input type="number" min="0" value="${t.xu||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.xu',Number(this.value)||0)"/></div>`}
+      </div>
       <button class="btn del" onclick="STATE.milestoneRules.tiers.splice(${i},1);renderAll()">🗑 Delete this milestone</button>
     </div>`).join('');
   return `
@@ -693,7 +696,7 @@ function renderMilestones(){
       <label>Period length (days)</label>
       <input type="number" min="1" value="${rules.periodDays||7}" oninput="setPath(STATE,'milestoneRules.periodDays',Number(this.value)||7)"/>
       ${rows || '<p class="hint-small">No milestones yet.</p>'}
-      <button class="btn" onclick="STATE.milestoneRules.tiers.push({thresholdUsd:5,rewardId:null,xu:50,label:'New milestone',icon:'🎁'});renderAll()">+ Add milestone</button>
+      <button class="btn" onclick="STATE.milestoneRules.tiers.push({thresholdUsd:5,rewardId:null,xu:50,label:'New milestone'});renderAll()">+ Add milestone</button>
     </div>`;
 }
 

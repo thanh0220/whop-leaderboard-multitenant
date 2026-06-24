@@ -34,14 +34,15 @@
 
   .track-wrap{overflow-x:auto;padding:6px 2px 18px;margin-bottom:4px}
   .track{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;min-width:min-content;position:relative}
-  .node{flex:0 0 auto;width:84px;text-align:center;position:relative}
+  .node{flex:0 0 auto;width:84px;text-align:center;position:relative;cursor:pointer;border-radius:14px;
+    padding:6px 2px 2px;transition:.15s}
+  .node:hover{background:rgba(255,255,255,.08)}
+  .node.selected{background:rgba(255,255,255,.14);box-shadow:0 0 0 2px var(--gold2),0 0 14px rgba(244,196,65,.5)}
   .chest-box{width:64px;height:64px;margin:0 auto 6px;position:relative;perspective:300px}
   .chest-box canvas{width:64px;height:64px;display:block;animation:chestSpin 6s linear infinite}
   @keyframes chestSpin{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}
-  .node.locked .chest-box{opacity:.4;filter:grayscale(.5)}
-  .node.locked .chest-box canvas{animation:none}
+  .lock-badge{position:absolute;top:-2px;right:6px;font-size:15px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
   .node .amt{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5)}
-  .node.locked .amt{color:#e8d4a0;opacity:.75}
   .node .claimed-mark{font-size:26px;line-height:64px}
 
   .bar-row{position:relative;height:16px;margin:0 8px 22px;border-radius:999px;background:rgba(0,0,0,.32);
@@ -126,6 +127,7 @@ function tenantQS(){
 function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
 
 let DATA = null;
+let selectedIdx = null;
 const TIER_CYCLE = ['bronze','jade','gold','ruby','diamond'];
 function chestTierFor(i){ return TIER_CYCLE[i % TIER_CYCLE.length]; }
 
@@ -157,7 +159,12 @@ function disposeChests(){
   for (const k in chestRegistry) delete chestRegistry[k];
 }
 
-function render(j){
+function selectNode(i){
+  selectedIdx = i;
+  render(DATA, i);
+}
+
+function render(j, selIdx){
   disposeChests();
 
   if (!j.enabled){
@@ -169,14 +176,19 @@ function render(j){
     return;
   }
 
+  const nextIdx = j.tiers.findIndex(t => !t.claimed);
+  if (selIdx == null) selIdx = nextIdx === -1 ? j.tiers.length - 1 : nextIdx;
+  selectedIdx = selIdx;
+
   const maxUsd = j.tiers[j.tiers.length-1].thresholdUsd || 1;
   const pct = Math.min(100, (j.usd / maxUsd) * 100);
 
   const nodes = j.tiers.map((t,i) => {
     const locked = !t.unlocked;
     return `
-    <div class="node ${locked?'locked':''}">
+    <div class="node ${i===selIdx?'selected':''}" onclick="selectNode(${i})">
       <div class="chest-box">
+        ${locked ? `<div class="lock-badge">🔒</div>` : ''}
         ${t.claimed
           ? `<div class="claimed-mark">🪙</div>`
           : `<canvas id="chest-${i}" width="64" height="64"></canvas>`}
@@ -200,32 +212,34 @@ function render(j){
       <div class="marker" style="left:${pct}%">💎</div>
     </div>`;
 
-  const nextIdx = j.tiers.findIndex(t => !t.claimed);
-  let panel;
-  if (nextIdx === -1){
-    panel = `<div class="empty">🎉 All milestones claimed this period! Come back next period.</div>`;
+  const t = j.tiers[selIdx];
+  const ready = t.unlocked;
+  const need = Math.max(0, t.thresholdUsd - j.usd);
+  const previewBox = t.image
+    ? `<img src="${esc(t.image)}" alt=""/>`
+    : `<div class="icon">${t.xu ? '🪙' : '🎁'}</div>`;
+  const rewardLine = t.xu ? `<div class="reward-line">+${fmtMoney(t.xu)} XU</div>` : '';
+
+  let cta;
+  if (t.claimed){
+    cta = `<button class="cta-btn" disabled>✅ Claimed</button>`;
+  } else if (ready){
+    cta = `<button class="cta-btn ready" onclick="claim(${selIdx},this)">🎁 Claim</button>`;
   } else {
-    const t = j.tiers[nextIdx];
-    const ready = t.unlocked;
-    const need = Math.max(0, t.thresholdUsd - j.usd);
-    const previewBox = t.image
-      ? `<img src="${esc(t.image)}" alt=""/>`
-      : `<div class="icon">${t.xu ? '🪙' : '🎁'}</div>`;
-    const rewardLine = t.xu ? `<div class="reward-line">+${fmtMoney(t.xu)} XU</div>` : '';
-    panel = `
-      <div class="panel">
-        <div class="reward-preview">${previewBox}</div>
-        <div class="info">
-          <div class="label1">${ready ? "You've unlocked:" : 'Unlock next:'}</div>
-          <div class="label2">${esc(t.label)}</div>
-          ${rewardLine}
-          <div class="progress-txt">Progress: <b>$${fmtMoney(j.usd)} / $${fmtMoney(t.thresholdUsd)}</b></div>
-        </div>
-        <button class="cta-btn ${ready?'ready':''}" ${ready?'':'disabled'} onclick="claim(${nextIdx},this)">
-          ${ready ? '🎁 Claim' : `Need $${fmtMoney(need)} more`}
-        </button>
-      </div>`;
+    cta = `<button class="cta-btn" disabled>Need $${fmtMoney(need)} more</button>`;
   }
+
+  const panel = `
+    <div class="panel">
+      <div class="reward-preview">${previewBox}</div>
+      <div class="info">
+        <div class="label1">${t.claimed ? 'Already claimed:' : (ready ? "You've unlocked:" : 'Preview:')}</div>
+        <div class="label2">${esc(t.label)}</div>
+        ${rewardLine}
+        <div class="progress-txt">Progress: <b>$${fmtMoney(j.usd)} / $${fmtMoney(t.thresholdUsd)}</b></div>
+      </div>
+      ${cta}
+    </div>`;
 
   $('content').innerHTML = head + panel;
 
