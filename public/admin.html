@@ -72,6 +72,24 @@
   .checkout-modal .x{position:absolute;top:10px;right:14px;cursor:pointer;color:var(--muted);font-size:18px}
   .checkout-modal .x:hover{color:var(--text)}
 
+  .pricing-card{max-width:340px;margin:0 auto;border-radius:16px;padding:22px;text-align:center;position:relative;
+    background:linear-gradient(160deg,rgba(244,196,65,.1),rgba(39,227,255,.06));border:1px solid rgba(244,196,65,.4)}
+  .pricing-card.is-active{border-color:rgba(34,197,94,.5);background:linear-gradient(160deg,rgba(34,197,94,.1),rgba(39,227,255,.06))}
+  .pricing-badge{display:inline-block;font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    padding:4px 12px;border-radius:20px;background:var(--gold);color:#1a1200;font-weight:700;margin-bottom:14px}
+  .pricing-card.is-active .pricing-badge{background:#34d37a;color:#06210f}
+  .pricing-name{font-family:'Oswald',sans-serif;font-size:18px;letter-spacing:.04em;color:var(--text);margin-bottom:4px}
+  .pricing-price{font-family:'Oswald',sans-serif;font-size:38px;font-weight:700;color:var(--gold);line-height:1}
+  .pricing-price span{font-size:14px;color:var(--muted);font-weight:400;font-family:'Be Vietnam Pro',sans-serif}
+  .pricing-features{list-style:none;margin:18px 0;padding:0;text-align:left;display:inline-block}
+  .pricing-features li{font-size:13px;color:var(--text);padding:5px 0;display:flex;align-items:center;gap:8px}
+  .pricing-features li::before{content:'✓';color:#34d37a;font-weight:700}
+  .pricing-cta{width:100%;margin-top:6px;padding:13px;border-radius:10px;border:none;cursor:pointer;
+    font:700 13px 'Oswald',sans-serif;letter-spacing:.05em;text-transform:uppercase;
+    background:linear-gradient(135deg,var(--gold),#d39a11);color:#1a1200}
+  .pricing-cta:disabled{opacity:.6;cursor:not-allowed}
+  .pricing-cta.is-active{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.4);cursor:default}
+
   /* ===== Live preview (mirrors store.html / index.html / daily.html markup+CSS) ===== */
   .edit-row{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:start;margin-top:10px}
   @media(max-width:680px){.edit-row{grid-template-columns:1fr}}
@@ -337,18 +355,27 @@ function renderConn(){
 
 // ===== #billing =====
 function renderBilling(){
-  const statusHtml = IS_PAID
-    ? `<span class="status on">✅ Paid plan active</span>`
-    : `<span class="status off">⚠ Free plan</span>`;
-  const action = IS_PAID
-    ? `<p class="hint-small">Thanks for supporting this app! All paid features are unlocked.</p>`
-    : `<button class="btn" id="upgrade-btn" onclick="startUpgrade()">⭐ Upgrade to Paid</button>`;
+  const features = [
+    'Daily check-in rewards',
+    'Redeem codes',
+    'Reward Store (up to 10 items)',
+    'Up to 10 event slots',
+    'Leaderboard up to 500 members',
+    'Custom branding — remove "Powered by" badge',
+  ];
+  const cta = IS_PAID
+    ? `<button class="pricing-cta is-active" disabled>✅ Current plan</button>`
+    : `<button class="pricing-cta" id="upgrade-btn" onclick="startUpgrade()">⭐ Upgrade now</button>`;
   return `
     <div class="sect" id="billing">💎 Billing</div>
     <div class="panel">
-      ${statusHtml}
-      <p class="hint-small" style="margin:8px 0">Paid unlocks daily check-in, redeem codes, the reward store, more event/reward slots, a higher member limit on the leaderboard, and removes the "Powered by" badge.</p>
-      ${action}
+      <div class="pricing-card ${IS_PAID?'is-active':''}">
+        <span class="pricing-badge">${IS_PAID?'Active':'Recommended'}</span>
+        <div class="pricing-name">Leaderboard Pro</div>
+        <div class="pricing-price">$9.99<span>/month</span></div>
+        <ul class="pricing-features">${features.map(f=>`<li>${esc(f)}</li>`).join('')}</ul>
+        ${cta}
+      </div>
     </div>`;
 }
 
