@@ -69,8 +69,10 @@ export const handler = async (event) => {
     const validate = makeWebhookValidator({ webhookSecret: secret });
     payload = await validate(req);
   } catch (err) {
+    console.log("[webhook] signature invalid:", err.message);
     return json(400, { error: "Invalid webhook signature: " + err.message });
   }
+  console.log("[webhook] payload:", JSON.stringify(payload));
 
   // Chống xử lý trùng (Whop có thể gửi lại cùng 1 event).
   const eventId = payload.id || payload.data?.id;
@@ -84,6 +86,7 @@ export const handler = async (event) => {
   }
 
   const action = payload.action || payload.type;
+  console.log("[webhook] action:", action);
   if (action !== "payment_succeeded") return json(200, { ok: true, skipped: action });
 
   const data = payload.data || {};
@@ -95,6 +98,7 @@ export const handler = async (event) => {
   // Đường dẫn field metadata thật CHƯA xác minh bằng webhook test thật — thử
   // vài vị trí hợp lý nhất, BẮT BUỘC log/kiểm tra lại khi có webhook test đầu tiên.
   const upgradeTenantId = data.metadata?.tenantId || payload.metadata?.tenantId || null;
+  console.log("[webhook] upgradeTenantId:", upgradeTenantId);
   if (upgradeTenantId) {
     try {
       await setTenantTier(upgradeTenantId, "paid");
