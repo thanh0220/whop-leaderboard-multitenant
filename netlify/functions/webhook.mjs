@@ -74,11 +74,18 @@ function verifyStandardWebhook(headers, body, secrets) {
 
   for (const secret of secrets) {
     const stripped = secret.replace(/^whsec_|^ws_/, "");
+    // Thử mọi cách hiểu key có thể: chuỗi gốc/đã bỏ prefix dùng thẳng làm
+    // UTF-8 bytes (không decode base64/hex gì cả), và 2 cách decode cũ.
+    const candidates = [
+      ["utf8-full", Buffer.from(secret, "utf8")],
+      ["utf8-stripped", Buffer.from(stripped, "utf8")],
+    ];
     for (const enc of ["base64", "hex"]) {
-      let keyBytes;
-      try { keyBytes = Buffer.from(stripped, enc); } catch (_) { continue; }
+      try { candidates.push([enc, Buffer.from(stripped, enc)]); } catch (_) {}
+    }
+    for (const [label, keyBytes] of candidates) {
       const computed = crypto.createHmac("sha256", keyBytes).update(signedContent, "utf8").digest("base64");
-      console.log(`[webhook] verify debug — secret=${secret.slice(0,6)}... enc=${enc} computed=${computed}`);
+      console.log(`[webhook] verify debug — secret=${secret.slice(0,6)}... enc=${label} computed=${computed}`);
       if (sentSigs.includes(computed)) return JSON.parse(body);
     }
   }
@@ -100,7 +107,9 @@ export const handler = async (event) => {
     return json(500, { error: "Missing WHOP_WEBHOOK_SECRET / WHOP_WEBHOOK_SECRET_2 environment variable." });
   }
 
-  const payload = verifyStandardWebhook(event.headers || {}, event.body || "", secrets);
+  console.log("[webhook] isBase64Encoded:", event.isBase64Encoded);
+  const rawBody = event.isBase64Encoded ? Buffer.from(event.body || "", "base64").toString("utf8") : (event.body || "");
+  const payload = verifyStandardWebhook(event.headers || {}, rawBody, secrets);
   if (!payload) {
     console.log("[webhook] signature invalid. header keys:", JSON.stringify(Object.keys(event.headers || {})));
     return json(400, { error: "Invalid webhook signature." });
