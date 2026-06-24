@@ -62,6 +62,9 @@ function rollXu(range) {
 // chuyển sang kiểu 3-header mới, không còn gửi "x-whop-signature" nữa.
 // Chưa xác minh được chắc 100% cách encode secret (docs nói base64, nhưng
 // secret thật trông như hex) — thử cả 2 cách cho an toàn.
+// Đã xác nhận THẬT bằng test webhook: key HMAC = nguyên chuỗi secret (kể cả
+// tiền tố "ws_"/"whsec_"), dùng thẳng làm UTF-8 bytes — KHÔNG decode base64
+// hay hex gì cả.
 function verifyStandardWebhook(headers, body, secrets) {
   const id = headers["webhook-id"];
   const timestamp = headers["webhook-timestamp"];
@@ -70,24 +73,10 @@ function verifyStandardWebhook(headers, body, secrets) {
 
   const signedContent = `${id}.${timestamp}.${body}`;
   const sentSigs = sigHeader.split(" ").map((s) => s.split(",")[1]).filter(Boolean);
-  console.log("[webhook] verify debug — id:", id, "timestamp:", timestamp, "sigHeader:", sigHeader, "bodyLen:", body.length);
 
   for (const secret of secrets) {
-    const stripped = secret.replace(/^whsec_|^ws_/, "");
-    // Thử mọi cách hiểu key có thể: chuỗi gốc/đã bỏ prefix dùng thẳng làm
-    // UTF-8 bytes (không decode base64/hex gì cả), và 2 cách decode cũ.
-    const candidates = [
-      ["utf8-full", Buffer.from(secret, "utf8")],
-      ["utf8-stripped", Buffer.from(stripped, "utf8")],
-    ];
-    for (const enc of ["base64", "hex"]) {
-      try { candidates.push([enc, Buffer.from(stripped, enc)]); } catch (_) {}
-    }
-    for (const [label, keyBytes] of candidates) {
-      const computed = crypto.createHmac("sha256", keyBytes).update(signedContent, "utf8").digest("base64");
-      console.log(`[webhook] verify debug — secret=${secret.slice(0,6)}... enc=${label} computed=${computed}`);
-      if (sentSigs.includes(computed)) return JSON.parse(body);
-    }
+    const computed = crypto.createHmac("sha256", Buffer.from(secret, "utf8")).update(signedContent, "utf8").digest("base64");
+    if (sentSigs.includes(computed)) return JSON.parse(body);
   }
   return null;
 }
@@ -107,14 +96,10 @@ export const handler = async (event) => {
     return json(500, { error: "Missing WHOP_WEBHOOK_SECRET / WHOP_WEBHOOK_SECRET_2 environment variable." });
   }
 
-  console.log("[webhook] isBase64Encoded:", event.isBase64Encoded);
-  const rawBody = event.isBase64Encoded ? Buffer.from(event.body || "", "base64").toString("utf8") : (event.body || "");
-  const payload = verifyStandardWebhook(event.headers || {}, rawBody, secrets);
+  const payload = verifyStandardWebhook(event.headers || {}, event.body || "", secrets);
   if (!payload) {
-    console.log("[webhook] signature invalid. header keys:", JSON.stringify(Object.keys(event.headers || {})));
     return json(400, { error: "Invalid webhook signature." });
   }
-  console.log("[webhook] payload:", JSON.stringify(payload));
 
   // Chống xử lý trùng (Whop có thể gửi lại cùng 1 event).
   const eventId = payload.id || payload.data?.id;
@@ -132,7 +117,6 @@ export const handler = async (event) => {
   // (gạch dưới) hiển thị trên checkbox chọn event ở Whop Dashboard. Giữ cả 2
   // dạng để an toàn (phòng trường hợp version/nguồn khác dùng gạch dưới).
   const action = payload.action || payload.type;
-  console.log("[webhook] action:", action);
   if (action !== "payment_succeeded" && action !== "payment.succeeded") {
     return json(200, { ok: true, skipped: action });
   }
@@ -146,7 +130,6 @@ export const handler = async (event) => {
   // Đường dẫn field metadata thật CHƯA xác minh bằng webhook test thật — thử
   // vài vị trí hợp lý nhất, BẮT BUỘC log/kiểm tra lại khi có webhook test đầu tiên.
   const upgradeTenantId = data.metadata?.tenantId || payload.metadata?.tenantId || null;
-  console.log("[webhook] upgradeTenantId:", upgradeTenantId);
   if (upgradeTenantId) {
     try {
       await setTenantTier(upgradeTenantId, "paid");
