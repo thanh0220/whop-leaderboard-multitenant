@@ -100,12 +100,16 @@ export const handler = async (event) => {
       if (r.ok) { const u = await r.json(); username = u.username || u.name || userId; }
     } catch (_) {}
 
+    const paid = await isPaidTier(companyId);
+
     return json(200, {
       userId, username,
-      tier: (await isPaidTier(companyId)) ? "paid" : "free",
+      tier: paid ? "paid" : "free",
       earned, spent, available: Math.max(0, earned - spent),
       paidUsd, referrals, months, bonus, history,
-      rewards: cfg.rewards, points: cfg.points,
+      // Free 2 / Paid 10 — chỉ ẩn phần dư khỏi member nếu tenant downgrade, không xoá data thật.
+      rewards: paid ? cfg.rewards : cfg.rewards.slice(0, 2),
+      points: cfg.points,
       checkin: { today, streak: ck.streak, canClaim: checkinCanClaim, nextStreak, nextReward, calendar: cfg.checkinRewards },
       season: { ...seasonInfo(), topRewards: cfg.seasonTopRewards },
       branding: cfg.branding,

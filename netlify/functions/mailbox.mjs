@@ -1,5 +1,6 @@
 import { pointsStore, tenantKey } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
+import { getTenantConfig, isPaidTier } from "./_tenant.mjs";
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -28,7 +29,8 @@ export const handler = async (event) => {
   list = list.filter((e) => e.claimed || new Date(e.expiresAt).getTime() > now);
 
   if (event.httpMethod === "GET") {
-    return json(200, { entries: list });
+    const cfg = await getTenantConfig(companyId);
+    return json(200, { entries: list, branding: cfg.branding, isPaid: await isPaidTier(companyId) });
   }
 
   if (event.httpMethod !== "POST") return json(405, { error: "GET or POST" });

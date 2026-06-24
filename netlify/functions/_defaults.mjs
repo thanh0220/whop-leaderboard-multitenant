@@ -14,11 +14,12 @@ export const DEFAULT_TENANT = {
   // tạm cho tới khi xác minh được cách gọi checkAccess() chuẩn của Whop SDK
   // để gate theo đúng quyền admin thật trong Whop.
   setupSecret: null,
-  // Khi true: bỏ qua paywall freemium hoàn toàn cho tenant này — dùng trong
-  // giai đoạn build/test CMS admin, KHÔNG xoá logic gate thật ở isPaidTier()
-  // (_tenant.mjs) — chỉ OR thêm điều kiện này. Tắt (false) khi có billing
-  // thật (Phase 5 trong kế hoạch).
-  unlockAllFeatures: true,
+  // Khi true: bỏ qua paywall freemium hoàn toàn cho tenant này — dùng cho
+  // support/comp account (set bằng tay, xem admin-set-tier.mjs), KHÔNG xoá
+  // logic gate thật ở isPaidTier() (_tenant.mjs) — chỉ OR thêm điều kiện này.
+  // Default false từ khi có billing thật — tenant CŨ đã lưu true từ trước vẫn
+  // giữ nguyên (deepMerge ưu tiên giá trị đã lưu), chỉ tenant MỚI nhận false.
+  unlockAllFeatures: false,
   branding: {
     displayName: "Your Community",
     primaryColor: "#7c3aed",
@@ -56,12 +57,11 @@ export const DEFAULT_TENANT = {
   redeemCodes: {},
   // Lịch sự kiện độc lập (live stream, khuyến mãi, AMA, bảo trì...) — KHÔNG
   // gắn với Nhiệm vụ/Code, chỉ để thông báo/hiển thị trên public/events.html.
-  // Luôn đúng 3 ô (ảnh + tên + 1 ngày duy nhất) — admin sửa trực tiếp trên ô,
-  // không có form cài đặt riêng, không thêm/xoá được.
+  // 2 ô mặc định (khớp giới hạn Free) — admin tự thêm/xoá ô qua admin.html,
+  // tối đa 2 (Free) / 10 (Paid) — xem events.mjs + admin-config.mjs.
   events: [
     { id: "event_1", name: "Event 1", image: "", date: "" },
     { id: "event_2", name: "Event 2", image: "", date: "" },
-    { id: "event_3", name: "Event 3", image: "", date: "" },
   ],
   // Rương Liên Minh: khi 1 member mua hàng thật trên Whop (webhook
   // payment_succeeded — xem webhook.mjs), TOÀN BỘ member khác trong kênh

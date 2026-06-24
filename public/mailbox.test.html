@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Mailbox — Whop Community App</title>
+<title>[TEST] Mailbox — DO NOT use this file when deploying</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -22,6 +22,7 @@
     text-transform:uppercase;font-size:16px;margin-bottom:14px}
   .top .s{color:var(--red);font-size:18px;text-shadow:0 0 12px rgba(255,45,75,.7)}
   .top b{color:var(--red)}
+  .testbar{background:rgba(255,45,75,.15);border:1px solid rgba(255,45,75,.5);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;color:#ffd0d8}
 
   .chest{display:flex;align-items:center;gap:14px;background:linear-gradient(160deg,#16202f,#0a0f18);
     border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;margin-bottom:10px;position:relative;overflow:hidden}
@@ -88,22 +89,12 @@
     background:#0e1622;border:1px solid var(--line2);border-radius:12px;padding:14px 22px;color:var(--cyan);
     font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:.05em;box-shadow:0 0 30px rgba(39,227,255,.35);transition:.3s;z-index:80}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
-  .powered-badge{position:fixed;bottom:10px;right:12px;z-index:60;font-size:11px;color:var(--muted);
-    background:rgba(10,14,24,.7);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:4px 9px;
-    display:none;pointer-events:none}
 </style>
 </head>
 <body>
-<div class="powered-badge" id="powered-badge">⚡ Powered by GTVăn</div>
 <div class="wrap">
-  <div class="nav">
-    <a href="/">🏆 Leaderboard</a>
-    <a href="/daily.html">📅 Daily</a>
-    <a href="/store.html">🎁 Store</a>
-    <a href="/events.html">🗓 Events</a>
-    <a href="/mailbox.html" class="on">📬 Mailbox</a>
-  </div>
-  <div class="top"><span class="s">♦</span> <b>Mailbox</b></div>
+  <div class="testbar">🧪 THIS IS A STANDALONE TEST FILE (mailbox.test.html) — all chest data is fake, no real backend/Whop calls. Do not deploy this file.</div>
+  <div class="top"><span class="s">♦</span> <b>Mailbox</b> (test)</div>
   <div id="content"><div class="state"><div class="spinner"></div>Loading...</div></div>
 </div>
 
@@ -116,28 +107,35 @@ const $=id=>document.getElementById(id);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2400);}
 
-function tenantQS(){
-  const u = new URL(location.href);
-  const exp = u.searchParams.get('experienceId') || '';
-  const co  = u.searchParams.get('companyId') || '';
-  const p = new URLSearchParams();
-  if (exp) p.set('experienceId', exp);
-  if (co)  p.set('companyId', co);
-  const s = p.toString();
-  return s ? '?' + s : '';
+const MOCK_ENTRIES = [
+  { id:'m1', tier:'wood',  label:'Wood Chest',  icon:'📦', xu:12,  buyerName:'minh_tran',  claimed:false, expiresAt:new Date(Date.now()+3600000).toISOString() },
+  { id:'m2', tier:'silver',label:'Silver Chest', icon:'🎁', xu:35,  buyerName:'kieu_anh',   claimed:false, expiresAt:new Date(Date.now()+7200000).toISOString() },
+  { id:'m3', tier:'gold',  label:'Gold Chest',icon:'🏆', xu:180, buyerName:'duc_phan',   claimed:false, expiresAt:new Date(Date.now()+10800000).toISOString() },
+  { id:'m4', tier:'buyer', label:'🎉 Thank you for your purchase!', icon:'🎉', xu:140, buyerName:'You', claimed:false, expiresAt:new Date(Date.now()+14400000).toISOString() },
+];
+function mockFetch(path, opts){
+  return new Promise(resolve => setTimeout(() => {
+    if (opts && opts.method === 'POST') {
+      const { entryId } = JSON.parse(opts.body || '{}');
+      const e = MOCK_ENTRIES.find(x => x.id === entryId);
+      if (!e || e.claimed) { resolve({ ok:false, json: async()=>({ error:'This chest is no longer valid (mock)' }) }); return; }
+      e.claimed = true;
+      resolve({ ok:true, json: async()=>({ xu: e.xu, message: `🎉 Claimed +${e.xu} XU (mock)` }) });
+      return;
+    }
+    resolve({ ok:true, json: async()=>({ entries: MOCK_ENTRIES }) });
+  }, 350));
 }
-function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
 
 async function load(){
   $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading...</div>`;
   try{
-    const r=await tenantFetch('/.netlify/functions/mailbox');
+    const r=await mockFetch('/.netlify/functions/mailbox');
     const j=await r.json();
     if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
-    $('powered-badge').style.display=(j.isPaid&&j.branding?.logoUrl)?'none':'block';
     render(j.entries||[]);
   }catch(e){
-    $('content').innerHTML=`<div class="err"><b>⚠ Could not load data:</b> ${e.message}<br><br>Please open this page inside Whop.</div>`;
+    $('content').innerHTML=`<div class="err"><b>⚠ Error:</b> ${e.message}</div>`;
   }
 }
 
@@ -155,7 +153,7 @@ function render(entries){
   for (const k in chestRegistry) delete chestRegistry[k];
 
   if (!entries.length){
-    $('content').innerHTML = '<div class="empty">📭 Your mailbox is empty. When a member makes a purchase on Whop, the whole channel will get a chest here!</div>';
+    $('content').innerHTML = '<div class="empty">📭 Your mailbox is empty.</div>';
     return;
   }
   const sparkAngles = [[-26,-10,-22],[24,-8,18],[-10,-34,-14],[12,-30,26],[-34,-22,-30],[30,-20,32]];
@@ -197,7 +195,7 @@ async function claim(id, btn){
   chestRegistry[id]?.open();
   const animDone = new Promise(res => setTimeout(res, 650));
   try{
-    const reqPromise = tenantFetch('/.netlify/functions/mailbox', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({entryId:id})});
+    const reqPromise = mockFetch('/.netlify/functions/mailbox', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({entryId:id})});
     const [r] = await Promise.all([reqPromise, animDone]);
     const j = await r.json();
     if(!r.ok) throw new Error(j.error||'Error');

@@ -1,6 +1,6 @@
 import { getAuthContext } from "./_auth.mjs";
 import { getCompanyAccessToken } from "./_tokens.mjs";
-import { getTenantConfig } from "./_tenant.mjs";
+import { getTenantConfig, isPaidTier } from "./_tenant.mjs";
 
 const WHOP_API = "https://api.whop.com/api/v5";
 
@@ -101,6 +101,17 @@ export const handler = async (event) => {
       const totalPages = j.pagination && j.pagination.total_pages;
       if (!totalPages || page >= totalPages || batch.length === 0) break;
     }
+
+    // Member cap (Free 50 / Paid 500) theo ngày tham gia SỚM NHẤT — cắt NGAY
+    // TRƯỚC pipeline enrichment tốn API (affiliates/payments/per-user fetch ở
+    // dưới) để tenant free thực sự giảm chi phí gọi Whop, không chỉ ẩn ở UI.
+    const totalMembersReal = members.length;
+    const paid = await isPaidTier(companyId);
+    const memberCap = paid ? 500 : 50;
+    members = members
+      .slice()
+      .sort((a, b) => (a.created_at || 0) - (b.created_at || 0))
+      .slice(0, memberCap);
 
     // 2) Affiliates — endpoint đúng: /v5/affiliates?companyId=biz_xxx
     const affiliatesRes = await fetch(
@@ -400,6 +411,7 @@ export const handler = async (event) => {
 
     const stats = {
       totalMembers: members.length,
+      totalMembersReal,
       paidMembers: paidUsers.size,
       totalReferrals: Object.values(referralsByUsername).reduce((s, n) => s + n, 0)
         || affiliates.reduce((s, a) => s + (a.total_referrals_count ?? a.referral_count ?? 0), 0),
@@ -455,7 +467,7 @@ export const handler = async (event) => {
     return {
       statusCode: 200,
       headers: corsHeaders,
-      body: JSON.stringify({ leaderboard, affiliateBoard, stats, season, branding: cfg.branding, updatedAt: new Date().toISOString() }),
+      body: JSON.stringify({ leaderboard, affiliateBoard, stats, season, branding: cfg.branding, isPaid: paid, updatedAt: new Date().toISOString() }),
     };
   } catch (err) {
     return {

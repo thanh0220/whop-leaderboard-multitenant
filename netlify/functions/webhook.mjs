@@ -1,6 +1,6 @@
 import { makeWebhookValidator } from "@whop/api";
 import { pointsStore, tenantKey } from "./_store.mjs";
-import { getTenantConfig, getTenantIdByRealCompanyId } from "./_tenant.mjs";
+import { getTenantConfig, getTenantIdByRealCompanyId, setTenantTier } from "./_tenant.mjs";
 
 const WHOP_API = "https://api.whop.com/api/v5";
 
@@ -87,6 +87,23 @@ export const handler = async (event) => {
   if (action !== "payment_succeeded") return json(200, { ok: true, skipped: action });
 
   const data = payload.data || {};
+
+  // Thanh toán nâng cấp Pro của CHÍNH app này (admin trả tiền cho dev qua
+  // create-upgrade-checkout.mjs) — company_id ở đây là company CỦA DEV, không
+  // map được qua getTenantIdByRealCompanyId (chỉ ánh xạ company của tenant) —
+  // nên phải tách riêng, đọc metadata.tenantId đã gắn lúc tạo checkout session.
+  // Đường dẫn field metadata thật CHƯA xác minh bằng webhook test thật — thử
+  // vài vị trí hợp lý nhất, BẮT BUỘC log/kiểm tra lại khi có webhook test đầu tiên.
+  const upgradeTenantId = data.metadata?.tenantId || payload.metadata?.tenantId || null;
+  if (upgradeTenantId) {
+    try {
+      await setTenantTier(upgradeTenantId, "paid");
+      return json(200, { ok: true, upgraded: upgradeTenantId });
+    } catch (err) {
+      return json(500, { error: err.message });
+    }
+  }
+
   const realCompanyId = data.company_id || data.company?.id || data.business_id || null;
   if (!realCompanyId) return json(200, { ok: true, skipped: "no-company-id" });
 

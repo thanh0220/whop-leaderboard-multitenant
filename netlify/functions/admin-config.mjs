@@ -1,5 +1,5 @@
 import { getAuthContext, lastVerifyError } from "./_auth.mjs";
-import { getTenantConfig, saveTenantConfig } from "./_tenant.mjs";
+import { getTenantConfig, saveTenantConfig, isPaidTier } from "./_tenant.mjs";
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -11,6 +11,9 @@ const json = (code, obj) => ({
 // (không spread thẳng body vào saveTenantConfig) để chặn field rác/field lạ
 // vô tình hoặc cố ý ghi vào config tenant (vd ghi đè whopApiKey bằng field
 // gõ sai tên, hoặc field hoàn toàn không liên quan).
+// "unlockAllFeatures" KHÔNG nằm trong list này dù vẫn còn trong data model —
+// đây là cờ bypass paywall, chỉ dev mới được set (qua admin-set-tier.mjs hoặc
+// sửa trực tiếp blob), tuyệt đối không cho admin tự POST tự mở khoá free.
 const ALLOWED_KEYS = [
   "branding",
   "points",
@@ -19,7 +22,6 @@ const ALLOWED_KEYS = [
   "seasonTopRewards",
   "rewards",
   "redeemCodes",
-  "unlockAllFeatures",
   "chestRules",
   "events",
 ];
@@ -52,6 +54,7 @@ export const handler = async (event) => {
     return json(200, {
       configured: !!cfg.whopApiKey,
       whopCompanyId: cfg.whopCompanyId || null,
+      isPaid: await isPaidTier(companyId),
       branding: cfg.branding,
       points: cfg.points,
       fx: cfg.fx,
@@ -96,6 +99,23 @@ export const handler = async (event) => {
   }
   if ("chestRules" in partial && (typeof partial.chestRules !== "object" || partial.chestRules === null || Array.isArray(partial.chestRules))) {
     return json(400, { error: "chestRules must be an object." });
+  }
+
+  // Chặn bypass cap Free/Paid bằng cách gọi API thẳng (UI admin.html đã tự
+  // chặn nhưng không tin client) — Free: 2 events / 2 rewards, Paid: 10 / 10.
+  const paid = await isPaidTier(companyId);
+  const limit = paid ? 10 : 2;
+  if ("events" in partial && partial.events.length > limit) {
+    return json(400, { error: `Free plan allows up to ${limit} events. Upgrade to Paid for more.` });
+  }
+  if ("rewards" in partial && partial.rewards.length > limit) {
+    return json(400, { error: `Free plan allows up to ${limit} rewards. Upgrade to Paid for more.` });
+  }
+  // branding.logoUrl ẩn badge "Powered by GTVăn" — admin.html disable input
+  // này khi free, nhưng vẫn gửi nguyên branding cũ trong mọi lần Save all, nên
+  // chặn ở đây là chống gọi API thẳng để bypass, KHÔNG phải chặn save thường.
+  if ("branding" in partial && !paid) {
+    partial.branding = { ...partial.branding, logoUrl: cfg.branding.logoUrl || null };
   }
 
   if (whopApiKey) partial.whopApiKey = String(whopApiKey).trim();

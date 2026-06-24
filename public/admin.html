@@ -67,6 +67,11 @@
     border-top:1px solid rgba(255,255,255,.1);display:flex;justify-content:center;gap:10px;z-index:20;backdrop-filter:blur(6px)}
   .save-bar .btn.big{margin:0;max-width:400px}
 
+  .checkout-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+  .checkout-modal{background:#0a0f18;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px;max-width:460px;width:100%;max-height:90vh;overflow:auto;position:relative}
+  .checkout-modal .x{position:absolute;top:10px;right:14px;cursor:pointer;color:var(--muted);font-size:18px}
+  .checkout-modal .x:hover{color:var(--text)}
+
   /* ===== Live preview (mirrors store.html / index.html / daily.html markup+CSS) ===== */
   .edit-row{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:start;margin-top:10px}
   @media(max-width:680px){.edit-row{grid-template-columns:1fr}}
@@ -166,6 +171,8 @@
   <p class="hint">Only admins should open this page — don't share this link with members.</p>
   <div class="nav">
     <a href="#conn">🔌 Connect</a>
+    <a href="#billing">💎 Billing</a>
+    <a href="#branding">🎨 Branding</a>
     <a href="#season">🏆 Season</a>
     <a href="#daily">📅 Check-in</a>
     <a href="#store">🎁 Store</a>
@@ -176,6 +183,7 @@
   <div id="content"><div class="state">Loading...</div></div>
 </div>
 
+<script async defer src="https://js.whop.com/static/checkout/loader.js"></script>
 <script type="module" src="/chest3d.module.js"></script>
 <script>
 const $=id=>document.getElementById(id);
@@ -241,6 +249,7 @@ function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
 // dòng, đổi loại payload, upload ảnh xong) mới gọi renderAll().
 let STATE = null;
 let CONFIGURED = false;
+let IS_PAID = false;
 let typedApiKey = ''; // ô API key không bind vào STATE (nhạy cảm) — phải giữ
                        // riêng 1 biến, không thì renderAll() do section khác
                        // gọi sẽ xoá mất giá trị đang gõ trong ô này.
@@ -265,6 +274,7 @@ async function load(){
     try{
       const j = await loadOnce();
       CONFIGURED = j.configured;
+      IS_PAID = !!j.isPaid;
       typedApiKey = '';
       STATE = {
         whopCompanyId: j.whopCompanyId || '',
@@ -274,7 +284,8 @@ async function load(){
         redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>
           typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),
         chestRules: j.chestRules || {thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},
-        events: normalizeEvents(j.events),
+        events: normalizeEvents(j.events, IS_PAID ? 10 : 2),
+        branding: j.branding || {displayName:'',primaryColor:'#7c3aed',logoUrl:''},
       };
       renderAll();
       return;
@@ -289,7 +300,7 @@ async function load(){
 
 function renderAll(){
   $('content').innerHTML =
-    renderConn() + renderSeason() + renderDaily() + renderStore() + renderCodes() + renderEvents() + renderChests() +
+    renderConn() + renderBilling() + renderBranding() + renderSeason() + renderDaily() + renderStore() + renderCodes() + renderEvents() + renderChests() +
     `<div class="save-bar"><button class="btn big" id="save-all">💾 Save all</button></div>`;
   $('save-all').onclick = saveAll;
   initChestPreviews();
@@ -321,6 +332,74 @@ function renderConn(){
       <label>Company ID</label>
       <input id="conn-id" type="text" value="${esc(STATE.whopCompanyId)}" oninput="STATE.whopCompanyId=this.value" autocomplete="off"/>
       <div class="hint-small">Find it in the URL when you open your business Dashboard: whop.com/dashboard/<b>biz_xxx</b>/</div>
+    </div>`;
+}
+
+// ===== #billing =====
+function renderBilling(){
+  const statusHtml = IS_PAID
+    ? `<span class="status on">✅ Paid plan active</span>`
+    : `<span class="status off">⚠ Free plan</span>`;
+  const action = IS_PAID
+    ? `<p class="hint-small">Thanks for supporting this app! All paid features are unlocked.</p>`
+    : `<button class="btn" id="upgrade-btn" onclick="startUpgrade()">⭐ Upgrade to Paid</button>`;
+  return `
+    <div class="sect" id="billing">💎 Billing</div>
+    <div class="panel">
+      ${statusHtml}
+      <p class="hint-small" style="margin:8px 0">Paid unlocks daily check-in, redeem codes, the reward store, more event/reward slots, a higher member limit on the leaderboard, and removes the "Powered by" badge.</p>
+      ${action}
+    </div>`;
+}
+
+async function startUpgrade(){
+  const btn = $('upgrade-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Loading...'; }
+  try{
+    const r = await tenantFetch('/.netlify/functions/create-upgrade-checkout', { method:'POST' });
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
+    openCheckoutModal(j.sessionId);
+  }catch(e){
+    alert('⚠ Could not start checkout: ' + e.message);
+  }finally{
+    if (btn) { btn.disabled = false; btn.textContent = '⭐ Upgrade to Paid'; }
+  }
+}
+
+function openCheckoutModal(sessionId){
+  const wrap = document.createElement('div');
+  wrap.className = 'checkout-overlay';
+  wrap.id = 'checkout-overlay';
+  wrap.innerHTML = `
+    <div class="checkout-modal">
+      <span class="x" onclick="closeCheckoutModal()">✕</span>
+      <div data-whop-checkout-session-id="${esc(sessionId)}" data-whop-checkout-return-url="${esc(location.origin + location.pathname)}"></div>
+    </div>`;
+  wrap.addEventListener('click', (e) => { if (e.target === wrap) closeCheckoutModal(); });
+  document.body.appendChild(wrap);
+}
+function closeCheckoutModal(){
+  const el = $('checkout-overlay');
+  if (el) el.remove();
+  load();
+}
+
+// ===== #branding — tuỳ chỉnh thương hiệu, chỉ Paid mới sửa được =====
+function renderBranding(){
+  const b = STATE.branding || {};
+  const dis = IS_PAID ? '' : 'disabled';
+  const lockHint = IS_PAID ? '' : `<p class="hint-small">🔒 Upgrade to Paid to customize branding and remove the "Powered by GTVăn" badge from member pages.</p>`;
+  return `
+    <div class="sect" id="branding">🎨 Branding</div>
+    <div class="panel">
+      ${lockHint}
+      <label>Display name (shown on the leaderboard header)</label>
+      <input ${dis} value="${esc(b.displayName||'')}" oninput="STATE.branding.displayName=this.value"/>
+      <label>Primary color</label>
+      <input ${dis} type="color" value="${esc(b.primaryColor||'#7c3aed')}" oninput="STATE.branding.primaryColor=this.value" style="width:60px;padding:2px;height:36px"/>
+      <label>Logo URL (paste an image link — also hides the "Powered by" badge)</label>
+      <input ${dis} value="${esc(b.logoUrl||'')}" placeholder="https://..." oninput="STATE.branding.logoUrl=this.value"/>
     </div>`;
 }
 
@@ -441,11 +520,16 @@ function renderStore(){
       </div>
     </details>`;
   }).join('');
+  const rewardLimit = IS_PAID ? 10 : 2;
+  const rewardCount = (STATE.rewards||[]).length;
+  const addRewardOrMsg = rewardCount < rewardLimit
+    ? `<button class="btn" onclick="STATE.rewards.push({id:'reward_'+Date.now().toString(36),name:'',cost:100,desc:'',image:'',badge:'',originalPrice:'',stock:null,tier:1,payload:{kind:'code',code:''}});renderAll()">+ Add new reward (${rewardCount}/${rewardLimit})</button>`
+    : `<p class="hint-small">${IS_PAID ? `Limit reached (${rewardLimit} rewards).` : `Free plan limit reached (${rewardLimit} rewards) — ⭐ upgrade to Paid for up to 10.`}</p>`;
   return `
     <div class="sect" id="store">🎁 Reward Store</div>
     <div class="panel">
       ${cards || '<p class="hint-small">No rewards in the store yet.</p>'}
-      <button class="btn" onclick="STATE.rewards.push({id:'reward_'+Date.now().toString(36),name:'',cost:100,desc:'',image:'',badge:'',originalPrice:'',stock:null,tier:1,payload:{kind:'code',code:''}});renderAll()">+ Add new reward</button>
+      ${addRewardOrMsg}
     </div>`;
 }
 
@@ -517,25 +601,21 @@ function renderChests(){
     </div>`;
 }
 
-// ===== #events — đúng 3 ô (ảnh + tên + 1 ngày), sửa trực tiếp trên ô, kéo-thả lên lịch =====
+// ===== #events — sự kiện (ảnh + tên + 1 ngày), sửa trực tiếp trên ô, kéo-thả lên lịch =====
 let eventsWeekOffset = 0;
 let dragChip = null; // idx của ô đang kéo (drop lần đầu lên lịch)
+function eventsLimit(){ return IS_PAID ? 10 : 2; }
 
-// Luôn đảm bảo đúng 3 phần tử {id,name,image,date} — migrate dữ liệu cũ
-// (startDate/endDate) về `date` nếu có, không thêm/xoá được từ UI.
-function normalizeEvents(raw){
+// Migrate dữ liệu cũ (startDate/endDate) về `date` nếu có, cắt về đúng giới
+// hạn tier (free 2 / paid 10) — admin thêm/xoá ô qua nút trong renderEvents().
+function normalizeEvents(raw, limit){
   const list = Array.isArray(raw) ? raw : [];
-  const out = [];
-  for(let i=0;i<3;i++){
-    const e = list[i] || {};
-    out.push({
-      id: e.id || ('event_'+(i+1)),
-      name: e.name || ('Event '+(i+1)),
-      image: e.image || '',
-      date: e.date || e.startDate || '',
-    });
-  }
-  return out;
+  return list.slice(0, limit).map((e,i)=>({
+    id: e.id || ('event_'+(i+1)),
+    name: e.name || ('Event '+(i+1)),
+    image: e.image || '',
+    date: e.date || e.startDate || '',
+  }));
 }
 
 function evWeekDates(offset){
@@ -556,6 +636,7 @@ function evCardHtml(e, idx){
     <img class="ev-thumb" id="ev-thumb-${idx}" src="${esc(e.image||'')}" style="${e.image?'':'display:none'}" onclick="promptImage(${idx})" title="Click to change image"/>
     ${e.image?'':`<span class="ev-thumb ev-thumb-empty" onclick="promptImage(${idx})" title="Click to set image">🖼</span>`}
     <input class="evt-name-inline" value="${esc(e.name)}" oninput="STATE.events[${idx}].name=this.value" onmousedown="event.stopPropagation()"/>
+    <span class="ex" onmousedown="event.stopPropagation()" onclick="deleteEventSlot(${idx})" title="Delete this event slot">🗑</span>
   `;
 }
 function promptImage(idx){
@@ -563,6 +644,10 @@ function promptImage(idx){
   const url = prompt('Paste an image link for this event:', cur);
   if(url === null) return;
   STATE.events[idx].image = url.trim();
+  refreshEvents();
+}
+function deleteEventSlot(idx){
+  STATE.events.splice(idx,1);
   refreshEvents();
 }
 
@@ -595,12 +680,17 @@ function renderEvents(){
   const chips = unscheduledIdx.map(idx=>{
     const e = events[idx];
     return `<span class="chip quest" draggable="true" ondragstart="onChipDragStart(event,${idx})">${evCardHtml(e, idx)}</span>`;
-  }).join('') || '<span class="hint-small">All 3 events are scheduled.</span>';
+  }).join('') || (events.length ? '<span class="hint-small">All events are scheduled.</span>' : '');
+
+  const limit = eventsLimit();
+  const addOrMsg = events.length < limit
+    ? `<button class="btn" onclick="STATE.events.push({id:'event_'+Date.now().toString(36),name:'Event '+(STATE.events.length+1),image:'',date:''});refreshEvents()">+ Add event slot (${events.length}/${limit})</button>`
+    : `<p class="hint-small">${IS_PAID ? `Limit reached (${limit} slots).` : `Free plan limit reached (${limit} slots) — ⭐ upgrade to Paid for up to 10.`}</p>`;
 
   return `<div id="events-wrap">
     <div class="sect" id="events">🗓 Events</div>
     <div class="panel">
-      <p class="hint-small" style="margin-bottom:10px">Exactly 3 slots — type the name directly, click the image to change it, drag onto the calendar to set a date.</p>
+      <p class="hint-small" style="margin-bottom:10px">Type the name directly, click the image to change it, drag onto the calendar to set a date.</p>
       <div class="events-nav">
         <button class="btn" onclick="eventsWeekOffset--;refreshEvents()">‹ Previous week</button>
         <span class="lbl">${week[0].slice(8,10)}/${week[0].slice(5,7)} — ${week[6].slice(8,10)}/${week[6].slice(5,7)}</span>
@@ -612,6 +702,7 @@ function renderEvents(){
         <div class="prev-label" style="text-align:left">📥 Unscheduled (drag onto a day above)</div>
         ${chips}
       </div>
+      ${addOrMsg}
     </div>
   </div>`;
 }
@@ -672,6 +763,7 @@ async function saveAll(){
     redeemCodes,
     chestRules: STATE.chestRules,
     events: STATE.events,
+    branding: STATE.branding,
   };
   if (typedApiKey.trim()) payload.whopApiKey = typedApiKey.trim();
   if ((STATE.whopCompanyId||'').trim()) payload.whopCompanyId = STATE.whopCompanyId.trim();
