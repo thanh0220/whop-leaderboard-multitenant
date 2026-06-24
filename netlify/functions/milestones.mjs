@@ -49,6 +49,7 @@ export const handler = async (event) => {
         label: reward ? reward.name : t.label,
         icon: reward ? "🎁" : t.icon,
         xu: reward ? null : t.xu,
+        image: reward ? (reward.image || null) : null,
         unlocked: progress.usd >= t.thresholdUsd,
         claimed: progress.claimedTiers.includes(i),
       };

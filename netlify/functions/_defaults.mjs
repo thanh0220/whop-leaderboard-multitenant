@@ -98,9 +98,11 @@ export const DEFAULT_TENANT = {
     enabled: false,
     periodDays: 7,
     tiers: [
-      { thresholdUsd: 5,  rewardId: null, xu: 50,  label: "Mốc 1", icon: "🎁" },
-      { thresholdUsd: 10, rewardId: null, xu: 150, label: "Mốc 2", icon: "🎁" },
-      { thresholdUsd: 20, rewardId: null, xu: 400, label: "Mốc 3", icon: "🎁" },
+      { thresholdUsd: 5,   rewardId: null, xu: 50,   label: "Starter Reward", icon: "🎁" },
+      { thresholdUsd: 10,  rewardId: null, xu: 150,  label: "Bronze Reward",  icon: "🎁" },
+      { thresholdUsd: 20,  rewardId: null, xu: 400,  label: "Silver Reward",  icon: "🎁" },
+      { thresholdUsd: 50,  rewardId: null, xu: 900,  label: "Gold Reward",    icon: "🎁" },
+      { thresholdUsd: 100, rewardId: null, xu: 2000, label: "Diamond Reward", icon: "🎁" },
     ],
   },
 };
