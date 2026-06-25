@@ -31,6 +31,8 @@ export const handler = async (event) => {
       name: e.name,
       image: e.image || null,
       date: e.date,
+      endDate: e.endDate || e.date,
+      desc: e.desc || "",
     }));
 
   return json(200, { events, branding: cfg.branding, isPaid: paid });

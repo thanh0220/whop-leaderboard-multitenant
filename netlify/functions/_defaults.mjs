@@ -69,8 +69,8 @@ export const DEFAULT_TENANT = {
   // 2 ô mặc định (khớp giới hạn Free) — admin tự thêm/xoá ô qua admin.html,
   // tối đa 2 (Free) / 10 (Paid) — xem events.mjs + admin-config.mjs.
   events: [
-    { id: "event_1", name: "Event 1", image: "", date: "" },
-    { id: "event_2", name: "Event 2", image: "", date: "" },
+    { id: "event_1", name: "Event 1", image: "", date: "", endDate: "", desc: "" },
+    { id: "event_2", name: "Event 2", image: "", date: "", endDate: "", desc: "" },
   ],
   eventsEnabled: true,
   // Rương Liên Minh: khi 1 member mua hàng thật trên Whop (webhook
