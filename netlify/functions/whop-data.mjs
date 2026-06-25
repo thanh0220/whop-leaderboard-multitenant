@@ -91,7 +91,7 @@ export const handler = async (event) => {
     let membersStatus = null;
     for (let page = 1; page <= 5; page++) {
       const r = await fetch(
-        `${WHOP_API}/company/memberships?company_id=${realCompanyId}&page=${page}&per_page=100&expand[]=user&expand[]=plan`,
+        `https://api.whop.com/api/v1/memberships?company_id=${realCompanyId}&page=${page}&per_page=100&expand[]=user&expand[]=plan`,
         { headers }
       );
       if (page === 1) membersStatus = r.status;
@@ -114,9 +114,11 @@ export const handler = async (event) => {
       .sort((a, b) => (a.created_at || 0) - (b.created_at || 0))
       .slice(0, memberCap);
 
-    // 2) Affiliates — endpoint đúng: /v5/affiliates?companyId=biz_xxx
+    // 2) Affiliates — App API key cần company_id, dùng endpoint v1 (v5 chỉ
+    // scope đúng theo company của chính key, không tôn trọng companyId/
+    // company_id truyền vào khi gọi bằng App API key chung).
     const affiliatesRes = await fetch(
-      `${WHOP_API}/affiliates?companyId=${realCompanyId}&first=50`,
+      `https://api.whop.com/api/v1/affiliates?company_id=${realCompanyId}&first=50`,
       { headers }
     );
     let affiliatesData = { data: [] };
@@ -208,30 +210,16 @@ export const handler = async (event) => {
     }
     for (let page = 1; page <= 3; page++) {
       try {
-        const r = await fetch(`${WHOP_API}/company/payments?company_id=${realCompanyId}&page=${page}&per_page=100`, { headers });
+        const r = await fetch(`https://api.whop.com/api/v1/payments?company_id=${realCompanyId}&page=${page}&per_page=100`, { headers });
         if (page === 1) paymentsStatus = r.status;
         if (!r.ok) break;
         const j = await r.json();
-        const arr = j.data || [];
+        const arr = j.data || j.payments || [];
         if (page === 1 && arr[0]) samplePayment = arr[0];
         harvestPayments(arr);
         const tp = j.pagination && j.pagination.total_pages;
         if (!tp || page >= tp || arr.length === 0) break;
       } catch (_) { break; }
-    }
-    if (Object.keys(paidInfo).length === 0) {
-      try {
-        const r = await fetch(
-          `https://api.whop.com/api/v1/payments?company_id=${realCompanyId}&page=1`,
-          { headers }
-        );
-        if (r.ok) {
-          const j = await r.json();
-          const arr = j.data || j.payments || [];
-          if (!samplePayment && arr[0]) samplePayment = arr[0];
-          harvestPayments(arr);
-        }
-      } catch (_) {}
     }
     const paidUsers = new Set(Object.keys(paidInfo));
 

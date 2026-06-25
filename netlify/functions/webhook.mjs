@@ -3,8 +3,6 @@ import { pointsStore, tenantKey } from "./_store.mjs";
 import { getTenantConfig, getTenantIdByRealCompanyId, setTenantTier } from "./_tenant.mjs";
 import { getCompanyAccessToken } from "./_tokens.mjs";
 
-const WHOP_API = "https://api.whop.com/api/v5";
-
 const json = (code, obj) => ({
   statusCode: code,
   headers: { "Content-Type": "application/json" },
@@ -26,7 +24,7 @@ async function fetchAllActiveMembers(apiKey, realCompanyId) {
   const REAL_STATUS = ["active", "completed", "trialing", "past_due", "canceling"];
   let members = [];
   for (let page = 1; page <= 10; page++) {
-    const r = await fetch(`${WHOP_API}/company/memberships?company_id=${realCompanyId}&page=${page}&per_page=100&expand[]=user`, { headers });
+    const r = await fetch(`https://api.whop.com/api/v1/memberships?company_id=${realCompanyId}&page=${page}&per_page=100&expand[]=user`, { headers });
     if (!r.ok) break;
     const j = await r.json();
     const batch = j.data || [];
