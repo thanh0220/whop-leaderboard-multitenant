@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#070910;--cyan:#27e3ff;--gold:#f4c441;--silver:#cbd5e1;--bronze:#e1955a;--diamond:#9beaff;--red:#ff2d4b;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3)}
+  :root{--bg:#070910;--cyan:#27e3ff;--gold:#f4c441;--silver:#cbd5e1;--bronze:#e1955a;--diamond:#9beaff;--red:#ff2d4b;--muted:#a3acc2;--text:#eef2f8;--line2:rgba(39,227,255,.3)}
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:30px 18px 100px;
     background:radial-gradient(120% 70% at 50% -10%,rgba(255,45,75,.13),var(--bg) 55%),var(--bg);background-attachment:fixed}
@@ -16,25 +16,25 @@
   h1{font-family:'Oswald',sans-serif;font-size:20px;letter-spacing:.06em;margin-bottom:6px}
   p.hint{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px}
   .nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:10}
-  .nav a{font-family:'Oswald',sans-serif;letter-spacing:.06em;text-transform:uppercase;font-size:11px;
+  .nav a{font-family:'Oswald',sans-serif;letter-spacing:.06em;text-transform:uppercase;font-size:12px;
     padding:7px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);
     color:var(--muted);text-decoration:none}
   .nav a:hover{border-color:var(--line2);color:var(--cyan)}
   .nav a.active{border-color:var(--gold);color:var(--gold);background:rgba(244,196,65,.12)}
   .tab-panel{animation:tabIn .25s ease}
   @keyframes tabIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
-  .sect{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:14px;color:var(--gold);margin:26px 0 12px;scroll-margin-top:60px}
+  .sect{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:16px;color:var(--gold);margin:26px 0 12px;scroll-margin-top:60px}
   .panel{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px;margin-bottom:8px}
-  label{display:block;font-size:11px;letter-spacing:.04em;color:var(--gold);margin:10px 0 4px;text-transform:uppercase;font-family:'Oswald',sans-serif}
+  label{display:block;font-size:11.5px;letter-spacing:.04em;color:var(--gold);margin:10px 0 4px;text-transform:uppercase;font-family:'Oswald',sans-serif}
   label:first-of-type{margin-top:0}
   input,select,textarea{width:100%;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.12);
     background:#070b16;color:var(--text);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none}
   textarea{min-height:60px;resize:vertical}
   input:focus,select:focus,textarea:focus{border-color:var(--cyan)}
-  .hint-small{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+  .hint-small{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .btn{margin-top:10px;padding:9px 14px;border-radius:8px;border:1px solid var(--line2);
-    background:rgba(39,227,255,.12);color:var(--cyan);font:700 11.5px 'Oswald',sans-serif;letter-spacing:.06em;
+    background:rgba(39,227,255,.12);color:var(--cyan);font:700 13px 'Oswald',sans-serif;letter-spacing:.06em;
     text-transform:uppercase;cursor:pointer}
   .btn:hover:not(:disabled){background:rgba(39,227,255,.22)}
   .btn:disabled{opacity:.5;cursor:not-allowed}
@@ -160,7 +160,7 @@
   .ev-head-cell.today{color:var(--cyan);background:rgba(39,227,255,.08)}
   .ev-head-cell .dd{font-size:12px;color:var(--text);font-weight:700;margin-top:2px}
   .ev-track{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;min-height:34px}
-  .evt-bar{position:relative;border-radius:8px;padding:7px 16px;font-size:11.5px;font-weight:600;display:flex;align-items:center;
+  .evt-bar{position:relative;border-radius:8px;padding:7px 16px;font-size:12.5px;font-weight:600;display:flex;align-items:center;
     overflow:hidden;white-space:nowrap;cursor:grab;user-select:none}
   .evt-bar:active{cursor:grabbing}
   .evt-bar.quest{background:rgba(39,227,255,.18);border:1px solid rgba(39,227,255,.5);color:var(--cyan)}
@@ -177,7 +177,7 @@
   .evt-bar .ex:hover{opacity:1}
   .ev-empty{text-align:center;color:var(--muted);font-size:12px;padding:10px 0}
   .unscheduled-tray{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
-  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:999px;
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:999px;
     margin:0 6px 6px 0;cursor:grab;user-select:none;width:160px}
   .chip .evt-name-inline{width:auto}
   .chip .ex{opacity:.7;cursor:pointer}
@@ -192,7 +192,9 @@
   .intro-steps{margin:0;padding-left:20px;font-size:12.5px;color:var(--muted);line-height:1.8}
   .intro-steps li{margin-bottom:2px}
   .reward-empty{background:rgba(255,45,75,.08);border:1px solid rgba(255,45,75,.3);border-radius:12px;padding:14px;text-align:center;margin-bottom:12px}
-  .reward-empty p{font-size:12.5px;color:#ffd0d8;margin-bottom:8px;line-height:1.5}
+  .reward-empty p{font-size:13px;color:#ffd0d8;margin-bottom:8px;line-height:1.5}
+  .step-head{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--gold);margin:18px 0 8px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px}
   .spin-pct{font-size:11px;color:var(--cyan);margin-top:4px;font-family:'Oswald',sans-serif;letter-spacing:.04em}
   .mini-preview{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px;margin:8px 0}
   .mini-preview img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#0a0f18}
@@ -381,11 +383,11 @@ function introBlock(what, steps){
 // bối rối "dropdown trống nghĩa là gì".
 function rewardEmptyWarning(required){
   const msg = required
-    ? "⚠ Bạn BẮT BUỘC phải có ít nhất 1 phần thưởng trong 🎁 Reward Store trước khi dùng tính năng này."
-    : "💡 Bạn chưa có phần thưởng nào trong 🎁 Reward Store — vẫn dùng được với xu thường, nhưng thêm 1 món quà thật sẽ hấp dẫn hơn nhiều.";
+    ? "⚠ You MUST have at least 1 reward in the 🎁 Reward Store before using this feature."
+    : "💡 You don't have any rewards in the 🎁 Reward Store yet — this still works with plain XU, but adding a real item makes it more exciting.";
   return `<div class="reward-empty">
     <p>${msg}</p>
-    <button class="btn" type="button" onclick="switchTab('store')">🎁 Đi tới Reward Store</button>
+    <button class="btn" type="button" onclick="switchTab('store')">🎁 Go to Reward Store</button>
   </div>`;
 }
 
@@ -396,7 +398,7 @@ function miniPreview(reward, big){
     ? `<img src="${esc(reward.image)}" alt=""/>`
     : `<div class="ic">🎁</div>`;
   return `<div class="mini-preview${big?' big':''}">${visual}
-    <div><div class="nm">${esc(reward.name||'(Unnamed)')}</div><div class="sub">👀 Member sẽ thấy đúng món này</div></div>
+    <div><div class="nm">${esc(reward.name||'(Unnamed)')}</div><div class="sub">👀 Members will see exactly this item</div></div>
   </div>`;
 }
 
@@ -651,7 +653,7 @@ function renderStore(){
       <summary>${esc(r.name||'(Unnamed)')} — ${r.cost||0} XU</summary>
       <div class="edit-row">
         <div>
-          <div class="hint-small" style="font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">🎴 Front side (shown before redeem)</div>
+          <div class="step-head" style="border-top:none;padding-top:0;margin-top:0">🎴 Front side (shown before redeem)</div>
           <label>Reward image (paste image link)</label>
           <img class="thumb" id="thumb-${i}" src="${esc(r.image||'')}" alt="" style="${r.image?'':'display:none'}"/>
           <input value="${esc(r.image||'')}" placeholder="https://..." oninput="setPath(STATE,'rewards.${i}.image',this.value);const t=$('thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none';refreshStorePreview(${i})"/>
@@ -665,7 +667,7 @@ function renderStore(){
           <label>Button label</label>
           <input value="${esc(r.buttonLabel||'GET')}" placeholder="GET" oninput="setPath(STATE,'rewards.${i}.buttonLabel',this.value);refreshStorePreview(${i})"/>
 
-          <div class="hint-small" style="font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:16px 0 6px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px">🎁 Back side (shown after a successful redeem)</div>
+          <div class="step-head">🎁 Back side (shown after a successful redeem)</div>
           <label>Reward type after redeem</label>
           <select onchange="setPath(STATE,'rewards.${i}.payload.kind',this.value);renderAll()">
             <option value="code" ${p.kind==='code'?'selected':''}>Code</option>
@@ -885,7 +887,7 @@ function renderSpin(){
 
 // ===== #auction — 1 vật phẩm duy nhất đấu giá bằng xu =====
 function stepHeader(text){
-  return `<div class="hint-small" style="font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:16px 0 6px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px">${text}</div>`;
+  return `<div class="step-head">${text}</div>`;
 }
 
 let auctionIsActive = false;
