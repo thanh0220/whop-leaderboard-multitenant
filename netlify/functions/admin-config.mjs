@@ -11,21 +11,28 @@ import { getCompanyAccessToken, getRealCompanyId } from "./_tokens.mjs";
 // Đánh dấu đã link rồi (`experienceLinkedAt`) để không gọi lại API Whop mỗi
 // lần admin mở trang — chỉ gọi lại nếu user bấm nút "Re-sync" (chưa có, có
 // thể thêm sau nếu cần). Không chặn/làm fail GET nếu bước này lỗi.
+// TẠM THỜI trả thêm diagnostic (status/body/url) để debug — xoá phần trả
+// diagnostic sau khi xác định xong nguyên nhân không link được experience.
 async function autoLinkExperiences(tenantId, realCompanyId) {
   const appId = process.env.WHOP_APP_ID || process.env.NEXT_PUBLIC_WHOP_APP_ID;
-  if (!realCompanyId || !appId) return;
+  if (!realCompanyId || !appId) return { skipped: true, realCompanyId, appId };
+  const url = `https://api.whop.com/api/v1/experiences?company_id=${encodeURIComponent(realCompanyId)}&app_id=${encodeURIComponent(appId)}`;
   try {
     const apiKey = await getCompanyAccessToken(tenantId);
-    const url = `https://api.whop.com/api/v1/experiences?company_id=${encodeURIComponent(realCompanyId)}&app_id=${encodeURIComponent(appId)}`;
     const r = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
-    if (!r.ok) return;
-    const j = await r.json();
+    const bodyText = await r.text();
+    if (!r.ok) return { ok: false, status: r.status, url, body: bodyText.slice(0, 500) };
+    let j = {};
+    try { j = JSON.parse(bodyText); } catch (_) {}
     const list = j.data || j.experiences || [];
     for (const exp of list) {
       if (exp?.id) await linkExperienceToTenant(exp.id, tenantId);
     }
     await saveTenantConfig(tenantId, { experienceLinkedAt: new Date().toISOString() });
-  } catch (_) {}
+    return { ok: true, status: r.status, url, linkedCount: list.length, ids: list.map(e=>e.id) };
+  } catch (e) {
+    return { ok: false, error: e.message, url };
+  }
 }
 
 const json = (code, obj) => ({
@@ -67,12 +74,18 @@ export const handler = async (event) => {
   if (event.queryStringParameters && event.queryStringParameters.debug) {
     const h = event.headers || {};
     const auth = await getAuthContext(event);
+    let linkResult = null;
+    if (auth.companyId) {
+      const realId = await getRealCompanyId(auth.companyId);
+      linkResult = await autoLinkExperiences(auth.companyId, realId);
+    }
     return json(200, {
       debug: true,
       hasTokenHeader: !!(h["x-whop-user-token"] || h["X-Whop-User-Token"]),
       referer: h["referer"] || h["Referer"] || null,
       auth,
       verifyError: lastVerifyError,
+      linkResult,
     });
   }
 
