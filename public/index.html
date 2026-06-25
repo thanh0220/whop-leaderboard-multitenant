@@ -278,8 +278,6 @@
       <input type="text" id="search" placeholder="Search members..." oninput="render()"/>
     </div>
   </div>
-  <div class="tab-note">🏆 <b>Season</b> is the sole basis for awarding the monthly Top 1-6 prizes (purchases + converted referrals during the month).</div>
-
   <div class="scope" id="scope" style="display:none">
     <button id="sc-all" class="on" onclick="setScope('all',this)">All</button>
     <button id="sc-month" onclick="setScope('month',this)">This month</button>
@@ -320,6 +318,20 @@ function tenantFetch(path, opts){
   document.querySelectorAll('a[href^="/"]').forEach(a=>{
     if (!a.getAttribute('href').includes('?')) a.href = a.getAttribute('href') + qs;
   });
+})();
+(async function applyNavVisibility(){
+  try{
+    const r = await tenantFetch('/.netlify/functions/nav-flags');
+    const j = await r.json();
+    if(!r.ok) return;
+    const map = { '/events.html': j.eventsEnabled, '/milestones.html': j.milestonesEnabled,
+      '/spin.html': j.spinEnabled, '/auction.html': j.auctionEnabled };
+    document.querySelectorAll('.nav a').forEach(a=>{
+      const href = a.getAttribute('href').split('?')[0];
+      if(href in map && !map[href]) a.remove();
+    });
+    if(!j.codesEnabled){ const fab=document.querySelector('.code-fab'); if(fab) fab.remove(); }
+  }catch(_){}
 })();
 
 /* Tỉ giá ~USD (chỉ để xếp BẬC danh hiệu, hiển thị vẫn theo tiền gốc) */

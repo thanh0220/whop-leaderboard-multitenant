@@ -8,6 +8,18 @@ const GEM_COLORS = {
   bronze: 0xffb070, jade: 0x7CFFC4, silver: 0xe8eef5, gold: 0xffe27a,
   ruby: 0xff7a90, diamond: 0xbdf3ff,
 };
+// Thân hộp + ru-y-băng cũng đổi màu theo tier (trước đây chỉ viên đá quý nhỏ đổi
+// màu, thân hộp luôn tím cố định — 5 hộp nhìn gần như giống nhau). Giờ cả khối
+// leo thang rõ rệt: bronze (nâu đồng) -> jade (xanh ngọc) -> gold (vàng kim) ->
+// ruby (đỏ ruby) -> diamond (trắng-xanh băng, sáng nhất).
+const TIER_BODY = {
+  bronze: 0x9c6b3f, jade: 0x1e6b54, silver: 0x9aa3ad, gold: 0xb8862e,
+  ruby: 0x8a1f33, diamond: 0xcfd8e3,
+};
+const TIER_RIBBON = {
+  bronze: 0xd8a86a, jade: 0x7CFFC4, silver: 0xe8eef5, gold: 0xffe27a,
+  ruby: 0xff7a90, diamond: 0xbdf3ff,
+};
 
 function buildScene(canvas, tier) {
   const gemColor = GEM_COLORS[tier] || GEM_COLORS.gold;
@@ -26,14 +38,16 @@ function buildScene(canvas, tier) {
 
   const group = new THREE.Group();
 
-  // Thân hộp — tím rực, sáng, bắt sáng tốt
+  // Thân hộp — màu theo tier (xem TIER_BODY), sáng, bắt sáng tốt
+  const bodyColor = TIER_BODY[tier] || TIER_BODY.gold;
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(1.05, 0.9, 1.05),
-    new THREE.MeshStandardMaterial({ color: 0x8b4fe8, roughness: 0.38, metalness: 0.08 })
+    new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.38, metalness: 0.08 })
   );
   group.add(body);
 
-  const ribbonMat = new THREE.MeshStandardMaterial({ color: 0xffd966, metalness: 0.7, roughness: 0.22, emissive: 0x6b4f00, emissiveIntensity: 0.15 });
+  const ribbonColor = TIER_RIBBON[tier] || TIER_RIBBON.gold;
+  const ribbonMat = new THREE.MeshStandardMaterial({ color: ribbonColor, metalness: 0.7, roughness: 0.22, emissive: 0x6b4f00, emissiveIntensity: 0.15 });
 
   // Ru-y-băng dọc (qua mặt trước + nóc + sau)
   const ribbonV = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.94, 1.09), ribbonMat);
@@ -77,6 +91,17 @@ function buildScene(canvas, tier) {
   renderer.setSize(canvas.width, canvas.height, false);
   renderer.render(scene, camera);
 
+  // Xoay THẬT trong scene 3D (đổi rotation.y + render lại mỗi frame) — KHÔNG
+  // dùng CSS rotateY trên canvas (đã bị lép/méo vì canvas chỉ là 1 ảnh phẳng,
+  // xoay CSS làm nó dẹt lại ở góc 90°/270° như xoay 1 tờ ảnh, không phải khối).
+  let spinRafId = null;
+  function spinTick() {
+    group.rotation.y += 0.006;
+    renderer.render(scene, camera);
+    spinRafId = requestAnimationFrame(spinTick);
+  }
+  spinRafId = requestAnimationFrame(spinTick);
+
   let rafId = null;
   function open() {
     if (rafId) return; // đã/đang mở rồi
@@ -102,6 +127,7 @@ function buildScene(canvas, tier) {
 
   function dispose() {
     if (rafId) cancelAnimationFrame(rafId);
+    if (spinRafId) cancelAnimationFrame(spinRafId);
     renderer.dispose();
     if (renderer.forceContextLoss) renderer.forceContextLoss();
   }

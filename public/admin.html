@@ -232,7 +232,7 @@
     <a href="#codes" onclick="switchTab('codes');return false">🔑 Codes</a>
     <a href="#events" onclick="switchTab('events');return false">🗓 Events</a>
     <a href="#chests" onclick="switchTab('chests');return false">📬 Community Chest</a>
-    <a href="#milestones" onclick="switchTab('milestones');return false">🎯 Deposit Milestones</a>
+    <a href="#milestones" onclick="switchTab('milestones');return false">🎯 Referral Milestones</a>
     <a href="#spin" onclick="switchTab('spin');return false">🎰 Lucky Spin</a>
     <a href="#auction" onclick="switchTab('auction');return false">🔨 Auction</a>
   </div>
@@ -339,7 +339,7 @@ async function load(){
         chestRules: j.chestRules || {enabled:true,thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},
         events: normalizeEvents(j.events, IS_PAID ? 10 : 2),
         eventsEnabled: j.eventsEnabled !== false,
-        milestoneRules: j.milestoneRules || {enabled:false,periodDays:7,tiers:[]},
+        milestoneRules: j.milestoneRules || {enabled:false,tiers:[]},
         spinRules: j.spinRules || {enabled:false,ticketsPerPayment:5,xuCostPerTicket:500,prizes:[]},
         auctionRules: j.auctionRules || {enabled:false,rewardId:null,startingBid:5000,minIncrement:100,durationHours:48},
         branding: j.branding || {displayName:'',primaryColor:'#7c3aed',logoUrl:''},
@@ -782,16 +782,18 @@ function renderChests(){
 
 // ===== #milestones — Deposit Milestones (members accumulate real USD spent in a period) =====
 function renderMilestones(){
-  const rules = STATE.milestoneRules || {enabled:false,periodDays:7,tiers:[]};
+  const rules = STATE.milestoneRules || {enabled:false,tiers:[]};
   const rewardOptions = (r) => `
-    <option value="">— Reward XU directly —</option>
+    <option value="" ${!r.rewardId?'selected':''}>— Reward XU directly —</option>
+    <option value="__spin__" ${r.rewardId==='__spin__'?'selected':''}>🎰 Give Lucky Spin tickets</option>
     ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${r.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
   const rows = (rules.tiers||[]).map((t,i)=>{
-    const reward = t.rewardId ? (STATE.rewards||[]).find(rw=>rw.id===t.rewardId) : null;
+    const isSpin = t.rewardId === '__spin__';
+    const reward = t.rewardId && !isSpin ? (STATE.rewards||[]).find(rw=>rw.id===t.rewardId) : null;
     return `
     <div class="item">
       <div class="row2">
-        <div><label>Member must deposit at least (USD)</label><input type="number" min="0" value="${t.thresholdUsd||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.thresholdUsd',Number(this.value)||0)"/></div>
+        <div><label>Member must refer at least (members)</label><input type="number" min="0" value="${t.thresholdReferrals||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.thresholdReferrals',Number(this.value)||0)"/></div>
         <div><label>Milestone name</label><input value="${esc(t.label||'')}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.label',this.value)"/></div>
       </div>
       <div class="row2">
@@ -799,28 +801,27 @@ function renderMilestones(){
           <label>Reward</label>
           <select onchange="setPath(STATE,'milestoneRules.tiers.${i}.rewardId',this.value||null);renderAll()">${rewardOptions(t)}</select>
         </div>
-        ${t.rewardId
-          ? '<div><label>&nbsp;</label><div class="hint-small">Members get this Reward Store item for FREE.</div></div>'
-          : `<div><label>How much XU to give instead</label><input type="number" min="0" value="${t.xu||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.xu',Number(this.value)||0)"/></div>`}
+        ${isSpin
+          ? `<div><label>How many spin tickets to give</label><input type="number" min="1" value="${t.spinTickets||1}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.spinTickets',Number(this.value)||1)"/></div>`
+          : t.rewardId
+            ? '<div><label>&nbsp;</label><div class="hint-small">Members get this Reward Store item for FREE.</div></div>'
+            : `<div><label>How much XU to give instead</label><input type="number" min="0" value="${t.xu||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.xu',Number(this.value)||0)"/></div>`}
       </div>
       ${miniPreview(reward)}
       <button class="btn del" onclick="STATE.milestoneRules.tiers.splice(${i},1);renderAll()">🗑 Delete this milestone</button>
     </div>`;
   }).join('');
   return `
-    <div class="sect" id="milestones">🎯 Deposit Milestones</div>
+    <div class="sect" id="milestones">🎯 Referral Milestones</div>
     <div class="panel">
       ${introBlock(
-        "Members slowly add up the real money they spend in your community during a period (e.g. a week). Each time they cross a money milestone you set, they get to claim a reward — automatically, you don't have to do anything.",
-        ["(Optional) Add a reward in 🎁 Store first if you want to give an actual item instead of plain XU", "Click + Add milestone below, set the dollar amount and the reward", "Turn on Enabled, then Save all"]
+        "Members earn a reward each time they cross a referral milestone you set (e.g. refer 5 people) — automatically, you don't have to do anything.",
+        ["(Optional) Add a reward in 🎁 Store first if you want to give an actual item instead of plain XU/spin tickets", "Click + Add milestone below, set how many referrals it takes and the reward", "Turn on Enabled, then Save all"]
       )}
       ${(STATE.rewards||[]).length===0 ? rewardEmptyWarning(false) : ''}
-      ${toggleRow(rules.enabled, "setPath(STATE,'milestoneRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Deposit Milestones page.', "Disabled — members can't see this program.")}
-      <label>Resets every (days)</label>
-      <input type="number" min="1" value="${rules.periodDays||7}" oninput="setPath(STATE,'milestoneRules.periodDays',Number(this.value)||7)"/>
-      <div class="hint-small" style="margin-bottom:10px">Example: 7 = every week, members' progress goes back to $0 and they can earn the same rewards again.</div>
+      ${toggleRow(rules.enabled, "setPath(STATE,'milestoneRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Referral Milestones page.', "Disabled — members can't see this program.")}
       ${rows || '<p class="hint-small">No milestones yet.</p>'}
-      <button class="btn" onclick="STATE.milestoneRules.tiers.push({thresholdUsd:5,rewardId:null,xu:50,label:'New milestone'});renderAll()">+ Add milestone</button>
+      <button class="btn" onclick="STATE.milestoneRules.tiers.push({thresholdReferrals:1,rewardId:null,xu:50,label:'New milestone'});renderAll()">+ Add milestone</button>
     </div>`;
 }
 

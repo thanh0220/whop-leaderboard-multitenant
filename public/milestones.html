@@ -39,8 +39,7 @@
   .node:hover{background:rgba(255,255,255,.08)}
   .node.selected{background:rgba(255,255,255,.14);box-shadow:0 0 0 2px var(--gold2),0 0 14px rgba(244,196,65,.5)}
   .chest-box{width:64px;height:64px;margin:0 auto 6px;position:relative;perspective:300px}
-  .chest-box canvas{width:64px;height:64px;display:block;animation:chestSpin 6s linear infinite}
-  @keyframes chestSpin{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}
+  .chest-box canvas{width:64px;height:64px;display:block}
   .lock-badge{position:absolute;top:-2px;right:6px;font-size:15px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
   .node .amt{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5)}
   .node .claimed-mark{font-size:26px;line-height:64px}
@@ -136,6 +135,20 @@ function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
     if (!a.getAttribute('href').includes('?')) a.href = a.getAttribute('href') + qs;
   });
 })();
+(async function applyNavVisibility(){
+  try{
+    const r = await tenantFetch('/.netlify/functions/nav-flags');
+    const j = await r.json();
+    if(!r.ok) return;
+    const map = { '/events.html': j.eventsEnabled, '/milestones.html': j.milestonesEnabled,
+      '/spin.html': j.spinEnabled, '/auction.html': j.auctionEnabled };
+    document.querySelectorAll('.nav a').forEach(a=>{
+      const href = a.getAttribute('href').split('?')[0];
+      if(href in map && !map[href]) a.remove();
+    });
+    if(!j.codesEnabled){ const fab=document.querySelector('.code-fab'); if(fab) fab.remove(); }
+  }catch(_){}
+})();
 
 let DATA = null;
 let selectedIdx = null;
@@ -191,8 +204,8 @@ function render(j, selIdx){
   if (selIdx == null) selIdx = nextIdx === -1 ? j.tiers.length - 1 : nextIdx;
   selectedIdx = selIdx;
 
-  const maxUsd = j.tiers[j.tiers.length-1].thresholdUsd || 1;
-  const pct = Math.min(100, (j.usd / maxUsd) * 100);
+  const maxRef = j.tiers[j.tiers.length-1].thresholdReferrals || 1;
+  const pct = Math.min(100, (j.referrals / maxRef) * 100);
 
   const nodes = j.tiers.map((t,i) => {
     const locked = !t.unlocked;
@@ -204,16 +217,14 @@ function render(j, selIdx){
           ? `<div class="claimed-mark">🪙</div>`
           : `<canvas id="chest-${i}" width="64" height="64"></canvas>`}
       </div>
-      <div class="amt">$${fmtMoney(t.thresholdUsd)}</div>
+      <div class="amt">${fmtMoney(t.thresholdReferrals)} ref</div>
     </div>`;
   }).join('');
 
   const head = `
     <div class="hero">
-      <div class="cta">Deposit to unlock exclusive rewards!</div>
-      <h1>Deposit Rewards</h1>
-      <div class="dates">Period ends ${new Date(j.periodEnd).toLocaleDateString()}</div>
-      <div class="countdown">Ends in <b>${fmtCountdown(j.periodEnd)}</b></div>
+      <div class="cta">Refer members to unlock exclusive rewards!</div>
+      <h1>Referral Rewards</h1>
     </div>
     <div class="track-wrap">
       <div class="track">${nodes}</div>
@@ -225,11 +236,13 @@ function render(j, selIdx){
 
   const t = j.tiers[selIdx];
   const ready = t.unlocked;
-  const need = Math.max(0, t.thresholdUsd - j.usd);
+  const need = Math.max(0, t.thresholdReferrals - j.referrals);
   const previewBox = t.image
     ? `<img src="${esc(t.image)}" alt=""/>`
-    : `<div class="icon">${t.xu ? '🪙' : '🎁'}</div>`;
-  const rewardLine = t.xu ? `<div class="reward-line">+${fmtMoney(t.xu)} XU</div>` : '';
+    : `<div class="icon">${t.spinTickets ? '🎰' : (t.xu ? '🪙' : '🎁')}</div>`;
+  const rewardLine = t.spinTickets
+    ? `<div class="reward-line">+${fmtMoney(t.spinTickets)} 🎰 Lucky Spin ticket${t.spinTickets>1?'s':''}</div>`
+    : (t.xu ? `<div class="reward-line">+${fmtMoney(t.xu)} XU</div>` : '');
 
   let cta;
   if (t.claimed){
@@ -237,7 +250,7 @@ function render(j, selIdx){
   } else if (ready){
     cta = `<button class="cta-btn ready" onclick="claim(${selIdx},this)">🎁 Claim</button>`;
   } else {
-    cta = `<button class="cta-btn" disabled>Need $${fmtMoney(need)} more</button>`;
+    cta = `<button class="cta-btn" disabled>Need ${fmtMoney(need)} more referral${need===1?'':'s'}</button>`;
   }
 
   const panel = `
@@ -247,7 +260,7 @@ function render(j, selIdx){
         <div class="label1">${t.claimed ? 'Already claimed:' : (ready ? "You've unlocked:" : 'Preview:')}</div>
         <div class="label2">${esc(t.label)}</div>
         ${rewardLine}
-        <div class="progress-txt">Progress: <b>$${fmtMoney(j.usd)} / $${fmtMoney(t.thresholdUsd)}</b></div>
+        <div class="progress-txt">Progress: <b>${fmtMoney(j.referrals)} / ${fmtMoney(t.thresholdReferrals)} referrals</b></div>
       </div>
       ${cta}
     </div>`;
@@ -270,7 +283,7 @@ async function claim(i, btn){
     const [r] = await Promise.all([reqPromise, animDone]);
     const j = await r.json();
     if(!r.ok) throw new Error(j.error||'Error');
-    toast(j.xu ? `+${j.xu} XU added!` : (j.code ? `Reward unlocked: ${j.code}` : 'Reward claimed!'));
+    toast(j.tickets ? `+${j.tickets} 🎰 Lucky Spin ticket${j.tickets>1?'s':''} added!` : (j.xu ? `+${j.xu} XU added!` : (j.code ? `Reward unlocked: ${j.code}` : 'Reward claimed!')));
     setTimeout(load, 900);
   }catch(e){
     toast('⚠ '+e.message);

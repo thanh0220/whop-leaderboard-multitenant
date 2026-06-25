@@ -120,6 +120,20 @@ function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
     if (!a.getAttribute('href').includes('?')) a.href = a.getAttribute('href') + qs;
   });
 })();
+(async function applyNavVisibility(){
+  try{
+    const r = await tenantFetch('/.netlify/functions/nav-flags');
+    const j = await r.json();
+    if(!r.ok) return;
+    const map = { '/events.html': j.eventsEnabled, '/milestones.html': j.milestonesEnabled,
+      '/spin.html': j.spinEnabled, '/auction.html': j.auctionEnabled };
+    document.querySelectorAll('.nav a').forEach(a=>{
+      const href = a.getAttribute('href').split('?')[0];
+      if(href in map && !map[href]) a.remove();
+    });
+    if(!j.codesEnabled){ const fab=document.querySelector('.code-fab'); if(fab) fab.remove(); }
+  }catch(_){}
+})();
 
 let pollTimer = null;
 
