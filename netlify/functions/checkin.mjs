@@ -1,6 +1,6 @@
 import { pointsStore, tenantKey } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
-import { getTenantConfig, isPaidTier } from "./_tenant.mjs";
+import { getTenantConfig } from "./_tenant.mjs";
 import { utcDayKey } from "./_season.mjs";
 
 const json = (code, obj) => ({
@@ -42,7 +42,6 @@ export const handler = async (event) => {
       ? (state.lastDay === yesterday(today) ? state.streak + 1 : 1)
       : state.streak;
     return json(200, {
-      locked: !(await isPaidTier(companyId)),
       today,
       streak: state.streak,
       lastDay: state.lastDay,
@@ -54,10 +53,6 @@ export const handler = async (event) => {
   }
 
   if (event.httpMethod !== "POST") return json(405, { error: "GET or POST" });
-
-  if (!(await isPaidTier(companyId))) {
-    return json(402, { error: "Check-in is a paid feature. Upgrade to unlock it." });
-  }
 
   // POST: claim
   if (state.lastDay === today) {

@@ -26,6 +26,16 @@ function pickAvatar(u) {
   );
 }
 
+// v1 memberships trả `created_at` dạng chuỗi ISO 8601 (đã xác nhận qua docs Whop),
+// KHÁC với v5 trả số giây unix — parse được cả 2 kiểu để tránh Invalid Date.
+function membershipCreatedMs(m) {
+  const v = m.created_at;
+  if (v == null) return null;
+  if (typeof v === "number") return v < 1e12 ? v * 1000 : v;
+  const t = Date.parse(v);
+  return isNaN(t) ? null : t;
+}
+
 // Lấy object user (nếu đã expand) và id user từ 1 membership.
 // Whop v5: trường tên là `user` (mặc định là chuỗi ID, expand[]=user -> object).
 function extractUser(m) {
@@ -111,7 +121,7 @@ export const handler = async (event) => {
     const memberCap = paid ? 500 : 50;
     members = members
       .slice()
-      .sort((a, b) => (a.created_at || 0) - (b.created_at || 0))
+      .sort((a, b) => (membershipCreatedMs(a) || 0) - (membershipCreatedMs(b) || 0))
       .slice(0, memberCap);
 
     // 2) Affiliates — App API key cần company_id, dùng endpoint v1 (v5 chỉ
@@ -347,7 +357,8 @@ export const handler = async (event) => {
 
         const avatar = pickAvatar(obj) || pickAvatar(fetched) || null;
 
-        const joinedAt = m.created_at ? new Date(m.created_at * 1000) : new Date();
+        const joinedMs = membershipCreatedMs(m);
+        const joinedAt = joinedMs != null ? new Date(joinedMs) : new Date();
         const daysJoined = Math.floor((now - joinedAt.getTime()) / (1000 * 60 * 60 * 24));
         const affEndpoint = affiliateMap[id] || { referrals: 0, commission: 0, revenue: 0 };
         const referralCount = referralsByUsername[username] ?? affEndpoint.referrals ?? 0;

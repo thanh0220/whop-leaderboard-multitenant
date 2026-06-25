@@ -70,8 +70,11 @@ export async function computeEarned(userId, apiKey, companyId, tenantCfg) {
           if (muid) referredUserIds.add(muid);
         }
         if (muid === userId && m.created_at) {
-          const ts = Number(m.created_at) * 1000;
-          if (firstJoinTs == null || ts < firstJoinTs) firstJoinTs = ts;
+          // v1 memberships trả created_at dạng chuỗi ISO 8601 (đã xác nhận qua
+          // docs Whop), không phải số giây unix như v5 cũ — dùng Date.parse
+          // để xử lý đúng, tránh ra NaN.
+          const ts = Date.parse(m.created_at);
+          if (!isNaN(ts) && (firstJoinTs == null || ts < firstJoinTs)) firstJoinTs = ts;
         }
       });
       const tp = j.pagination && j.pagination.total_pages;
