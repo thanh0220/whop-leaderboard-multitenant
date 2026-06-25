@@ -25,5 +25,9 @@ export async function getCompanyAccessToken(companyId) {
 // company như Company API key cũ).
 export async function getRealCompanyId(companyId) {
   const cfg = await getTenantConfig(companyId);
-  return cfg.whopCompanyId || companyId;
+  const raw = cfg.whopCompanyId || companyId;
+  // Tenant cũ có thể còn lưu giá trị bẩn (admin lỡ dán cả URL dài thời còn
+  // dán tay) — tự lọc lại đúng "biz_xxx" mỗi lần đọc, không chỉ lúc lưu.
+  const m = String(raw).match(/biz_[A-Za-z0-9]+/);
+  return m ? m[0] : raw;
 }
