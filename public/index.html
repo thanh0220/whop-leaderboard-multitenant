@@ -296,8 +296,13 @@
    (xem netlify/functions/_auth.mjs#getAuthContext). */
 function tenantQS(){
   const u = new URL(location.href);
-  const exp = u.searchParams.get('experienceId') || '';
-  const co  = u.searchParams.get('companyId') || '';
+  let exp = u.searchParams.get('experienceId') || '';
+  let co  = u.searchParams.get('companyId') || '';
+  // Netlify rewrite (status 200) đổi NỘI DUNG trả về nhưng KHÔNG đổi
+  // location.search mà trình duyệt thấy — phải tự đọc từ location.pathname
+  // (Whop nhúng app theo dạng /experiences/exp_xxx hoặc /dashboard/biz_xxx).
+  if (!exp) { const m = location.pathname.match(/\/experiences\/([^/]+)/); if (m) exp = m[1]; }
+  if (!co)  { const m = location.pathname.match(/\/dashboard\/([^/]+)/);  if (m) co  = m[1]; }
   const p = new URLSearchParams();
   if (exp) p.set('experienceId', exp);
   if (co)  p.set('companyId', co);

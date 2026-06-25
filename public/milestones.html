@@ -118,8 +118,10 @@ function fmtMoney(n){return Number(n||0).toLocaleString('en-US',{minimumFraction
 
 function tenantQS(){
   const u = new URL(location.href);
-  const exp = u.searchParams.get('experienceId') || '';
-  const co  = u.searchParams.get('companyId') || '';
+  let exp = u.searchParams.get('experienceId') || '';
+  let co  = u.searchParams.get('companyId') || '';
+  if (!exp) { const m = location.pathname.match(/\/experiences\/([^/]+)/); if (m) exp = m[1]; }
+  if (!co)  { const m = location.pathname.match(/\/dashboard\/([^/]+)/);  if (m) co  = m[1]; }
   const p = new URLSearchParams();
   if (exp) p.set('experienceId', exp);
   if (co)  p.set('companyId', co);
