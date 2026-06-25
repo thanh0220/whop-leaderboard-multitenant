@@ -349,6 +349,8 @@ let affiliateData = []; // separate affiliate dataset (Referrals tab)
 let sortBy = 'season';
 let scope = 'all'; // all | month (VIP tab only)
 
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
 const HERO_TITLE = {
   season:'THIS MONTH\'S SEASON', paid:'VIP MEMBERS', referrals:'TOP REFERRERS'
 };
@@ -385,9 +387,9 @@ function sortVal(m){
 }
 
 function avatarEl(m,cls){
-  if(m.avatar) return `<div class="${cls}"><img src="${m.avatar}" alt="" onerror="this.parentElement.textContent='${initials(m.username)}'"/></div>`;
+  if(m.avatar) return `<div class="${cls}"><img src="${esc(m.avatar)}" alt="" onerror="this.parentElement.textContent=${esc(JSON.stringify(initials(m.username)))}"/></div>`;
   const [bg,fg]=avatarColor(m.username);
-  return `<div class="${cls}" style="background:${bg};color:${fg}">${initials(m.username)}</div>`;
+  return `<div class="${cls}" style="background:${bg};color:${fg}">${esc(initials(m.username))}</div>`;
 }
 
 function setSort(s,el){
@@ -413,7 +415,7 @@ function render(){
     let data=[...affiliateData];
     if(q) data=data.filter(a=>a.username.toLowerCase().includes(q));
     if(!data.length){
-      document.getElementById('content').innerHTML=`<div class="state">${q?`No results found for "<b>${q}</b>".`:'No one has referred successfully yet.'}</div>`;
+      document.getElementById('content').innerHTML=`<div class="state">${q?`No results found for "<b>${esc(q)}</b>".`:'No one has referred successfully yet.'}</div>`;
       return;
     }
     const top3=data.slice(0,3), rest=data.slice(3);
@@ -423,21 +425,23 @@ function render(){
       const real=a===top3[0]?1:a===top3[1]?2:3;
       const tro=real===1?'🏆':real===2?'🥈':'🥉';
       const name=a.displayName||a.username;
+      const initialsTxt=name.slice(0,2).toUpperCase();
       const avEl=a.avatar
-        ?`<div class="${cls[i]==='first'?'pavatar':'pavatar'}"><img src="${a.avatar}" alt="" onerror="this.parentElement.textContent='${(name).slice(0,2).toUpperCase()}'"/></div>`
-        :`<div class="pavatar" style="background:#16202f;color:#27e3ff">${name.slice(0,2).toUpperCase()}</div>`;
+        ?`<div class="${cls[i]==='first'?'pavatar':'pavatar'}"><img src="${esc(a.avatar)}" alt="" onerror="this.parentElement.textContent=${esc(JSON.stringify(initialsTxt))}"/></div>`
+        :`<div class="pavatar" style="background:#16202f;color:#27e3ff">${esc(initialsTxt)}</div>`;
       return `<div class="pcard ${cls[i]}"><span class="watersuit">${suits[i]}</span>
         <div class="ptag">${tags[i]}</div><div class="ptrophy">${tro}</div>
-        ${avEl}<div class="pname">${name}</div>
+        ${avEl}<div class="pname">${esc(name)}</div>
         <div class="pamount">${a.referrals} referrals${a.commission>0?' · $'+Number(a.commission).toFixed(2):''}</div></div>`;
     }).join('')}</div>`:'';
     const list=rest.length?`<div class="list">${rest.map((a,i)=>{
       const name=a.displayName||a.username;
+      const initialsTxt=name.slice(0,2).toUpperCase();
       const avEl=a.avatar
-        ?`<div class="ravatar"><img src="${a.avatar}" alt="" onerror="this.parentElement.textContent='${name.slice(0,2).toUpperCase()}'"/></div>`
-        :`<div class="ravatar" style="background:#16202f;color:#27e3ff">${name.slice(0,2).toUpperCase()}</div>`;
+        ?`<div class="ravatar"><img src="${esc(a.avatar)}" alt="" onerror="this.parentElement.textContent=${esc(JSON.stringify(initialsTxt))}"/></div>`
+        :`<div class="ravatar" style="background:#16202f;color:#27e3ff">${esc(initialsTxt)}</div>`;
       return `<div class="row"><div class="rank">${i+4}</div>${avEl}
-        <div class="rinfo"><div class="rname">${name}</div></div>
+        <div class="rinfo"><div class="rname">${esc(name)}</div></div>
         <div class="ramount">${a.referrals} referrals${a.commission>0?' · $'+Number(a.commission).toFixed(2):''}</div></div>`;
     }).join('')}</div>`:'';
     document.getElementById('content').innerHTML=podium+list;
@@ -456,7 +460,7 @@ function render(){
   if(!data.length){
     const map={season:'No one has purchased or referred successfully this month.',
       paid:(scope==='month'?'No one has paid this month.':'No VIP members yet.')};
-    const msg = q?`No members found matching "<b>${q}</b>".`:(map[sortBy]||'No data yet.');
+    const msg = q?`No members found matching "<b>${esc(q)}</b>".`:(map[sortBy]||'No data yet.');
     document.getElementById('content').innerHTML=`<div class="state">${msg}</div>`;
     return;
   }
@@ -474,7 +478,7 @@ function render(){
     const tro=real===1?'🏆':real===2?'🥈':'🥉';
     return `<div class="pcard ${cls[i]}"><span class="watersuit">${suits[i]}</span>
       <div class="ptag">${tags[i]}</div><div class="ptrophy">${tro}</div>
-      ${avatarEl(m,'pavatar')}<div class="pname">${m.username} ${badge(m)}</div>
+      ${avatarEl(m,'pavatar')}<div class="pname">${esc(m.username)} ${badge(m)}</div>
       <div class="pamount">${metric(m)}</div></div>`;
   }).join('')}</div>`:'';
   const list=rest.length?`<div class="list">${rest.map((m,i)=>rowEl(m,i+3)).join('')}</div>`:'';
@@ -483,7 +487,7 @@ function render(){
 
 function rowEl(m,idx){
   return `<div class="row"><div class="rank">${idx+1}</div>${avatarEl(m,'ravatar')}
-    <div class="rinfo"><div class="rname">${m.username} ${badge(m)}</div></div>
+    <div class="rinfo"><div class="rname">${esc(m.username)} ${badge(m)}</div></div>
     <div class="ramount">${metric(m)}</div></div>`;
 }
 
