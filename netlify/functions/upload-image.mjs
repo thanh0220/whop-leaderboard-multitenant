@@ -1,5 +1,7 @@
 import { pointsStore, tenantKey } from "./_store.mjs";
-import { getAuthContext } from "./_auth.mjs";
+import { getAuthContext, isCompanyAdmin } from "./_auth.mjs";
+import { getRealCompanyId } from "./_tokens.mjs";
+import { isPaidTier } from "./_tenant.mjs";
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -23,6 +25,19 @@ export const handler = async (event) => {
   const { userId, companyId } = await getAuthContext(event);
   if (!userId) return json(401, { error: "Could not identify the user." });
   if (!companyId) return json(400, { error: "Could not identify the community." });
+
+  // Chỉ admin/owner của company mới được upload ảnh (tính năng hiện tại — ảnh
+  // Event — chỉ admin.html mới gọi tới, chặn member thường lợi dụng endpoint
+  // này để lưu trữ/host ảnh tuỳ ý qua hạ tầng app).
+  const realCompanyId = await getRealCompanyId(companyId);
+  if (!(await isCompanyAdmin(userId, realCompanyId))) {
+    return json(403, { error: "Only the community admin can upload images." });
+  }
+  // Upload từ máy chỉ mở cho Paid tier (Free vẫn dùng được cách dán link ảnh
+  // ngoài) — chặn cả khi gọi thẳng API, không chỉ ẩn nút ở UI.
+  if (!(await isPaidTier(companyId))) {
+    return json(402, { error: "Uploading images is a paid feature. Upgrade to unlock it, or paste an image link instead." });
+  }
 
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
