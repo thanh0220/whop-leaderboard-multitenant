@@ -1,4 +1,5 @@
-import { getAuthContext } from "./_auth.mjs";
+import { getAuthContext, isCompanyAdmin } from "./_auth.mjs";
+import { getRealCompanyId } from "./_tokens.mjs";
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -32,6 +33,13 @@ export const handler = async (event) => {
   const { userId, companyId } = await getAuthContext(event);
   if (!userId) return json(401, { error: "Could not identify the user." });
   if (!companyId) return json(400, { error: "Could not identify the community. Please open this page inside Whop." });
+
+  // Chỉ admin/owner của company mới được kích hoạt nâng cấp Pro (billing) cho
+  // community đó — chặn 1 member thường tự gọi thẳng endpoint này.
+  const realCompanyId = await getRealCompanyId(companyId);
+  if (!(await isCompanyAdmin(userId, realCompanyId))) {
+    return json(403, { error: "Only the community admin can upgrade to Pro." });
+  }
 
   const devApiKey = process.env.WHOP_DEV_API_KEY;
   const planId = process.env.WHOP_PRO_PLAN_ID;

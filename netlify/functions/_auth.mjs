@@ -87,7 +87,7 @@ async function fetchCompanyIdForExperience(experienceId) {
 // nếu có quyền. Lỗi do THIẾU quyền scope (chưa Approve lại) ném riêng, KHÔNG
 // coi như "không phải admin" để tránh tự khóa nhầm admin thật khi mới deploy.
 export let lastAdminCheckError = null;
-async function isCompanyAdmin(userId, realCompanyId) {
+export async function isCompanyAdmin(userId, realCompanyId) {
   const appApiKey = process.env.WHOP_APP_API_KEY;
   if (!appApiKey) { lastAdminCheckError = "missing-app-api-key"; return false; }
   try {

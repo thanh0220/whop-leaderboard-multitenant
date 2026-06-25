@@ -1,4 +1,4 @@
-import { pointsStore, tenantKey } from "./_store.mjs";
+import { pointsStore, tenantKey, casUpdate } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getTenantConfig } from "./_tenant.mjs";
 import { utcDayKey } from "./_season.mjs";
@@ -8,6 +8,10 @@ const json = (code, obj) => ({
   headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
   body: JSON.stringify(obj),
 });
+
+class AlreadyCheckedInError extends Error {
+  constructor(streak) { super("already-checked-in"); this.streak = streak; }
+}
 
 // State per user (blob key `checkin:<companyId>:<userId>`):
 //   { lastDay: "YYYY-MM-DD", streak: number }
@@ -54,21 +58,32 @@ export const handler = async (event) => {
 
   if (event.httpMethod !== "POST") return json(405, { error: "GET or POST" });
 
-  // POST: claim
-  if (state.lastDay === today) {
-    return json(409, { error: "You've already checked in today.", streak: state.streak });
+  // POST: claim — dùng casUpdate (không phải check rồi ghi thường) để chặn
+  // nhiều request Check-in song song đều đọc thấy "chưa check-in hôm nay" và
+  // đều được cộng thưởng (double-claim trong 1 ngày).
+  let newStreak;
+  try {
+    await casUpdate(store, tenantKey("checkin", companyId, userId), (current) => {
+      const cur = current && typeof current === "object"
+        ? { lastDay: current.lastDay || null, streak: Number(current.streak) || 0 }
+        : { lastDay: null, streak: 0 };
+      if (cur.lastDay === today) throw new AlreadyCheckedInError(cur.streak);
+      newStreak = cur.lastDay === yesterday(today) ? cur.streak + 1 : 1;
+      return { lastDay: today, streak: newStreak };
+    });
+  } catch (e) {
+    if (e instanceof AlreadyCheckedInError) {
+      return json(409, { error: "You've already checked in today.", streak: e.streak });
+    }
+    throw e;
   }
-  const newStreak = state.lastDay === yesterday(today) ? state.streak + 1 : 1;
+
   const idx = ((newStreak - 1) % CHECKIN_REWARDS.length + CHECKIN_REWARDS.length) % CHECKIN_REWARDS.length;
   const reward = CHECKIN_REWARDS[idx];
 
-  await store.setJSON(tenantKey("checkin", companyId, userId), { lastDay: today, streak: newStreak });
-
-  // cộng vào bonus
-  let bonus = 0;
-  try { const b = await store.get(tenantKey("bonus", companyId, userId)); if (b) bonus = Number(b) || 0; } catch (_) {}
-  bonus += reward;
-  await store.set(tenantKey("bonus", companyId, userId), String(bonus));
+  const bonus = Number(await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
+    return String((Number(current) || 0) + reward);
+  }, { type: "text" }));
 
   return json(200, {
     ok: true,
