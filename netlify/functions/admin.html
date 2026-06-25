@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Settings — Whop Community App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070910;--cyan:#27e3ff;--gold:#f4c441;--silver:#cbd5e1;--bronze:#e1955a;--diamond:#9beaff;--red:#ff2d4b;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:30px 18px 100px;
+    background:radial-gradient(120% 70% at 50% -10%,rgba(255,45,75,.13),var(--bg) 55%),var(--bg);background-attachment:fixed}
+  .wrap{max-width:760px;margin:0 auto}
+  h1{font-family:'Oswald',sans-serif;font-size:20px;letter-spacing:.06em;margin-bottom:6px}
+  p.hint{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px}
+  .nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:10}
+  .nav a{font-family:'Oswald',sans-serif;letter-spacing:.06em;text-transform:uppercase;font-size:11px;
+    padding:7px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);
+    color:var(--muted);text-decoration:none}
+  .nav a:hover{border-color:var(--line2);color:var(--cyan)}
+  .nav a.active{border-color:var(--gold);color:var(--gold);background:rgba(244,196,65,.12)}
+  .tab-panel{animation:tabIn .25s ease}
+  @keyframes tabIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+  .sect{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:14px;color:var(--gold);margin:26px 0 12px;scroll-margin-top:60px}
+  .panel{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px;margin-bottom:8px}
+  label{display:block;font-size:11px;letter-spacing:.04em;color:var(--gold);margin:10px 0 4px;text-transform:uppercase;font-family:'Oswald',sans-serif}
+  label:first-of-type{margin-top:0}
+  input,select,textarea{width:100%;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.12);
+    background:#070b16;color:var(--text);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none}
+  textarea{min-height:60px;resize:vertical}
+  input:focus,select:focus,textarea:focus{border-color:var(--cyan)}
+  .hint-small{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .btn{margin-top:10px;padding:9px 14px;border-radius:8px;border:1px solid var(--line2);
+    background:rgba(39,227,255,.12);color:var(--cyan);font:700 11.5px 'Oswald',sans-serif;letter-spacing:.06em;
+    text-transform:uppercase;cursor:pointer}
+  .btn:hover:not(:disabled){background:rgba(39,227,255,.22)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.del{border-color:rgba(255,45,75,.4);background:rgba(255,45,75,.1);color:#ffb0bd}
+  .btn.big{width:100%;margin-top:18px;padding:13px;font-size:13px}
+  .item{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:10px;background:rgba(255,255,255,.02)}
+  .chest-tier-row{display:flex;gap:12px;align-items:flex-start}
+  .chest-tier-row .chest-preview{width:64px;height:64px;flex:none;border-radius:10px;background:radial-gradient(circle,rgba(255,255,255,.06),rgba(255,255,255,0) 70%)}
+  .chest-tier-row .tier-fields{flex:1;min-width:0}
+  .chest-tier-row .tier-fields label:first-of-type{margin-top:0}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  @media(max-width:560px){.row3{grid-template-columns:1fr}}
+  .item-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .item-head b{font-size:13px}
+  details.item summary{cursor:pointer;font-weight:600;font-size:13px;list-style:none}
+  details.item summary::-webkit-details-marker{display:none}
+  details.item summary::before{content:'▸ ';color:var(--cyan)}
+  details.item[open] summary::before{content:'▾ '}
+  .msg{margin-top:10px;font-size:13px;min-height:1.2em}
+  .msg.ok{color:#7ee787}
+  .msg.err{color:#ff8896}
+  .state{text-align:center;padding:40px 0;color:var(--muted)}
+  .status{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:999px;margin-bottom:10px}
+  .status.on{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.4)}
+  .status.off{background:rgba(255,45,75,.12);color:#ffb0bd;border:1px solid rgba(255,45,75,.4)}
+  .calgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+  .calgrid .cell{text-align:center}
+  .calgrid .cell label{margin:0 0 2px;font-size:9px}
+  .calgrid input{padding:6px;text-align:center;font-size:12px}
+  @media(max-width:560px){.calgrid{grid-template-columns:repeat(5,1fr)}.row2{grid-template-columns:1fr}}
+  .thumb{width:64px;height:64px;border-radius:8px;background:#0a0f18;object-fit:cover;display:block;margin-bottom:6px;border:1px solid rgba(255,255,255,.1)}
+  .save-bar{position:fixed;left:0;right:0;bottom:0;padding:12px 18px;background:rgba(7,9,16,.95);
+    border-top:1px solid rgba(255,255,255,.1);display:flex;justify-content:center;gap:10px;z-index:20;backdrop-filter:blur(6px)}
+  .save-bar .btn.big{margin:0;max-width:400px}
+
+  .checkout-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+  .checkout-modal{background:#0a0f18;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px;max-width:460px;width:100%;max-height:90vh;overflow:auto;position:relative}
+  .checkout-modal .x{position:absolute;top:10px;right:14px;cursor:pointer;color:var(--muted);font-size:18px}
+  .checkout-modal .x:hover{color:var(--text)}
+
+  .pricing-card{max-width:340px;margin:0 auto;border-radius:16px;padding:22px;text-align:center;position:relative;
+    background:linear-gradient(160deg,rgba(244,196,65,.1),rgba(39,227,255,.06));border:1px solid rgba(244,196,65,.4)}
+  .pricing-card.is-active{border-color:rgba(34,197,94,.5);background:linear-gradient(160deg,rgba(34,197,94,.1),rgba(39,227,255,.06))}
+  .pricing-badge{display:inline-block;font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    padding:4px 12px;border-radius:20px;background:var(--gold);color:#1a1200;font-weight:700;margin-bottom:14px}
+  .pricing-card.is-active .pricing-badge{background:#34d37a;color:#06210f}
+  .pricing-name{font-family:'Oswald',sans-serif;font-size:18px;letter-spacing:.04em;color:var(--text);margin-bottom:4px}
+  .pricing-price{font-family:'Oswald',sans-serif;font-size:38px;font-weight:700;color:var(--gold);line-height:1}
+  .pricing-price span{font-size:14px;color:var(--muted);font-weight:400;font-family:'Be Vietnam Pro',sans-serif}
+  .pricing-features{list-style:none;margin:18px 0;padding:0;text-align:left;display:inline-block}
+  .pricing-features li{font-size:13px;color:var(--text);padding:5px 0;display:flex;align-items:center;gap:8px}
+  .pricing-features li::before{content:'✓';color:#34d37a;font-weight:700}
+  .pricing-cta{width:100%;margin-top:6px;padding:13px;border-radius:10px;border:none;cursor:pointer;
+    font:700 13px 'Oswald',sans-serif;letter-spacing:.05em;text-transform:uppercase;
+    background:linear-gradient(135deg,var(--gold),#d39a11);color:#1a1200}
+  .pricing-cta:disabled{opacity:.6;cursor:not-allowed}
+  .pricing-cta.is-active{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.4);cursor:default}
+
+  /* ===== Live preview (mirrors store.html / index.html / daily.html markup+CSS) ===== */
+  .edit-row{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:start;margin-top:10px}
+  @media(max-width:680px){.edit-row{grid-template-columns:1fr}}
+  .prev-col{position:sticky;top:70px}
+  .prev-label{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;text-align:center;font-family:'Oswald',sans-serif}
+
+  .pv-card{position:relative;background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:0;display:flex;flex-direction:column;overflow:hidden}
+  .pv-card .thumb2{position:relative;width:100%;aspect-ratio:1/1;background:#0a0f18 center/cover no-repeat;border-bottom:1px solid rgba(255,255,255,.06)}
+  .pv-card .body2{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .pv-card h3{font-size:15px;font-weight:700;line-height:1.3}
+  .pv-card p{font-size:12.5px;color:var(--muted);flex:1;line-height:1.5}
+  .pv-badge{position:absolute;top:10px;left:10px;font-family:'Oswald',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:5px 9px;border-radius:6px;backdrop-filter:blur(4px);z-index:2}
+  .pv-badge.hot{background:rgba(255,45,75,.18);color:#ffb0bd;border:1px solid rgba(255,45,75,.5)}
+  .pv-badge.new{background:rgba(39,227,255,.18);color:var(--cyan);border:1px solid rgba(39,227,255,.5)}
+  .pv-badge.vip{background:rgba(244,196,65,.18);color:var(--gold);border:1px solid rgba(244,196,65,.5)}
+  .pv-badge.bestseller{background:rgba(178,102,255,.2);color:#d5b8ff;border:1px solid rgba(178,102,255,.5)}
+  .pv-badge.limited{background:rgba(255,45,75,.18);color:#ffb0bd;border:1px solid rgba(255,45,75,.5)}
+  .pv-stock{position:absolute;top:10px;right:10px;font-family:'Oswald',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:5px 9px;border-radius:6px;background:rgba(10,15,24,.7);color:#ffb0bd;border:1px solid rgba(255,45,75,.45);backdrop-filter:blur(4px);z-index:2}
+  .pv-cost-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:2px}
+  .pv-cost{font-family:'Oswald',sans-serif;font-weight:700;color:var(--gold);font-size:18px;letter-spacing:.04em}
+  .pv-price-anchor{font-size:11px;color:var(--muted);letter-spacing:.04em}
+  .pv-price-anchor s{color:rgba(255,255,255,.55)}
+  .pv-price-anchor b{color:var(--cyan);font-weight:600}
+  .pv-btn{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:12px;font-weight:600;
+    padding:10px;border-radius:9px;border:1px solid var(--line2);background:rgba(39,227,255,.1);color:var(--cyan);text-align:center;margin-top:4px}
+  .pv-btn.primary{background:linear-gradient(135deg,rgba(244,196,65,.18),rgba(39,227,255,.18));border-color:rgba(244,196,65,.5);color:var(--gold)}
+  .pv-toggle{margin-top:6px;font-size:10px;padding:6px 10px}
+
+  .pv-back{position:relative;display:flex;flex-direction:column;background:linear-gradient(165deg,#0e1622 0%,#1a0a2e 100%);
+    border:1px solid rgba(244,196,65,.55);border-radius:16px;box-shadow:0 0 0 1px rgba(244,196,65,.18) inset;padding:18px 16px;overflow:hidden}
+  .pv-fb-hdr{text-align:center;position:relative;z-index:1}
+  .pv-fb-tag{display:inline-block;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.2em;padding:4px 10px;border-radius:6px;background:rgba(244,196,65,.18);color:var(--gold);border:1px solid rgba(244,196,65,.4)}
+  .pv-fb-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;color:#fff;margin-top:8px;letter-spacing:.04em;line-height:1.25}
+  .pv-fb-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;position:relative;z-index:1;margin:12px 0;width:100%}
+  .pv-fb-code{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;color:#fff;letter-spacing:.14em;background:#0a0f18;border:1.5px dashed var(--gold);border-radius:10px;padding:12px 14px;text-align:center;width:100%;word-break:break-all}
+  .pv-fb-copy{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.12em;text-transform:uppercase;background:transparent;border:1px solid rgba(244,196,65,.5);color:var(--gold);padding:7px 14px;border-radius:8px;width:100%}
+  .pv-fb-link{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;background:linear-gradient(135deg,rgba(178,102,255,.18),rgba(244,196,65,.12));border:1px solid rgba(178,102,255,.5);color:#fff;font-weight:600;font-size:12.5px;width:100%;box-sizing:border-box}
+  .pv-fb-link small{display:block;font-size:10px;font-weight:400;color:rgba(255,255,255,.55);margin-top:2px}
+
+  .pv-prize{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:11px 13px}
+  .pv-prize .pp{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+  .pv-prize .pxu{font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;line-height:1}
+  .pv-prize.r1 .pp,.pv-prize.r1 .pxu{color:var(--gold)}
+  .pv-prize.r2 .pp,.pv-prize.r2 .pxu{color:var(--silver)}
+  .pv-prize.r3 .pp,.pv-prize.r3 .pxu{color:var(--bronze)}
+  .pv-prize.r4 .pp,.pv-prize.r4 .pxu,.pv-prize.r5 .pp,.pv-prize.r5 .pxu,.pv-prize.r6 .pp,.pv-prize.r6 .pxu{color:var(--diamond)}
+
+  .pv-quest{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:11px}
+  .pv-quest .ic{font-size:20px}
+  .pv-quest .info{flex:1;min-width:0}
+  .pv-quest .nm{font-size:13px;font-weight:600;color:#fff;margin-bottom:2px}
+  .pv-quest .rw{font-family:'Oswald',sans-serif;font-size:11px;color:var(--gold);letter-spacing:.05em}
+
+  .pv-day{position:relative;aspect-ratio:1;border-radius:8px;border:1px solid rgba(255,255,255,.08);
+    background:rgba(255,255,255,.02);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin-top:4px}
+  .pv-day .n{font-size:8px;color:var(--muted);letter-spacing:.04em}
+  .pv-day .r{font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;color:#fff}
+
+  /* ===== #events — lịch kéo-thả ===== */
+  .events-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+  .events-nav .lbl{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+  .ev-head-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:10px;user-select:none}
+  .ev-head-cell{text-align:center;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;padding:6px 2px;border-radius:6px}
+  .ev-head-cell.today{color:var(--cyan);background:rgba(39,227,255,.08)}
+  .ev-head-cell .dd{font-size:12px;color:var(--text);font-weight:700;margin-top:2px}
+  .ev-track{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;min-height:34px}
+  .evt-bar{position:relative;border-radius:8px;padding:7px 16px;font-size:11.5px;font-weight:600;display:flex;align-items:center;
+    overflow:hidden;white-space:nowrap;cursor:grab;user-select:none}
+  .evt-bar:active{cursor:grabbing}
+  .evt-bar.quest{background:rgba(39,227,255,.18);border:1px solid rgba(39,227,255,.5);color:var(--cyan)}
+  .evt-bar.code{background:rgba(255,45,75,.18);border:1px solid rgba(255,45,75,.5);color:#ffb0bd}
+  .evt-bar .grip{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize;z-index:2}
+  .evt-bar .grip-l{left:0} .evt-bar .grip-r{right:0}
+  .evt-bar .evt-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ev-thumb{width:20px;height:20px;border-radius:5px;object-fit:cover;flex-shrink:0;margin-right:4px;cursor:pointer}
+  .ev-thumb-empty{width:20px;height:20px;border-radius:5px;flex-shrink:0;margin-right:4px;cursor:pointer;display:inline-flex;
+    align-items:center;justify-content:center;font-size:11px;background:rgba(255,255,255,.08);border:1px dashed rgba(255,255,255,.25)}
+  .evt-name-inline{flex:1;min-width:0;background:transparent;border:none;color:inherit;font:inherit;padding:0;outline:none}
+  .evt-name-inline:focus{border-bottom:1px dashed currentColor}
+  .evt-bar .ex{font-size:10px;line-height:1;opacity:.6;cursor:pointer;padding:2px;flex-shrink:0;margin-left:4px}
+  .evt-bar .ex:hover{opacity:1}
+  .ev-empty{text-align:center;color:var(--muted);font-size:12px;padding:10px 0}
+  .unscheduled-tray{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:999px;
+    margin:0 6px 6px 0;cursor:grab;user-select:none;width:160px}
+  .chip .evt-name-inline{width:auto}
+  .chip .ex{opacity:.7;cursor:pointer}
+  .flash{animation:flash-pulse 1.5s ease-out;border-radius:12px}
+  @keyframes flash-pulse{0%,30%{box-shadow:0 0 0 2px var(--cyan)}100%{box-shadow:0 0 0 0 transparent}}
+  .chip.quest{background:rgba(39,227,255,.1);border:1px solid rgba(39,227,255,.4);color:var(--cyan)}
+  .chip.code{background:rgba(255,45,75,.1);border:1px solid rgba(255,45,75,.4);color:#ffb0bd}
+
+  /* ===== Khối giới thiệu/hướng dẫn đầu mỗi tab + cảnh báo reward rỗng + mini preview ===== */
+  .intro-card{background:rgba(39,227,255,.06);border:1px solid rgba(39,227,255,.25);border-radius:12px;padding:13px 15px;margin-bottom:14px}
+  .intro-what{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:8px}
+  .intro-steps{margin:0;padding-left:20px;font-size:12.5px;color:var(--muted);line-height:1.8}
+  .intro-steps li{margin-bottom:2px}
+  .reward-empty{background:rgba(255,45,75,.08);border:1px solid rgba(255,45,75,.3);border-radius:12px;padding:14px;text-align:center;margin-bottom:12px}
+  .reward-empty p{font-size:12.5px;color:#ffd0d8;margin-bottom:8px;line-height:1.5}
+  .spin-pct{font-size:11px;color:var(--cyan);margin-top:4px;font-family:'Oswald',sans-serif;letter-spacing:.04em}
+  .mini-preview{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px;margin:8px 0}
+  .mini-preview img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#0a0f18}
+  .mini-preview .ic{width:44px;height:44px;border-radius:8px;background:#0a0f18;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .mini-preview .nm{font-size:13px;font-weight:600}
+  .mini-preview .sub{font-size:10.5px;color:var(--muted);margin-top:1px}
+  .mini-preview.big img,.mini-preview.big .ic{width:64px;height:64px;font-size:30px}
+
+  /* ===== Khối "Mức dùng hiện tại" (giới hạn bản Free) — tab Billing ===== */
+  .usage-card{background:rgba(255,45,75,.06);border:1px solid rgba(255,45,75,.25);border-radius:14px;padding:14px 16px;margin-bottom:16px}
+  .usage-card h4{font-family:'Oswald',sans-serif;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:#ffb0bd;margin-bottom:10px}
+  .usage-row{margin-bottom:10px}
+  .usage-row .lbl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text);margin-bottom:4px}
+  .usage-row .lbl b{color:var(--gold)}
+  .usage-bar{height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+  .usage-bar .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--gold))}
+  .usage-locked{list-style:none;margin:10px 0 4px;padding:0}
+  .usage-locked li{font-size:12.5px;color:var(--muted);padding:5px 0;border-top:1px solid rgba(255,255,255,.06)}
+  .usage-locked li:first-child{border-top:none}
+  .usage-locked b{color:#ffb0bd}
+  .usage-check-btn{margin-top:4px}
+  .usage-member-result{font-size:12px;color:var(--cyan);margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>⚙️ Settings — Community Admin</h1>
+  <p class="hint">Only admins should open this page — don't share this link with members.</p>
+  <div class="nav">
+    <a href="#conn" onclick="switchTab('conn');return false">🔌 Connect</a>
+    <a href="#billing" onclick="switchTab('billing');return false">💎 Billing</a>
+    <a href="#season" onclick="switchTab('season');return false">🏆 Season</a>
+    <a href="#daily" onclick="switchTab('daily');return false">📅 Check-in</a>
+    <a href="#store" onclick="switchTab('store');return false">🎁 Store</a>
+    <a href="#codes" onclick="switchTab('codes');return false">🔑 Codes</a>
+    <a href="#events" onclick="switchTab('events');return false">🗓 Events</a>
+    <a href="#chests" onclick="switchTab('chests');return false">📬 Community Chest</a>
+    <a href="#milestones" onclick="switchTab('milestones');return false">🎯 Deposit Milestones</a>
+    <a href="#spin" onclick="switchTab('spin');return false">🎰 Lucky Spin</a>
+    <a href="#auction" onclick="switchTab('auction');return false">🔨 Auction</a>
+  </div>
+  <div id="content"><div class="state">Loading...</div></div>
+</div>
+
+<script async defer src="https://js.whop.com/static/checkout/loader.js"></script>
+<script type="module" src="/chest3d.module.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmt(n){return Number(n||0).toLocaleString('en-US');}
+
+// ===== Preview render (pure, no DOM access) — mirrors the exact markup of store.html/index.html/daily.html =====
+const BADGE_LABEL={hot:'🔥 Hot',new:'⚡ New',vip:'👑 VIP',bestseller:'⭐ Bestseller',limited:'⏳ Limited'};
+
+function storeCardHtml(r){
+  const thumb=r.image?`<div class="thumb2" style="background-image:url('${esc(r.image)}')"></div>`:`<div class="thumb2" style="background:linear-gradient(135deg,#1a2236,#0a0f18)"></div>`;
+  const badge=r.badge?`<span class="pv-badge ${esc(r.badge)}">${BADGE_LABEL[r.badge]||r.badge}</span>`:'';
+  const stockPill=(r.stock!=null&&r.stock<=10)?`<span class="pv-stock">${r.stock} left</span>`:'';
+  const priceAnchor=r.originalPrice?`<div class="pv-price-anchor"><s>${esc(r.originalPrice)}</s> · <b>save 100%</b></div>`:'';
+  return `<div class="pv-card">
+    ${thumb}${badge}${stockPill}
+    <div class="body2">
+      <h3>${esc(r.name||'(Unnamed)')}</h3>
+      <p>${esc(r.desc||'')}</p>
+      <div class="pv-cost-row"><span class="pv-cost">${fmt(r.cost)} XU</span>${priceAnchor}</div>
+      <div class="pv-btn ${(r.tier>=4)?'primary':''}">🎁 Redeem now</div>
+    </div>
+  </div>`;
+}
+function storeBackHtml(r){
+  const p=r.payload||{kind:'code',code:''};
+  let backBody='';
+  if(p.kind==='ea'){
+    backBody=`<div class="pv-fb-link"><span style="font-size:18px">📥</span><span>Download file<small>${esc(p.label||'')}</small></span></div>
+      <div class="pv-fb-link"><span style="font-size:18px">🛠</span><span>Setup guide<small>Install &amp; activate</small></span></div>`;
+  }else if(p.kind==='link'){
+    backBody=`<div class="pv-fb-link"><span style="font-size:18px">🔗</span><span>Open reward<small>${esc(p.label||'')}</small></span></div>`;
+  }else{
+    backBody=`<div class="pv-fb-code">${esc(p.code||'')}</div><div class="pv-fb-copy">📋 Copy code</div>`;
+  }
+  return `<div class="pv-back">
+    <div class="pv-fb-hdr"><span class="pv-fb-tag">🎉 Redeemed</span><div class="pv-fb-title">${esc(r.name||'')}</div></div>
+    <div class="pv-fb-body">${backBody}</div>
+  </div>`;
+}
+function seasonTileHtml(r,i){
+  return `<div class="pv-prize r${i+1}"><div class="pp">${esc(r.rank||'')}</div><div class="pxu">🪙 ${esc(r.prize||'')}</div></div>`;
+}
+function dayCellHtml(v,i){
+  return `<div class="pv-day"><div class="n">Day ${i+1}</div><div class="r">+${fmt(v)}</div></div>`;
+}
+
+function tenantQS(){
+  const u = new URL(location.href);
+  let exp = u.searchParams.get('experienceId') || '';
+  let co  = u.searchParams.get('companyId') || '';
+  if (!exp) { const m = location.pathname.match(/\/experiences\/([^/]+)/); if (m) exp = m[1]; }
+  if (!co)  { const m = location.pathname.match(/\/dashboard\/([^/]+)/);  if (m) co  = m[1]; }
+  const p = new URLSearchParams();
+  if (exp) p.set('experienceId', exp);
+  if (co)  p.set('companyId', co);
+  const s = p.toString();
+  return s ? '?' + s : '';
+}
+function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
+
+// STATE = toàn bộ config tenant đang chỉnh trong bộ nhớ. Input đơn giản
+// (text/number/textarea) ghi trực tiếp vào STATE qua setPath() KHÔNG render
+// lại — tránh mất focus/con trỏ khi đang gõ. Hành động cấu trúc (thêm/xoá
+// dòng, đổi loại payload, upload ảnh xong) mới gọi renderAll().
+let STATE = null;
+let CONFIGURED = false;
+let IS_PAID = false;
+let activeTab = (location.hash||'#conn').slice(1);
+
+function setPath(obj, path, value){
+  const parts = path.split('.');
+  let cur = obj;
+  for (let i=0;i<parts.length-1;i++) cur = cur[parts[i]];
+  cur[parts[parts.length-1]] = value;
+}
+
+async function loadOnce(){
+  const r = await tenantFetch('/.netlify/functions/admin-config');
+  const j = await r.json();
+  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+  return j;
+}
+async function load(){
+  const maxTries = 6;
+  let lastErr = null;
+  for (let i = 0; i < maxTries; i++) {
+    try{
+      const j = await loadOnce();
+      CONFIGURED = j.configured;
+      IS_PAID = !!j.isPaid;
+      STATE = {
+        whopCompanyId: j.whopCompanyId || '',
+        seasonTopRewards: j.seasonTopRewards || [],
+        checkinRewards: j.checkinRewards || [],
+        rewards: j.rewards || [],
+        redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>
+          typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),
+        codesEnabled: j.codesEnabled !== false,
+        chestRules: j.chestRules || {enabled:true,thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},
+        events: normalizeEvents(j.events, IS_PAID ? 10 : 2),
+        eventsEnabled: j.eventsEnabled !== false,
+        milestoneRules: j.milestoneRules || {enabled:false,periodDays:7,tiers:[]},
+        spinRules: j.spinRules || {enabled:false,ticketsPerPayment:5,xuCostPerTicket:500,prizes:[]},
+        auctionRules: j.auctionRules || {enabled:false,rewardId:null,startingBid:5000,minIncrement:100,durationHours:48},
+        branding: j.branding || {displayName:'',primaryColor:'#7c3aed',logoUrl:''},
+      };
+      renderAll();
+      return;
+    }catch(e){
+      lastErr = e;
+      $('content').innerHTML = `<div class="state">Waiting for Whop authentication... (${i+1}/${maxTries})</div>`;
+      await new Promise(res=>setTimeout(res,1200));
+    }
+  }
+  $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${lastErr.message}</div></div>`;
+}
+
+// TẠM THỜI — debug tìm nguyên nhân lẫn tenant, xoá sau khi xác định xong.
+(async function showDebugBox3(){
+  try{
+    const qs = tenantQS();
+    const url = '/.netlify/functions/admin-config' + (qs ? qs + '&debug=1' : '?debug=1');
+    const r = await fetch(url);
+    const j = await r.json();
+    const box = document.createElement('div');
+    box.style = 'position:fixed;bottom:8px;left:8px;right:8px;z-index:9999;background:#000;color:#0f0;font:11px monospace;padding:10px;border-radius:8px;white-space:pre-wrap;max-height:40vh;overflow:auto;border:1px solid #0f0';
+    box.textContent = 'location.pathname: ' + location.pathname + '\nfetch url: ' + url + '\n' + JSON.stringify(j, null, 2);
+    document.body.appendChild(box);
+  }catch(e){}
+})();
+
+const TAB_RENDERERS = {
+  conn: renderConn, billing: renderBilling,
+  season: renderSeason, daily: renderDaily, store: renderStore,
+  codes: renderCodes, events: renderEvents, chests: renderChests,
+  milestones: renderMilestones, spin: renderSpin, auction: renderAuction,
+};
+
+function toggleRow(checked, onchange, labelOn, labelOff){
+  return `<label class="hint-small" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px">
+    <input type="checkbox" style="width:auto" ${checked?'checked':''} onchange="${esc(onchange)}"/>
+    <span>${checked ? '✅ '+labelOn : '⛔ '+labelOff}</span>
+  </label>`;
+}
+
+// Khối "cái này là gì + làm theo mấy bước" — đặt ngay đầu mỗi tab, viết bằng
+// câu đơn giản cho người chưa từng dùng app này, không dùng thuật ngữ trần trụi.
+function introBlock(what, steps){
+  return `<div class="intro-card">
+    <p class="intro-what">${what}</p>
+    <ol class="intro-steps">${(steps||[]).map(s=>`<li>${s}</li>`).join('')}</ol>
+  </div>`;
+}
+
+// Cảnh báo khi chưa có reward nào trong Store — Milestones/Spin/Auction đều
+// có thể cần chọn 1 item Store làm quà; nút nhảy thẳng sang tab Store cho đỡ
+// bối rối "dropdown trống nghĩa là gì".
+function rewardEmptyWarning(required){
+  const msg = required
+    ? "⚠ Bạn BẮT BUỘC phải có ít nhất 1 phần thưởng trong 🎁 Reward Store trước khi dùng tính năng này."
+    : "💡 Bạn chưa có phần thưởng nào trong 🎁 Reward Store — vẫn dùng được với xu thường, nhưng thêm 1 món quà thật sẽ hấp dẫn hơn nhiều.";
+  return `<div class="reward-empty">
+    <p>${msg}</p>
+    <button class="btn" type="button" onclick="switchTab('store')">🎁 Đi tới Reward Store</button>
+  </div>`;
+}
+
+// Xem trước nhỏ — "đây là thứ member sẽ thấy" — dùng cho 1 reward cụ thể.
+function miniPreview(reward, big){
+  if (!reward) return '';
+  const visual = reward.image
+    ? `<img src="${esc(reward.image)}" alt=""/>`
+    : `<div class="ic">🎁</div>`;
+  return `<div class="mini-preview${big?' big':''}">${visual}
+    <div><div class="nm">${esc(reward.name||'(Unnamed)')}</div><div class="sub">👀 Member sẽ thấy đúng món này</div></div>
+  </div>`;
+}
+
+function switchTab(id){
+  activeTab = id;
+  history.replaceState(null, '', '#'+id);
+  renderAll();
+}
+function applyNavActive(){
+  document.querySelectorAll('.nav a').forEach(a=>{
+    a.classList.toggle('active', a.getAttribute('href') === '#'+activeTab);
+  });
+}
+
+function renderAll(){
+  const fn = TAB_RENDERERS[activeTab] || renderConn;
+  $('content').innerHTML =
+    `<div class="tab-panel">${fn()}</div>` +
+    `<div class="save-bar"><button class="btn big" id="save-all">💾 Save all</button></div>`;
+  $('save-all').onclick = saveAll;
+  applyNavActive();
+  if (activeTab === 'chests') initChestPreviews();
+}
+
+// Rương 3D dùng làm preview tĩnh (không animate) cho mỗi tier — dispose canvas cũ
+// trước khi tạo lại vì renderAll() re-render toàn bộ innerHTML mỗi lần đổi field.
+const chestPreviewRegistry = {};
+function initChestPreviews(){
+  Object.values(chestPreviewRegistry).forEach(c => { try{ c.dispose(); }catch(_){} });
+  for (const k in chestPreviewRegistry) delete chestPreviewRegistry[k];
+  document.querySelectorAll('.chest-preview[data-tier]').forEach(canvas => {
+    if (window.ChestVoxel) chestPreviewRegistry[canvas.id] = window.ChestVoxel.create(canvas, canvas.dataset.tier);
+  });
+}
+
+// ===== #conn =====
+function renderConn(){
+  const statusHtml = CONFIGURED
+    ? `<span class="status on">✅ Connected — Company ID: ${esc(STATE.whopCompanyId)}</span>`
+    : `<span class="status off">⚠ Not connected yet — close this and reopen the app inside Whop</span>`;
+  return `
+    <div class="sect" id="conn">🔌 Connect Whop</div>
+    <div class="panel">
+      ${introBlock(
+        "This app automatically connects to YOUR Whop community as soon as you open it from inside Whop — there is nothing for you to set up here.",
+        ["Just make sure you opened this Settings page from inside your own Whop dashboard (not a link someone else sent you)", "The status below should say \"Connected\" — if it doesn't, close and reopen the app"]
+      )}
+      ${statusHtml}
+    </div>`;
+}
+
+// ===== #billing =====
+// Khối "Mức dùng hiện tại" — chỉ hiện khi đang Free, cho admin thấy rõ đang
+// chạm giới hạn nào. Event/Reward đếm thẳng từ STATE (miễn phí, không gọi
+// API). Member dùng nút bấm riêng — KHÔNG tự gọi whop-data.mjs (function đó
+// tốn 30-70 API call thật tới Whop mỗi lần chạy), chỉ gọi khi admin chủ động
+// bấm kiểm tra.
+function usageBarRow(label, used, limit){
+  const pct = Math.min(100, (used/limit)*100);
+  return `<div class="usage-row">
+    <div class="lbl"><span>${label}</span><b>${used}/${limit}</b></div>
+    <div class="usage-bar"><div class="fill" style="width:${pct}%"></div></div>
+  </div>`;
+}
+function renderUsagePanel(){
+  if (IS_PAID) return '';
+  const eventsUsed = (STATE.events||[]).length;
+  const rewardsUsed = (STATE.rewards||[]).length;
+  return `<div class="usage-card">
+    <h4>⚠ You're on the Free plan — here's what's limited right now</h4>
+    ${usageBarRow('🗓 Event slots', eventsUsed, 2)}
+    ${usageBarRow('🎁 Reward Store items', rewardsUsed, 2)}
+    <div class="usage-row">
+      <div class="lbl"><span>👥 Members shown on leaderboard</span><b>up to 50</b></div>
+      <button class="btn usage-check-btn" type="button" onclick="checkMemberCap(this)">🔄 Check how many of my real members are hidden</button>
+      <div class="usage-member-result" id="usage-member-result"></div>
+    </div>
+    <ul class="usage-locked">
+      <li>🔒 <b>Daily Check-in</b> — members can't claim daily XU at all</li>
+      <li>🔒 <b>Redeem Codes</b> — secret codes you hand out won't work for members</li>
+      <li>🔒 <b>Reward Store redemption</b> — members can see rewards but can't redeem them</li>
+    </ul>
+  </div>`;
+}
+async function checkMemberCap(btn){
+  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Checking...';
+  const out = $('usage-member-result');
+  try{
+    const r = await tenantFetch('/.netlify/functions/whop-data');
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    const real = j.stats?.totalMembersReal ?? 0;
+    const shown = j.stats?.totalMembers ?? 0;
+    const hidden = Math.max(0, real - shown);
+    out.textContent = hidden > 0
+      ? `You have ${real} real members — ${hidden} are currently hidden from the leaderboard.`
+      : `You have ${real} real members — none are hidden yet.`;
+  }catch(e){
+    out.textContent = '⚠ ' + e.message;
+  }finally{
+    btn.disabled = false; btn.textContent = old;
+  }
+}
+
+function renderBilling(){
+  const features = [
+    'Daily check-in rewards',
+    'Redeem codes',
+    'Reward Store (up to 10 items)',
+    'Up to 10 event slots',
+    'Leaderboard up to 500 members',
+  ];
+  const cta = IS_PAID
+    ? `<button class="pricing-cta is-active" disabled>✅ Current plan</button>`
+    : `<button class="pricing-cta" id="upgrade-btn" onclick="startUpgrade()">⭐ Upgrade now</button>`;
+  return `
+    <div class="sect" id="billing">💎 Billing</div>
+    <div class="panel">
+      ${introBlock(
+        "This is YOUR subscription as the community owner — it upgrades what YOU can do in this admin panel (more events, more rewards, custom branding). It has nothing to do with what members pay for.",
+        ["If you want more event slots, more rewards, and custom branding, click Upgrade now below", "Otherwise you can ignore this tab completely — the free plan already works"]
+      )}
+      ${renderUsagePanel()}
+      <div class="pricing-card ${IS_PAID?'is-active':''}">
+        <span class="pricing-badge">${IS_PAID?'Active':'Recommended'}</span>
+        <div class="pricing-name">Leaderboard Pro</div>
+        <div class="pricing-price">$9.99<span>/month</span></div>
+        <ul class="pricing-features">${features.map(f=>`<li>${esc(f)}</li>`).join('')}</ul>
+        ${cta}
+      </div>
+    </div>`;
+}
+
+async function startUpgrade(){
+  const btn = $('upgrade-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Loading...'; }
+  try{
+    const r = await tenantFetch('/.netlify/functions/create-upgrade-checkout', { method:'POST' });
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
+    openCheckoutModal(j.sessionId, j.planId);
+  }catch(e){
+    alert('⚠ Could not start checkout: ' + e.message);
+  }finally{
+    if (btn) { btn.disabled = false; btn.textContent = '⭐ Upgrade to Paid'; }
+  }
+}
+
+function openCheckoutModal(sessionId, planId){
+  const wrap = document.createElement('div');
+  wrap.className = 'checkout-overlay';
+  wrap.id = 'checkout-overlay';
+  wrap.innerHTML = `
+    <div class="checkout-modal">
+      <span class="x" onclick="closeCheckoutModal()">✕</span>
+      <div data-whop-checkout-session="${esc(sessionId)}" data-whop-checkout-plan-id="${esc(planId)}" data-whop-checkout-return-url="${esc(location.origin + location.pathname)}"></div>
+    </div>`;
+  wrap.addEventListener('click', (e) => { if (e.target === wrap) closeCheckoutModal(); });
+  document.body.appendChild(wrap);
+}
+function closeCheckoutModal(){
+  const el = $('checkout-overlay');
+  if (el) el.remove();
+  load();
+}
+
+// ===== #season =====
+function renderSeason(){
+  const rows = (STATE.seasonTopRewards||[]).map((r,i)=>`
+    <div class="edit-row">
+      <div>
+        <div class="row2">
+          <div><label>Rank</label><input value="${esc(r.rank)}" oninput="setPath(STATE,'seasonTopRewards.${i}.rank',this.value);$('prev-season-${i}').innerHTML=seasonTileHtml(STATE.seasonTopRewards[${i}],${i})"/></div>
+          <div><label>Prize</label><input value="${esc(r.prize)}" oninput="setPath(STATE,'seasonTopRewards.${i}.prize',this.value);$('prev-season-${i}').innerHTML=seasonTileHtml(STATE.seasonTopRewards[${i}],${i})"/></div>
+        </div>
+        <button class="btn del" onclick="STATE.seasonTopRewards.splice(${i},1);renderAll()">🗑 Delete this rank</button>
+      </div>
+      <div class="prev-col">
+        <div class="prev-label">Preview</div>
+        <div id="prev-season-${i}">${seasonTileHtml(r,i)}</div>
+      </div>
+    </div>
+  `).join('<hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:10px 0">');
+  return `
+    <div class="sect" id="season">🏆 Season</div>
+    <div class="panel">
+      ${introBlock(
+        "This is just a TEXT list shown to members to announce what the top players will win at the end of the season. The app does NOT automatically give out these prizes — you hand them out yourself when the season ends.",
+        ["Type the rank (e.g. 🥇 Top 1) and what they win", "Save all"]
+      )}
+      ${rows || '<p class="hint-small">No ranks yet.</p>'}
+      <button class="btn" onclick="STATE.seasonTopRewards.push({rank:'🏅 New rank',prize:''});renderAll()">+ Add rank</button>
+    </div>`;
+}
+
+// ===== #daily (checkinRewards — 30 fixed slots) =====
+function renderDaily(){
+  const cells = (STATE.checkinRewards||[]).map((v,i)=>`
+    <div class="cell">
+      <label>Day ${i+1}</label>
+      <input type="number" value="${v}" oninput="setPath(STATE,'checkinRewards.${i}',Number(this.value)||0);$('prev-day-${i}').innerHTML=dayCellHtml(STATE.checkinRewards[${i}],${i})"/>
+      <div id="prev-day-${i}">${dayCellHtml(v,i)}</div>
+    </div>`).join('');
+  return `
+    <div class="sect" id="daily">📅 Daily Check-in</div>
+    <div class="panel">
+      ${introBlock(
+        "Members get free XU just for opening the app and checking in every day. Day 1 starts the cycle; after Day 30 it loops back to Day 1.",
+        ["Type how many XU to give for each day below (bigger numbers on later days encourage members to keep coming back)", "Save all"]
+      )}
+      <div class="calgrid">${cells}</div>
+    </div>`;
+}
+
+// ===== #store (rewards) =====
+function payloadFields(p, i){
+  const kind = p.kind || 'code';
+  if (kind === 'link') return `
+    <label>Link to open on redeem</label>
+    <input value="${esc(p.url||'')}" oninput="setPath(STATE,'rewards.${i}.payload.url',this.value);refreshStorePreview(${i})"/>
+    <label>Button label</label>
+    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'rewards.${i}.payload.label',this.value);refreshStorePreview(${i})"/>`;
+  if (kind === 'ea') return `
+    <label>File link (e.g. EA bot / downloadable product)</label>
+    <input value="${esc(p.ea||'')}" oninput="setPath(STATE,'rewards.${i}.payload.ea',this.value);refreshStorePreview(${i})"/>
+    <label>Setup guide link</label>
+    <input value="${esc(p.setup||'')}" oninput="setPath(STATE,'rewards.${i}.payload.setup',this.value);refreshStorePreview(${i})"/>
+    <label>Button label</label>
+    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'rewards.${i}.payload.label',this.value);refreshStorePreview(${i})"/>`;
+  return `
+    <label>Code received</label>
+    <input value="${esc(p.code||'')}" oninput="setPath(STATE,'rewards.${i}.payload.code',this.value);refreshStorePreview(${i})"/>`;
+}
+
+function refreshStorePreview(i){
+  const r = STATE.rewards[i];
+  const el = $('prev-store-'+i);
+  if (el.dataset.face === 'back') el.innerHTML = storeBackHtml(r);
+  else el.innerHTML = storeCardHtml(r);
+}
+function toggleStoreFace(i){
+  const el = $('prev-store-'+i);
+  el.dataset.face = el.dataset.face === 'back' ? 'front' : 'back';
+  refreshStorePreview(i);
+}
+function renderStore(){
+  const cards = (STATE.rewards||[]).map((r,i)=>{
+    const p = r.payload || (r.payload = { kind: 'code', code: '' });
+    return `
+    <details class="item">
+      <summary>${esc(r.name||'(Unnamed)')} — ${r.cost||0} XU</summary>
+      <div class="edit-row">
+        <div>
+          <label>Reward name</label>
+          <input value="${esc(r.name)}" oninput="setPath(STATE,'rewards.${i}.name',this.value);refreshStorePreview(${i})"/>
+          <div class="row2">
+            <div><label>Price (XU)</label><input type="number" value="${r.cost||0}" oninput="setPath(STATE,'rewards.${i}.cost',Number(this.value)||0);refreshStorePreview(${i})"/></div>
+            <div><label>Stock (leave blank = unlimited)</label><input type="number" value="${r.stock??''}" oninput="setPath(STATE,'rewards.${i}.stock',this.value===''?null:Number(this.value));refreshStorePreview(${i})"/></div>
+          </div>
+          <label>Description</label>
+          <textarea oninput="setPath(STATE,'rewards.${i}.desc',this.value);refreshStorePreview(${i})">${esc(r.desc)}</textarea>
+          <label>Reward image (paste image link)</label>
+          <img class="thumb" id="thumb-${i}" src="${esc(r.image||'')}" alt="" style="${r.image?'':'display:none'}"/>
+          <input value="${esc(r.image||'')}" placeholder="https://..." oninput="setPath(STATE,'rewards.${i}.image',this.value);const t=$('thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none';refreshStorePreview(${i})"/>
+          <div class="hint-small">Host the image elsewhere (Imgur, free Cloudinary, an existing product link...) then paste the URL here.</div>
+          <div class="row2">
+            <div><label>Badge</label>
+              <select onchange="setPath(STATE,'rewards.${i}.badge',this.value);refreshStorePreview(${i})">
+                ${['','hot','new','vip','bestseller','limited'].map(b=>`<option value="${b}" ${r.badge===b?'selected':''}>${b||'(none)'}</option>`).join('')}
+              </select>
+            </div>
+            <div><label>Displayed original price (e.g. $97)</label><input value="${esc(r.originalPrice||'')}" oninput="setPath(STATE,'rewards.${i}.originalPrice',this.value);refreshStorePreview(${i})"/></div>
+          </div>
+          <label>Reward type after redeem</label>
+          <select onchange="setPath(STATE,'rewards.${i}.payload.kind',this.value);renderAll()">
+            <option value="code" ${p.kind==='code'?'selected':''}>Code</option>
+            <option value="link" ${p.kind==='link'?'selected':''}>Link (file/landing page)</option>
+            <option value="ea" ${p.kind==='ea'?'selected':''}>File + dedicated setup guide</option>
+          </select>
+          ${payloadFields(p, i)}
+          <button class="btn del" onclick="STATE.rewards.splice(${i},1);renderAll()">🗑 Delete this reward</button>
+        </div>
+        <div class="prev-col">
+          <div class="prev-label">Preview</div>
+          <div id="prev-store-${i}">${storeCardHtml(r)}</div>
+          <button class="btn pv-toggle" onclick="toggleStoreFace(${i})">🔄 View back side</button>
+        </div>
+      </div>
+    </details>`;
+  }).join('');
+  const rewardLimit = IS_PAID ? 10 : 2;
+  const rewardCount = (STATE.rewards||[]).length;
+  const addRewardOrMsg = rewardCount < rewardLimit
+    ? `<button class="btn" onclick="STATE.rewards.push({id:'reward_'+Date.now().toString(36),name:'',cost:100,desc:'',image:'',badge:'',originalPrice:'',stock:null,tier:1,payload:{kind:'code',code:''}});renderAll()">+ Add new reward (${rewardCount}/${rewardLimit})</button>`
+    : `<p class="hint-small">${IS_PAID ? `Limit reached (${rewardLimit} rewards).` : `Free plan limit reached (${rewardLimit} rewards) — ⭐ upgrade to Paid for up to 10.`}</p>`;
+  return `
+    <div class="sect" id="store">🎁 Reward Store</div>
+    <div class="panel">
+      ${introBlock(
+        "This is where members spend their XU to get real things — a discount code, a download link, a file. Whatever you add here can also be reused as a prize in Milestones, Lucky Spin, and Auction.",
+        ["Click + Add new reward below", "Give it a name, a price in XU, and pick what members receive (a code, a link, or a file)", "Save all"]
+      )}
+      ${cards || '<p class="hint-small">No rewards in the store yet.</p>'}
+      ${addRewardOrMsg}
+    </div>`;
+}
+
+// ===== #codes =====
+function renderCodes(){
+  const rows = (STATE.redeemCodesList||[]).map((c,i)=>`
+    <div id="code-item-${i}">
+    <div class="row2">
+      <div><label>Code (secret string members enter)</label><input value="${esc(c.code)}" oninput="setPath(STATE,'redeemCodesList.${i}.code',this.value)"/></div>
+      <div><label>Coins awarded</label><input type="number" value="${c.xu}" oninput="setPath(STATE,'redeemCodesList.${i}.xu',Number(this.value)||0)"/></div>
+    </div>
+    <label>Display name (used on 🗓 Event calendar — does NOT show the real code)</label>
+    <input value="${esc(c.title||'')}" placeholder="e.g. Holiday voucher" oninput="setPath(STATE,'redeemCodesList.${i}.title',this.value)"/>
+    <label>Image (paste image link, optional)</label>
+    <img class="thumb" id="code-thumb-${i}" src="${esc(c.image||'')}" alt="" style="${c.image?'':'display:none'}"/>
+    <input value="${esc(c.image||'')}" placeholder="https://..." oninput="setPath(STATE,'redeemCodesList.${i}.image',this.value);const t=$('code-thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none'"/>
+    <div class="row2">
+      <div><label>Start date (leave blank = usable right away)</label><input type="date" value="${esc(c.startDate||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.startDate',this.value)"/></div>
+      <div><label>End date (leave blank = never expires)</label><input type="date" value="${esc(c.endDate||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.endDate',this.value)"/></div>
+    </div>
+    <label>Repeat every (days, leave blank = no repeat)</label>
+    <input type="number" min="1" value="${esc(c.repeatDays||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.repeatDays',this.value?Number(this.value):'')"/>
+    <div class="hint-small">Leave dates blank = code works right away and never expires. Set dates to limit when it can be used; repeat = recurs every N days.</div>
+    <button class="btn del" onclick="STATE.redeemCodesList.splice(${i},1);renderAll()">🗑 Delete code</button>
+    </div>
+  `).join('<hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:10px 0">');
+  return `
+    <div class="sect" id="codes">🔑 Special Codes</div>
+    <div class="panel">
+      ${introBlock(
+        "A secret word you give to specific people (in a livestream, DM, giveaway post) — whoever types it into the app gets free XU. Different from the Reward Store: this is a code YOU hand out, not something members buy.",
+        ["Click + Add code below", "Type a secret word and how much XU it gives", "Share that secret word with whoever you want to reward", "Save all"]
+      )}
+      ${toggleRow(STATE.codesEnabled, 'STATE.codesEnabled=this.checked;renderAll()', 'Enabled — members can redeem codes.', 'Disabled — members cannot redeem codes right now.')}
+      ${rows || '<p class="hint-small">No codes yet.</p>'}
+      <button class="btn" onclick="STATE.redeemCodesList.push({code:'',xu:0});renderAll()">+ Add code</button>
+    </div>`;
+}
+
+// ===== #chests — Rương Liên Minh (phát khi có member mua hàng — xem webhook.mjs) =====
+function renderChests(){
+  const rules = STATE.chestRules || {thresholds:[],rewardRange:{},expiryHours:48};
+  const rows = (rules.thresholds||[]).map((t,i)=>{
+    const range = rules.rewardRange[t.tier] || {min:0,max:0};
+    return `
+    <div class="item chest-tier-row">
+      <canvas class="chest-preview" id="chest-preview-${i}" data-tier="${esc(t.tier)}" width="64" height="64"></canvas>
+      <div class="tier-fields">
+        <label>Display name</label><input value="${esc(t.label)}" oninput="setPath(STATE,'chestRules.thresholds.${i}.label',this.value)"/>
+        <div class="row3">
+          <div><label>Min. purchase (USD)</label><input type="number" min="0" value="${t.minUsd}" oninput="setPath(STATE,'chestRules.thresholds.${i}.minUsd',Number(this.value)||0)"/></div>
+          <div><label>Min coins</label><input type="number" min="0" value="${range.min}" oninput="setPath(STATE,'chestRules.rewardRange.${t.tier}.min',Number(this.value)||0)"/></div>
+          <div><label>Max coins</label><input type="number" min="0" value="${range.max}" oninput="setPath(STATE,'chestRules.rewardRange.${t.tier}.max',Number(this.value)||0)"/></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="sect" id="chests">📬 Community Chest</div>
+    <div class="panel">
+      ${introBlock(
+        "Whenever ANY member buys something real on your Whop, EVERY other member gets a free surprise chest of XU in their Mailbox — a fun way to celebrate sales together. The buyer also gets an extra bonus chest just for themselves.",
+        ["Set how much XU each chest tier gives (Wood = small purchase, Gold = big purchase)", "Make sure the Webhook setup at the bottom is done once (ask for help if unsure)", "Save all"]
+      )}
+      ${toggleRow(rules.enabled !== false, "setPath(STATE,'chestRules.enabled',this.checked);renderAll()", 'Enabled — purchases trigger a community chest.', 'Disabled — purchases no longer trigger a chest.')}
+      <p class="hint-small" style="margin-bottom:10px">When a member buys something on Whop, everyone else in the channel gets a chest in their 📬 Mailbox. The tier depends on the purchase amount; the coin reward is randomized within the range you set below.</p>
+      ${rows || '<p class="hint-small">No tiers configured yet.</p>'}
+      <div class="item">
+        <label>🎉 Buyer bonus</label>
+        <p class="hint-small" style="margin-top:-2px;margin-bottom:6px">Sent directly to the person who made the purchase, on top of the community chest above.</p>
+        <div class="row2">
+          <div><label>Min coins</label><input type="number" min="0" value="${(rules.buyerReward||{}).min||0}" oninput="setPath(STATE,'chestRules.buyerReward.min',Number(this.value)||0)"/></div>
+          <div><label>Max coins</label><input type="number" min="0" value="${(rules.buyerReward||{}).max||0}" oninput="setPath(STATE,'chestRules.buyerReward.max',Number(this.value)||0)"/></div>
+        </div>
+      </div>
+      <label>Chest claim deadline (hours)</label>
+      <input type="number" min="1" value="${rules.expiryHours}" oninput="setPath(STATE,'chestRules.expiryHours',Number(this.value)||48)"/>
+      <div class="hint-small">Requires a Webhook on the Whop Dev Dashboard (event <code>payment_succeeded</code>) pointing to <code>/.netlify/functions/webhook</code>, with <code>WHOP_WEBHOOK_SECRET</code> set on Netlify — one-time setup per app.</div>
+    </div>`;
+}
+
+// ===== #milestones — Deposit Milestones (members accumulate real USD spent in a period) =====
+function renderMilestones(){
+  const rules = STATE.milestoneRules || {enabled:false,periodDays:7,tiers:[]};
+  const rewardOptions = (r) => `
+    <option value="">— Reward XU directly —</option>
+    ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${r.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
+  const rows = (rules.tiers||[]).map((t,i)=>{
+    const reward = t.rewardId ? (STATE.rewards||[]).find(rw=>rw.id===t.rewardId) : null;
+    return `
+    <div class="item">
+      <div class="row2">
+        <div><label>Member must deposit at least (USD)</label><input type="number" min="0" value="${t.thresholdUsd||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.thresholdUsd',Number(this.value)||0)"/></div>
+        <div><label>Milestone name</label><input value="${esc(t.label||'')}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.label',this.value)"/></div>
+      </div>
+      <div class="row2">
+        <div>
+          <label>Reward</label>
+          <select onchange="setPath(STATE,'milestoneRules.tiers.${i}.rewardId',this.value||null);renderAll()">${rewardOptions(t)}</select>
+        </div>
+        ${t.rewardId
+          ? '<div><label>&nbsp;</label><div class="hint-small">Members get this Reward Store item for FREE.</div></div>'
+          : `<div><label>How much XU to give instead</label><input type="number" min="0" value="${t.xu||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.xu',Number(this.value)||0)"/></div>`}
+      </div>
+      ${miniPreview(reward)}
+      <button class="btn del" onclick="STATE.milestoneRules.tiers.splice(${i},1);renderAll()">🗑 Delete this milestone</button>
+    </div>`;
+  }).join('');
+  return `
+    <div class="sect" id="milestones">🎯 Deposit Milestones</div>
+    <div class="panel">
+      ${introBlock(
+        "Members slowly add up the real money they spend in your community during a period (e.g. a week). Each time they cross a money milestone you set, they get to claim a reward — automatically, you don't have to do anything.",
+        ["(Optional) Add a reward in 🎁 Store first if you want to give an actual item instead of plain XU", "Click + Add milestone below, set the dollar amount and the reward", "Turn on Enabled, then Save all"]
+      )}
+      ${(STATE.rewards||[]).length===0 ? rewardEmptyWarning(false) : ''}
+      ${toggleRow(rules.enabled, "setPath(STATE,'milestoneRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Deposit Milestones page.', "Disabled — members can't see this program.")}
+      <label>Resets every (days)</label>
+      <input type="number" min="1" value="${rules.periodDays||7}" oninput="setPath(STATE,'milestoneRules.periodDays',Number(this.value)||7)"/>
+      <div class="hint-small" style="margin-bottom:10px">Example: 7 = every week, members' progress goes back to $0 and they can earn the same rewards again.</div>
+      ${rows || '<p class="hint-small">No milestones yet.</p>'}
+      <button class="btn" onclick="STATE.milestoneRules.tiers.push({thresholdUsd:5,rewardId:null,xu:50,label:'New milestone'});renderAll()">+ Add milestone</button>
+    </div>`;
+}
+
+// ===== #spin — Lucky Spin (vé tự động khi nạp tiền thật, hoặc đổi bằng xu) =====
+function spinTotalWeight(){
+  return (STATE.spinRules.prizes||[]).reduce((s,p)=>s+(Number(p.weight)||0),0) || 1;
+}
+function updateSpinPct(){
+  const total = spinTotalWeight();
+  (STATE.spinRules.prizes||[]).forEach((p,i)=>{
+    const el = $('spin-pct-'+i);
+    if (el) el.textContent = '≈ ' + Math.round((Number(p.weight)||0)/total*100) + '% chance to win this';
+  });
+}
+function renderSpin(){
+  const rules = STATE.spinRules || {enabled:false,ticketsPerPayment:5,xuCostPerTicket:500,prizes:[]};
+  const rewardOptions = (p) => `
+    <option value="">— Reward XU directly —</option>
+    ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${p.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
+  const total = spinTotalWeight();
+  const rows = (rules.prizes||[]).map((p,i)=>{
+    const reward = p.rewardId ? (STATE.rewards||[]).find(rw=>rw.id===p.rewardId) : null;
+    const pct = Math.round((Number(p.weight)||0)/total*100);
+    return `
+    <div class="item">
+      <div class="row2">
+        <div><label>Prize name</label><input value="${esc(p.label||'')}" oninput="setPath(STATE,'spinRules.prizes.${i}.label',this.value)"/></div>
+        <div><label>How common (bigger number = wins more often)</label>
+          <input type="number" min="1" value="${p.weight||1}" oninput="setPath(STATE,'spinRules.prizes.${i}.weight',Number(this.value)||1);updateSpinPct()"/>
+          <div class="spin-pct" id="spin-pct-${i}">≈ ${pct}% chance to win this</div>
+        </div>
+      </div>
+      <div class="row2">
+        <div>
+          <label>Reward</label>
+          <select onchange="setPath(STATE,'spinRules.prizes.${i}.rewardId',this.value||null);renderAll()">${rewardOptions(p)}</select>
+        </div>
+        ${p.rewardId
+          ? '<div><label>&nbsp;</label><div class="hint-small">Members get this Reward Store item for FREE.</div></div>'
+          : `<div><label>XU prize amount</label><input type="number" min="0" value="${p.xu||0}" oninput="setPath(STATE,'spinRules.prizes.${i}.xu',Number(this.value)||0)"/></div>`}
+      </div>
+      ${miniPreview(reward)}
+      <button class="btn del" onclick="STATE.spinRules.prizes.splice(${i},1);renderAll()">🗑 Delete this prize</button>
+    </div>`;
+  }).join('');
+  return `
+    <div class="sect" id="spin">🎰 Lucky Spin</div>
+    <div class="panel">
+      ${introBlock(
+        "Members spin a wheel to win a random prize. They get free spin tickets automatically when they pay real money, or they can pay XU for extra tickets. Whatever they win is delivered automatically.",
+        ["(Optional) Add a reward in 🎁 Store first if you want a real item as a prize", "Click + Add prize below for each prize on the wheel", "Set how rare each prize is and how many tickets a real payment gives", "Turn on Enabled, then Save all"]
+      )}
+      ${(STATE.rewards||[]).length===0 ? rewardEmptyWarning(false) : ''}
+      ${toggleRow(rules.enabled, "setPath(STATE,'spinRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Lucky Spin page.', "Disabled — members can't see this program.")}
+      <div class="row2">
+        <div><label>Free tickets per real payment</label><input type="number" min="0" value="${rules.ticketsPerPayment||0}" oninput="setPath(STATE,'spinRules.ticketsPerPayment',Number(this.value)||0)"/></div>
+        <div><label>XU price for 1 ticket (if not paying real money)</label><input type="number" min="0" value="${rules.xuCostPerTicket||0}" oninput="setPath(STATE,'spinRules.xuCostPerTicket',Number(this.value)||0)"/></div>
+      </div>
+      <div class="hint-small" style="margin:6px 0 10px">Tip: keep the XU price high so depositing real money stays the better deal for members.</div>
+      ${rows || '<p class="hint-small">No prizes yet.</p>'}
+      <button class="btn" onclick="STATE.spinRules.prizes.push({id:'prize_'+Date.now().toString(36),label:'New prize',weight:10,rewardId:null,xu:50});renderAll()">+ Add prize</button>
+    </div>`;
+}
+
+// ===== #auction — 1 vật phẩm duy nhất đấu giá bằng xu =====
+function renderAuction(){
+  const rules = STATE.auctionRules || {enabled:false,rewardId:null,startingBid:5000,minIncrement:100,durationHours:48};
+  const reward = rules.rewardId ? (STATE.rewards||[]).find(rw=>rw.id===rules.rewardId) : null;
+  const rewardOptions = `
+    <option value="">— Pick a Reward Store item —</option>
+    ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${rules.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
+  return `
+    <div class="sect" id="auction">🔨 Auction</div>
+    <div class="panel">
+      ${introBlock(
+        "ONE single item that members fight over by bidding XU — like a real auction house. Whoever has the highest bid when time runs out wins it automatically (as long as they still have enough XU).",
+        ["Add the item you want to auction in 🎁 Store first (this is REQUIRED)", "Come back here, pick that item, and set a starting price", "Save all, THEN click Start New Auction below"]
+      )}
+      ${(STATE.rewards||[]).length===0 ? rewardEmptyWarning(true) : ''}
+      ${toggleRow(rules.enabled, "setPath(STATE,'auctionRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Auction page.', "Disabled — members can't see this program.")}
+      <label>Item being auctioned (from Reward Store)</label>
+      <select onchange="setPath(STATE,'auctionRules.rewardId',this.value||null);renderAll()">${rewardOptions}</select>
+      ${miniPreview(reward, true)}
+      <div class="row2">
+        <div><label>Starting price — lowest possible bid (XU)</label><input type="number" min="0" value="${rules.startingBid||0}" oninput="setPath(STATE,'auctionRules.startingBid',Number(this.value)||0)"/></div>
+        <div><label>Each new bid must beat the last by at least (XU)</label><input type="number" min="1" value="${rules.minIncrement||100}" oninput="setPath(STATE,'auctionRules.minIncrement',Number(this.value)||100)"/></div>
+      </div>
+      <div class="hint-small" style="margin:4px 0 10px">Example: if the current top bid is 5,000 XU and this is set to 100, the next bid must be at least 5,100 XU.</div>
+      <label>How long the auction runs (hours)</label>
+      <input type="number" min="1" value="${rules.durationHours||48}" oninput="setPath(STATE,'auctionRules.durationHours',Number(this.value)||48)"/>
+      <div class="hint-small" style="margin:8px 0">⚠ Save all first, THEN start the auction — starting uses the saved settings.</div>
+      <button class="btn" onclick="startAuction(this)">🔨 Start New Auction</button>
+      <div class="msg" id="auction-status"></div>
+    </div>`;
+}
+
+async function startAuction(btn){
+  btn.disabled = true;
+  try{
+    const r = await tenantFetch('/.netlify/functions/auction', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'start'})});
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error||'Error');
+    $('auction-status').innerHTML = `<span class="msg ok">✅ Auction started — ends ${new Date(j.endsAt).toLocaleString()}.</span>`;
+  }catch(e){
+    $('auction-status').innerHTML = `<span class="msg err">⚠ ${e.message}</span>`;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+// ===== #events — sự kiện (ảnh + tên + 1 ngày), sửa trực tiếp trên ô, kéo-thả lên lịch =====
+let eventsWeekOffset = 0;
+let dragChip = null; // idx của ô đang kéo (drop lần đầu lên lịch)
+function eventsLimit(){ return IS_PAID ? 10 : 2; }
+
+// Migrate dữ liệu cũ (startDate/endDate) về `date` nếu có, cắt về đúng giới
+// hạn tier (free 2 / paid 10) — admin thêm/xoá ô qua nút trong renderEvents().
+function normalizeEvents(raw, limit){
+  const list = Array.isArray(raw) ? raw : [];
+  return list.slice(0, limit).map((e,i)=>({
+    id: e.id || ('event_'+(i+1)),
+    name: e.name || ('Event '+(i+1)),
+    image: e.image || '',
+    date: e.date || e.startDate || '',
+  }));
+}
+
+function evWeekDates(offset){
+  const todayKey = new Date().toISOString().slice(0,10);
+  const t = new Date(todayKey+'T00:00:00Z');
+  const start = new Date(t); start.setUTCDate(t.getUTCDate() - t.getUTCDay() + offset*7);
+  const days = [];
+  for(let i=0;i<7;i++){ const d=new Date(start); d.setUTCDate(start.getUTCDate()+i); days.push(d.toISOString().slice(0,10)); }
+  return days;
+}
+function addDays(dateKey, n){
+  const d = new Date(dateKey+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n);
+  return d.toISOString().slice(0,10);
+}
+
+function evCardHtml(e, idx){
+  return `
+    <img class="ev-thumb" id="ev-thumb-${idx}" src="${esc(e.image||'')}" style="${e.image?'':'display:none'}" onclick="promptImage(${idx})" title="Click to change image"/>
+    ${e.image?'':`<span class="ev-thumb ev-thumb-empty" onclick="promptImage(${idx})" title="Click to set image">🖼</span>`}
+    <input class="evt-name-inline" value="${esc(e.name)}" oninput="STATE.events[${idx}].name=this.value" onmousedown="event.stopPropagation()"/>
+    <span class="ex" onmousedown="event.stopPropagation()" onclick="deleteEventSlot(${idx})" title="Delete this event slot">🗑</span>
+  `;
+}
+function promptImage(idx){
+  const cur = STATE.events[idx].image || '';
+  const url = prompt('Paste an image link for this event:', cur);
+  if(url === null) return;
+  STATE.events[idx].image = url.trim();
+  refreshEvents();
+}
+function deleteEventSlot(idx){
+  STATE.events.splice(idx,1);
+  refreshEvents();
+}
+
+function renderEvents(){
+  const week = evWeekDates(eventsWeekOffset);
+  const todayKey = new Date().toISOString().slice(0,10);
+  const dowLabel=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const headCells = week.map((dk,i)=>{
+    const isToday = dk===todayKey;
+    const [,m,dd]=dk.split('-');
+    return `<div class="ev-head-cell ${isToday?'today':''}" ondragover="event.preventDefault()" ondrop="onEvDrop(event,'${dk}')">${dowLabel[i]}<div class="dd">${dd}/${m}</div></div>`;
+  }).join('');
+
+  const events = STATE.events||[];
+  const scheduledIdx = events.map((e,i)=>i).filter(i=>events[i].date);
+  const unscheduledIdx = events.map((e,i)=>i).filter(i=>!events[i].date);
+
+  const bars = scheduledIdx.map(idx=>{
+    const e = events[idx];
+    let col = week.indexOf(e.date);
+    if(col===-1) return ''; // ngoài tuần đang xem
+    return `<div class="ev-track">
+      <div class="evt-bar quest" style="grid-column:${col+1} / ${col+2}" onmousedown="startDragMove(event,${idx})">
+        ${evCardHtml(e, idx)}
+        <span class="ex" onmousedown="event.stopPropagation()" onclick="unscheduleEvent(${idx})" title="Remove from schedule">✕</span>
+      </div>
+    </div>`;
+  }).filter(Boolean).join('') || (scheduledIdx.length ? '<div class="ev-empty">No events scheduled this week.</div>' : '<div class="ev-empty">Drag a card below onto a day to schedule it.</div>');
+
+  const chips = unscheduledIdx.map(idx=>{
+    const e = events[idx];
+    return `<span class="chip quest" draggable="true" ondragstart="onChipDragStart(event,${idx})">${evCardHtml(e, idx)}</span>`;
+  }).join('') || (events.length ? '<span class="hint-small">All events are scheduled.</span>' : '');
+
+  const limit = eventsLimit();
+  const addOrMsg = events.length < limit
+    ? `<button class="btn" onclick="STATE.events.push({id:'event_'+Date.now().toString(36),name:'Event '+(STATE.events.length+1),image:'',date:''});refreshEvents()">+ Add event slot (${events.length}/${limit})</button>`
+    : `<p class="hint-small">${IS_PAID ? `Limit reached (${limit} slots).` : `Free plan limit reached (${limit} slots) — ⭐ upgrade to Paid for up to 10.`}</p>`;
+
+  return `<div id="events-wrap">
+    <div class="sect" id="events">🗓 Events</div>
+    <div class="panel">
+      ${introBlock(
+        "A simple calendar members see, announcing your livestreams, AMAs, or any event coming up — it doesn't give out any reward by itself, it's just a notice board.",
+        ["Click + Add event slot below", "Type the name, click the picture icon to add an image", "Drag the card onto the day it happens", "Save all"]
+      )}
+      ${toggleRow(STATE.eventsEnabled, 'STATE.eventsEnabled=this.checked;refreshEvents()', 'Enabled — the event calendar is visible to members.', 'Disabled — members see an empty event calendar.')}
+      <p class="hint-small" style="margin-bottom:10px">Type the name directly, click the image to change it, drag onto the calendar to set a date.</p>
+      <div class="events-nav">
+        <button class="btn" onclick="eventsWeekOffset--;refreshEvents()">‹ Previous week</button>
+        <span class="lbl">${week[0].slice(8,10)}/${week[0].slice(5,7)} — ${week[6].slice(8,10)}/${week[6].slice(5,7)}</span>
+        <button class="btn" onclick="eventsWeekOffset++;refreshEvents()">Next week ›</button>
+      </div>
+      <div class="ev-head-row">${headCells}</div>
+      ${bars}
+      <div class="unscheduled-tray">
+        <div class="prev-label" style="text-align:left">📥 Unscheduled (drag onto a day above)</div>
+        ${chips}
+      </div>
+      ${addOrMsg}
+    </div>
+  </div>`;
+}
+function refreshEvents(){ $('events-wrap').outerHTML = renderEvents(); }
+
+function startDragMove(e, idx){
+  e.preventDefault();
+  const track = e.currentTarget.closest('.ev-track');
+  const cellWidth = track.getBoundingClientRect().width/7;
+  const item = STATE.events[idx];
+  const origDate = item.date;
+  const x0 = e.clientX;
+  function onUp(ev){
+    document.removeEventListener('mouseup', onUp);
+    const delta = Math.round((ev.clientX - x0)/cellWidth);
+    if(delta){
+      item.date = addDays(origDate, delta);
+      refreshEvents();
+    }
+  }
+  document.addEventListener('mouseup', onUp);
+}
+function unscheduleEvent(idx){
+  STATE.events[idx].date = '';
+  refreshEvents();
+}
+function onChipDragStart(e, idx){ dragChip = idx; }
+function onEvDrop(e, dateKey){
+  e.preventDefault();
+  if(dragChip == null) return;
+  STATE.events[dragChip].date = dateKey;
+  dragChip = null;
+  refreshEvents();
+}
+
+// ===== Lưu tất cả =====
+async function saveAll(){
+  const btn = $('save-all');
+  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Saving...';
+
+  const redeemCodes = {};
+  (STATE.redeemCodesList||[]).forEach(c=>{
+    const code = (c.code||'').trim().toLowerCase();
+    if (!code) return;
+    const entry = { xu: Number(c.xu)||0 };
+    if (c.title) entry.title = c.title;
+    if (c.image) entry.image = c.image;
+    if (c.startDate) entry.startDate = c.startDate;
+    if (c.endDate) entry.endDate = c.endDate;
+    if (c.repeatDays) entry.repeatDays = Number(c.repeatDays);
+    redeemCodes[code] = entry;
+  });
+
+  const payload = {
+    seasonTopRewards: STATE.seasonTopRewards,
+    checkinRewards: STATE.checkinRewards,
+    rewards: STATE.rewards,
+    redeemCodes,
+    codesEnabled: STATE.codesEnabled,
+    chestRules: STATE.chestRules,
+    events: STATE.events,
+    eventsEnabled: STATE.eventsEnabled,
+    milestoneRules: STATE.milestoneRules,
+    spinRules: STATE.spinRules,
+    auctionRules: STATE.auctionRules,
+    branding: STATE.branding,
+  };
+  try{
+    const r = await tenantFetch('/.netlify/functions/admin-config', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    btn.textContent = '✅ Saved!';
+    setTimeout(load, 700);
+  }catch(e){
+    alert('⚠ Save failed: '+e.message);
+    btn.disabled = false; btn.textContent = old;
+  }
+}
+
+setTimeout(load, 300);
+</script>
+</body>
+</html>
