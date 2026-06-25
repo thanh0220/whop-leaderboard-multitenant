@@ -1,4 +1,4 @@
-import { pointsStore, tenantKey } from "./_store.mjs";
+import { pointsStore, tenantKey, casUpdate } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getTenantConfig, isPaidTier } from "./_tenant.mjs";
 
@@ -7,6 +7,10 @@ const json = (code, obj) => ({
   headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
   body: JSON.stringify(obj),
 });
+
+class InvalidEntryError extends Error {}
+class AlreadyClaimedEntryError extends Error {}
+class ExpiredEntryError extends Error {}
 
 // State per user (blob key `mailbox:<companyId>:<userId>`): mảng entry rương
 // do webhook.mjs phát mỗi khi có người mua hàng — xem webhook.mjs.
@@ -37,18 +41,31 @@ export const handler = async (event) => {
 
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
-  const entry = list.find((e) => e.id === body.entryId);
-  if (!entry) return json(400, { error: "Invalid or expired chest." });
-  if (entry.claimed) return json(409, { error: "This chest has already been claimed." });
-  if (new Date(entry.expiresAt).getTime() <= now) return json(400, { error: "This chest has expired." });
 
-  entry.claimed = true;
-  await store.setJSON(key, list);
+  // Khoá claim bằng casUpdate trên đúng list mailbox của user — chống 2
+  // request claim CÙNG 1 rương song song đều pass kiểm tra "chưa claim".
+  let claimedEntry = null;
+  try {
+    await casUpdate(store, key, (current) => {
+      const curList = Array.isArray(current) ? current : [];
+      const e = curList.find((x) => x.id === body.entryId);
+      if (!e) throw new InvalidEntryError();
+      if (e.claimed) throw new AlreadyClaimedEntryError();
+      if (new Date(e.expiresAt).getTime() <= now) throw new ExpiredEntryError();
+      e.claimed = true;
+      claimedEntry = e;
+      return curList;
+    });
+  } catch (e) {
+    if (e instanceof InvalidEntryError) return json(400, { error: "Invalid or expired chest." });
+    if (e instanceof AlreadyClaimedEntryError) return json(409, { error: "This chest has already been claimed." });
+    if (e instanceof ExpiredEntryError) return json(400, { error: "This chest has expired." });
+    throw e;
+  }
 
-  let bonus = 0;
-  try { const b = await store.get(tenantKey("bonus", companyId, userId)); if (b) bonus = Number(b) || 0; } catch (_) {}
-  bonus += entry.xu;
-  await store.set(tenantKey("bonus", companyId, userId), String(bonus));
+  const bonus = Number(await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
+    return String((Number(current) || 0) + claimedEntry.xu);
+  }, { type: "text" }));
 
-  return json(200, { ok: true, xu: entry.xu, tier: entry.tier, bonusTotal: bonus, message: `+${entry.xu} XU from ${entry.label}!` });
+  return json(200, { ok: true, xu: claimedEntry.xu, tier: claimedEntry.tier, bonusTotal: bonus, message: `+${claimedEntry.xu} XU from ${claimedEntry.label}!` });
 };

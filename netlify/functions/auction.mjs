@@ -1,4 +1,4 @@
-import { pointsStore, tenantKey } from "./_store.mjs";
+import { pointsStore, tenantKey, casUpdate, InsufficientFundsError } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getCompanyAccessToken } from "./_tokens.mjs";
 import { computeEarned } from "./_points.mjs";
@@ -16,6 +16,11 @@ function summarize(payload) {
   if (payload.kind === "ea")   return payload.label || "EA trial";
   if (payload.kind === "link") return payload.url || "";
   return "";
+}
+
+class AuctionClosedError extends Error {}
+class BidTooLowError extends Error {
+  constructor(minNext) { super("bid-too-low"); this.minNext = minNext; }
 }
 
 function pickUsername(u) {
@@ -46,6 +51,8 @@ async function settleIfNeeded(store, tenantId, state, cfg) {
 
   // Duyệt các mức bid cao nhất → thấp dần (loại trùng userId, giữ bid cao nhất
   // của mỗi người), thử trừ xu người đầu tiên còn đủ — không đủ thì rớt tiếp.
+  // Trừ XU bằng casUpdate (không phải get-rồi-set thường) để tránh trừ XU 2
+  // lần nếu lỡ có 2 request cùng settle phiên đấu giá gần đồng thời.
   const seen = new Set();
   const candidates = [...state.bids]
     .sort((a, b) => b.amount - a.amount)
@@ -55,13 +62,18 @@ async function settleIfNeeded(store, tenantId, state, cfg) {
   for (const c of candidates) {
     try {
       const apiKey = await getCompanyAccessToken(tenantId);
-      const { available, spent } = await availableXu(store, tenantId, c.userId, apiKey, cfg);
-      if (available >= c.amount) {
-        await store.set(tenantKey("spent", tenantId, c.userId), String(spent + c.amount));
-        winner = c;
-        break;
-      }
-    } catch (_) {}
+      const { earned } = await computeEarned(c.userId, apiKey, tenantId, cfg);
+      await casUpdate(store, tenantKey("spent", tenantId, c.userId), (current) => {
+        const curSpent = Number(current) || 0;
+        const available = earned - curSpent;
+        if (available < c.amount) throw new InsufficientFundsError({ available, cost: c.amount });
+        return String(curSpent + c.amount);
+      }, { type: "text" });
+      winner = c;
+      break;
+    } catch (_) {
+      // Không đủ XU (hoặc lỗi tạm thời) — thử người đặt giá cao kế tiếp.
+    }
   }
 
   if (winner && cfg.auctionRules.rewardId) {
@@ -159,25 +171,35 @@ export const handler = async (event) => {
     if (Date.now() >= state.endsAt) return json(400, { error: "This auction has ended." });
 
     const amount = Number(body.amount);
-    const minNext = state.highestBid > 0 ? state.highestBid + rules.minIncrement : rules.startingBid;
-    if (!amount || amount < minNext) return json(400, { error: `Bid must be at least ${minNext} XU.` });
 
     try {
       const apiKey = await getCompanyAccessToken(companyId);
       const { available } = await availableXu(store, companyId, userId, apiKey, cfg);
-      if (available < amount) return json(402, { error: "Not enough XU.", available });
-
       const name = await fetchUserName(userId, apiKey);
-      state.bids.unshift({ userId, name, amount, at: new Date().toISOString() });
-      state.bids = state.bids.slice(0, 50);
-      state.highestBid = amount;
-      state.highestBidderId = userId;
-      state.highestBidderName = name;
-      await store.setJSON(stateKey, state);
+
+      // Đọc lại auction-state NGAY trong khoá CAS (không dùng biến `state` đã
+      // đọc ở trên, có thể đã cũ) — chống 2 bid song song ghi đè nhau làm mất
+      // 1 bid (lost update) hoặc đặt giá thấp hơn mức tối thiểu thật lúc ghi.
+      state = await casUpdate(store, stateKey, (current) => {
+        if (!current || current.settled) throw new AuctionClosedError("There is no active auction right now.");
+        if (Date.now() >= current.endsAt) throw new AuctionClosedError("This auction has ended.");
+        const minNext = current.highestBid > 0 ? current.highestBid + rules.minIncrement : rules.startingBid;
+        if (!amount || amount < minNext) throw new BidTooLowError(minNext);
+        if (available < amount) throw new InsufficientFundsError({ available, cost: amount });
+        const next = { ...current };
+        next.bids = [{ userId, name, amount, at: new Date().toISOString() }, ...current.bids].slice(0, 50);
+        next.highestBid = amount;
+        next.highestBidderId = userId;
+        next.highestBidderName = name;
+        return next;
+      }, { type: "json" });
 
       return json(200, publicView());
-    } catch (err) {
-      return json(500, { error: err.message });
+    } catch (e) {
+      if (e instanceof InsufficientFundsError) return json(402, { error: "Not enough XU.", available: e.available });
+      if (e instanceof BidTooLowError) return json(400, { error: `Bid must be at least ${e.minNext} XU.` });
+      if (e instanceof AuctionClosedError) return json(400, { error: e.message });
+      return json(500, { error: e.message });
     }
   }
 

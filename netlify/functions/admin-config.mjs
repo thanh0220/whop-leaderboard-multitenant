@@ -1,4 +1,4 @@
-import { getAuthContext, lastVerifyError } from "./_auth.mjs";
+import { getAuthContext, lastVerifyError, lastAdminCheckError } from "./_auth.mjs";
 import { getTenantConfig, saveTenantConfig, isPaidTier, linkExperienceToTenant } from "./_tenant.mjs";
 import { getCompanyAccessToken, getRealCompanyId } from "./_tokens.mjs";
 
@@ -85,6 +85,7 @@ export const handler = async (event) => {
       referer: h["referer"] || h["Referer"] || null,
       auth,
       verifyError: lastVerifyError,
+      adminCheckError: lastAdminCheckError,
       linkResult,
     });
   }

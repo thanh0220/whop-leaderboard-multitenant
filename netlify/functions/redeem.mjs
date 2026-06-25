@@ -1,4 +1,4 @@
-import { pointsStore, tenantKey } from "./_store.mjs";
+import { pointsStore, tenantKey, casUpdate, InsufficientFundsError } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getCompanyAccessToken } from "./_tokens.mjs";
 import { computeEarned } from "./_points.mjs";
@@ -37,19 +37,23 @@ export const handler = async (event) => {
     const { earned } = await computeEarned(userId, apiKey, companyId, cfg);
 
     const store = pointsStore();
-    let spent = 0;
-    try { const s = await store.get(tenantKey("spent", companyId, userId)); if (s) spent = Number(s) || 0; } catch (_) {}
-
-    const available = earned - spent;
-    if (available < reward.cost) {
-      return json(402, { error: "Not enough points.", available, cost: reward.cost });
-    }
-
     const payload = reward.payload || { kind: "code", code: "" };
     const codeSummary = summarize(payload);
 
-    const newSpent = spent + reward.cost;
-    await store.set(tenantKey("spent", companyId, userId), String(newSpent));
+    let newSpent;
+    try {
+      newSpent = Number(await casUpdate(store, tenantKey("spent", companyId, userId), (current) => {
+        const spent = Number(current) || 0;
+        const available = earned - spent;
+        if (available < reward.cost) throw new InsufficientFundsError({ available, cost: reward.cost });
+        return String(spent + reward.cost);
+      }, { type: "text" }));
+    } catch (e) {
+      if (e instanceof InsufficientFundsError) {
+        return json(402, { error: "Not enough points.", available: e.available, cost: e.cost });
+      }
+      throw e;
+    }
 
     let history = [];
     try {

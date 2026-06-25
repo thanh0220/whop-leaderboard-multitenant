@@ -1,8 +1,8 @@
-import { pointsStore, tenantKey } from "./_store.mjs";
+import { pointsStore, tenantKey, casUpdate } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getTenantConfig, isPaidTier } from "./_tenant.mjs";
 import { utcDayKey } from "./_season.mjs";
-import { isWithinWindow } from "./_repeat.mjs";
+import { isWithinWindow, ddiff } from "./_repeat.mjs";
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -41,17 +41,39 @@ export const handler = async (event) => {
     return json(400, { error: "This code isn't active yet or has expired." });
   }
 
+  // Chống dùng lại vô hạn cùng 1 mã: mỗi user chỉ redeem được 1 lần/chu kỳ.
+  // Mã không lặp (repeatDays rỗng) -> chu kỳ "once" -> chỉ redeem được đúng 1 lần.
+  // Mã lặp mỗi N ngày -> chu kỳ = số thứ tự lần lặp hiện tại, redeem lại được
+  // khi sang chu kỳ mới (đúng thiết kế mã tái diễn hiện tại).
+  const start = reward.startDate || reward.endDate || null;
+  const cycleId = reward.repeatDays && start
+    ? String(Math.floor(ddiff(start, today) / reward.repeatDays))
+    : "once";
+
   const store = pointsStore();
-  let bonus = 0;
-  try { const b = await store.get(tenantKey("bonus", companyId, userId)); if (b) bonus = Number(b) || 0; } catch (_) {}
-  bonus += reward.xu;
-  await store.set(tenantKey("bonus", companyId, userId), String(bonus));
+  const redeemedKey = tenantKey("redeemed-codes", companyId, userId);
+  let alreadyUsed = false;
+  await casUpdate(store, redeemedKey, (current) => {
+    const map = current && typeof current === "object" ? current : {};
+    if (map[code] === cycleId) { alreadyUsed = true; return map; }
+    return { ...map, [code]: cycleId };
+  });
+  if (alreadyUsed) {
+    return json(409, { error: "You have already redeemed this code." });
+  }
+
+  let bonusTotal = 0;
+  await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
+    const prev = Number(current) || 0;
+    bonusTotal = prev + reward.xu;
+    return String(bonusTotal);
+  }, { type: "text" });
 
   return json(200, {
     ok: true,
     code,
     added: reward.xu,
-    bonusTotal: bonus,
+    bonusTotal,
     message: `+${reward.xu} XU added!`,
   });
 };

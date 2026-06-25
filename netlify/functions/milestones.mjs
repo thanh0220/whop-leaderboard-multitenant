@@ -1,4 +1,4 @@
-import { pointsStore, tenantKey } from "./_store.mjs";
+import { pointsStore, tenantKey, casUpdate } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getTenantConfig } from "./_tenant.mjs";
 import { getCompanyAccessToken } from "./_tokens.mjs";
@@ -17,6 +17,8 @@ function summarize(payload) {
   if (payload.kind === "link") return payload.url || "";
   return "";
 }
+
+class AlreadyClaimedError extends Error {}
 
 // Mốc theo SỐ LƯỢT GIỚI THIỆU (referral) — dùng đúng số `referrals` đã tính ở
 // computeEarned() (giống Leaderboard/Store, không định nghĩa lại referral khác
@@ -76,7 +78,20 @@ export const handler = async (event) => {
   const tier = (rules.tiers || [])[tierIndex];
   if (!tier) return json(400, { error: "Invalid milestone." });
   if (referrals < tier.thresholdReferrals) return json(402, { error: "You haven't reached this milestone yet." });
-  if (claimedTiers.includes(tierIndex)) return json(409, { error: "This milestone has already been claimed." });
+
+  // Khoá claim bằng casUpdate (không phải check rồi push thường) — chống 2
+  // request claim CÙNG 1 tier song song đều pass kiểm tra "chưa claim" và đều
+  // được phát quà 2 lần.
+  try {
+    await casUpdate(store, claimedKey, (current) => {
+      const list = Array.isArray(current) ? current : [];
+      if (list.includes(tierIndex)) throw new AlreadyClaimedError();
+      return [...list, tierIndex];
+    });
+  } catch (e) {
+    if (e instanceof AlreadyClaimedError) return json(409, { error: "This milestone has already been claimed." });
+    throw e;
+  }
 
   let resultPayload = null;
   let resultCode = "";
@@ -85,13 +100,9 @@ export const handler = async (event) => {
 
   if (tier.rewardId === "__spin__") {
     ticketsGranted = tier.spinTickets || 1;
-    let tickets = 0;
-    try {
-      const v = await store.get(tenantKey("spin-tickets", companyId, userId));
-      if (v) tickets = Number(v) || 0;
-    } catch (_) {}
-    tickets += ticketsGranted;
-    await store.set(tenantKey("spin-tickets", companyId, userId), String(tickets));
+    await casUpdate(store, tenantKey("spin-tickets", companyId, userId), (current) => {
+      return String((Number(current) || 0) + ticketsGranted);
+    }, { type: "text" });
   } else if (tier.rewardId) {
     const reward = cfg.rewards.find((r) => r.id === tier.rewardId);
     if (reward) {
@@ -113,14 +124,10 @@ export const handler = async (event) => {
     }
   } else {
     xuGranted = tier.xu || 0;
-    let bonus = 0;
-    try { const b = await store.get(tenantKey("bonus", companyId, userId)); if (b) bonus = Number(b) || 0; } catch (_) {}
-    bonus += xuGranted;
-    await store.set(tenantKey("bonus", companyId, userId), String(bonus));
+    await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
+      return String((Number(current) || 0) + xuGranted);
+    }, { type: "text" });
   }
-
-  claimedTiers.push(tierIndex);
-  await store.setJSON(claimedKey, claimedTiers);
 
   return json(200, {
     ok: true,

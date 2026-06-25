@@ -81,11 +81,44 @@ async function fetchCompanyIdForExperience(experienceId) {
   }
 }
 
-async function resolveCompanyId(event) {
+// ĐÃ XÁC MINH qua docs Whop (api-reference/authorized-users/list-authorized-users):
+// GET /api/v1/authorized_users?company_id=&user_id= (Bearer App API key) trả
+// data: [] rỗng nếu user KHÔNG phải admin/owner của company đó, hoặc 1+ bản ghi
+// nếu có quyền. Lỗi do THIẾU quyền scope (chưa Approve lại) ném riêng, KHÔNG
+// coi như "không phải admin" để tránh tự khóa nhầm admin thật khi mới deploy.
+export let lastAdminCheckError = null;
+async function isCompanyAdmin(userId, realCompanyId) {
+  const appApiKey = process.env.WHOP_APP_API_KEY;
+  if (!appApiKey) { lastAdminCheckError = "missing-app-api-key"; return false; }
+  try {
+    const r = await fetch(
+      `https://api.whop.com/api/v1/authorized_users?company_id=${encodeURIComponent(realCompanyId)}&user_id=${encodeURIComponent(userId)}`,
+      { headers: { Authorization: `Bearer ${appApiKey}` } }
+    );
+    if (!r.ok) {
+      const body = await r.text().catch(() => "");
+      lastAdminCheckError = `authorized_users HTTP ${r.status}: ${body.slice(0, 300)}`;
+      return false;
+    }
+    lastAdminCheckError = null;
+    const j = await r.json();
+    return Array.isArray(j?.data) && j.data.length > 0;
+  } catch (e) {
+    lastAdminCheckError = e?.message || String(e);
+    return false;
+  }
+}
+
+async function resolveCompanyId(event, userId) {
   const q = event.queryStringParameters || {};
   if (q.companyId) {
     const existing = await getTenantIdByRealCompanyId(q.companyId);
-    return existing || q.companyId;
+    const realCompanyId = existing || q.companyId;
+    // Lỗ hổng IDOR: KHÔNG được tin companyId client tự gửi nếu chưa xác minh
+    // userId thực sự là admin/owner của company đó qua API Whop.
+    const isAdmin = await isCompanyAdmin(userId, q.companyId);
+    if (!isAdmin) return null;
+    return realCompanyId;
   }
   if (q.experienceId) {
     const cached = await getTenantIdByExperienceId(q.experienceId);
@@ -107,7 +140,7 @@ async function resolveCompanyId(event) {
 // companyId thật ra suy từ đâu.
 export async function getAuthContext(event) {
   const userId = await verifyUser(event);
-  const companyId = await resolveCompanyId(event);
+  const companyId = await resolveCompanyId(event, userId);
   return { userId, companyId };
 }
 

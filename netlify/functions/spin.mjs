@@ -1,4 +1,4 @@
-import { pointsStore, tenantKey } from "./_store.mjs";
+import { pointsStore, tenantKey, casUpdate, InsufficientFundsError } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getCompanyAccessToken } from "./_tokens.mjs";
 import { computeEarned } from "./_points.mjs";
@@ -85,30 +85,46 @@ export const handler = async (event) => {
     try {
       const apiKey = await getCompanyAccessToken(companyId);
       const { earned } = await computeEarned(userId, apiKey, companyId, cfg);
-      let spent = 0;
-      try { const s = await store.get(tenantKey("spent", companyId, userId)); if (s) spent = Number(s) || 0; } catch (_) {}
-      const available = earned - spent;
       const cost = rules.xuCostPerTicket || 0;
-      if (available < cost) return json(402, { error: "Not enough XU.", available, cost });
 
-      const newSpent = spent + cost;
-      await store.set(tenantKey("spent", companyId, userId), String(newSpent));
+      let available;
+      try {
+        await casUpdate(store, tenantKey("spent", companyId, userId), (current) => {
+          const spent = Number(current) || 0;
+          available = earned - spent;
+          if (available < cost) throw new InsufficientFundsError({ available, cost });
+          return String(spent + cost);
+        }, { type: "text" });
+      } catch (e) {
+        if (e instanceof InsufficientFundsError) {
+          return json(402, { error: "Not enough XU.", available: e.available, cost: e.cost });
+        }
+        throw e;
+      }
 
-      const tickets = (await getTickets(store, companyId, userId)) + 1;
-      await store.set(tenantKey("spin-tickets", companyId, userId), String(tickets));
+      const tickets = await casUpdate(store, tenantKey("spin-tickets", companyId, userId), (current) => {
+        return String((Number(current) || 0) + 1);
+      }, { type: "text" });
 
-      return json(200, { ok: true, tickets, xuAvailable: available - cost });
+      return json(200, { ok: true, tickets: Number(tickets), xuAvailable: available - cost });
     } catch (err) {
       return json(500, { error: err.message });
     }
   }
 
   if (body.action === "spin") {
-    const tickets = await getTickets(store, companyId, userId);
-    if (tickets <= 0) return json(402, { error: "No tickets left." });
     if (!rules.prizes || !rules.prizes.length) return json(400, { error: "No prizes configured." });
 
-    await store.set(tenantKey("spin-tickets", companyId, userId), String(tickets - 1));
+    try {
+      await casUpdate(store, tenantKey("spin-tickets", companyId, userId), (current) => {
+        const tickets = Number(current) || 0;
+        if (tickets <= 0) throw new InsufficientFundsError({ available: 0, cost: 1 });
+        return String(tickets - 1);
+      }, { type: "text" });
+    } catch (e) {
+      if (e instanceof InsufficientFundsError) return json(402, { error: "No tickets left." });
+      throw e;
+    }
 
     const prize = pickWeighted(rules.prizes);
     let resultPayload = null;
@@ -137,19 +153,19 @@ export const handler = async (event) => {
     }
     if (!resultPayload) {
       xuGranted = prize.xu || 0;
-      let bonus = 0;
-      try { const b = await store.get(tenantKey("bonus", companyId, userId)); if (b) bonus = Number(b) || 0; } catch (_) {}
-      bonus += xuGranted;
-      await store.set(tenantKey("bonus", companyId, userId), String(bonus));
+      await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
+        return String((Number(current) || 0) + xuGranted);
+      }, { type: "text" });
     }
 
+    const ticketsLeft = Number((await store.get(tenantKey("spin-tickets", companyId, userId))) || 0);
     return json(200, {
       ok: true,
       prizeId: prize.id,
       label: prize.rewardId ? (cfg.rewards.find((r) => r.id === prize.rewardId)?.name || prize.label) : prize.label,
       xu: xuGranted || null,
       code: resultCode || null,
-      ticketsLeft: tickets - 1,
+      ticketsLeft,
     });
   }
 
