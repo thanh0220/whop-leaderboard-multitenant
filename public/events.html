@@ -35,9 +35,15 @@
 
   .track{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;min-height:38px}
   .evt{border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap;
-    background:rgba(39,227,255,.16);border:1px solid rgba(39,227,255,.5);color:var(--cyan)}
-  .evt-thumb{width:20px;height:20px;border-radius:5px;object-fit:cover;flex-shrink:0}
+    background:rgba(39,227,255,.16);border:1px solid rgba(39,227,255,.5);color:var(--cyan);cursor:pointer}
+  .evt span.nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .evt small{font-weight:400;opacity:.8;font-size:10.5px}
+  .event-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+  .event-modal{background:#0e1622;border:1px solid var(--line2);border-radius:16px;padding:20px;max-width:340px;width:100%;position:relative;text-align:center}
+  .event-modal .x{position:absolute;top:10px;right:14px;cursor:pointer;color:var(--muted);font-size:18px}
+  .event-modal .x:hover{color:var(--text)}
+  .event-modal .ev-modal-name{font-family:'Oswald',sans-serif;font-size:17px;font-weight:700;color:var(--cyan);margin:6px 0 8px}
+  .event-modal .ev-modal-date{font-size:13px;color:var(--muted)}
 
   .empty{text-align:center;color:var(--muted);font-size:13px;padding:14px 0}
 
@@ -130,15 +136,40 @@ function weekDates(todayKey){
 }
 function dayCol(dateKey, week){ return week.indexOf(dateKey); } // -1 nếu ngoài tuần
 
-function evtRow(item, week){
+let CURRENT_EVENTS = [];
+
+function evtRow(item, week, idx){
   const col = dayCol(item.date, week);
   if(col===-1) return ''; // ngoài tuần đang xem
-  const thumb = item.image ? `<img class="evt-thumb" src="${esc(item.image)}"/>` : '';
-  return `<div class="track"><div class="evt" style="grid-column:${col+1} / ${col+2}">${thumb}${esc(item.name)}</div></div>`;
+  return `<div class="track"><div class="evt" style="grid-column:${col+1} / ${col+2}" onclick="openEventModal(${idx})"><span class="nm">${esc(item.name)}</span></div></div>`;
+}
+
+function fmtEventDate(dateKey){
+  const [y,m,d] = dateKey.split('-');
+  return `${d}/${m}/${y}`;
+}
+function openEventModal(idx){
+  const item = CURRENT_EVENTS[idx];
+  const wrap = document.createElement('div');
+  wrap.className = 'event-modal-overlay';
+  wrap.id = 'event-modal-overlay';
+  wrap.innerHTML = `
+    <div class="event-modal">
+      <span class="x" onclick="closeEventModal()">✕</span>
+      <div class="ev-modal-name">${esc(item.name)}</div>
+      <div class="ev-modal-date">📅 ${fmtEventDate(item.date)}</div>
+    </div>`;
+  wrap.addEventListener('click', (ev) => { if (ev.target === wrap) closeEventModal(); });
+  document.body.appendChild(wrap);
+}
+function closeEventModal(){
+  const el = $('event-modal-overlay');
+  if (el) el.remove();
 }
 
 function render(d){
   const events = (d.events || []).filter(e=>e.date);
+  CURRENT_EVENTS = events;
   const today = new Date().toISOString().slice(0,10);
   const week = weekDates(today);
   const dowLabel=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -149,7 +180,7 @@ function render(d){
     return `<div class="head-cell ${isToday?'today':''}">${dowLabel[i]}<div class="dd">${dd}/${m}</div></div>`;
   }).join('');
 
-  const rows = events.map(e=>evtRow(e, week)).filter(Boolean).join('');
+  const rows = events.map((e,idx)=>evtRow(e, week, idx)).filter(Boolean).join('');
 
   const html = `
     <div class="counter">📅 <b>${events.length}</b> upcoming events</div>

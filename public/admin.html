@@ -160,21 +160,24 @@
   .ev-head-cell.today{color:var(--cyan);background:rgba(39,227,255,.08)}
   .ev-head-cell .dd{font-size:12px;color:var(--text);font-weight:700;margin-top:2px}
   .ev-track{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;min-height:34px}
-  .evt-bar{position:relative;border-radius:8px;padding:7px 16px;font-size:12.5px;font-weight:600;display:flex;align-items:center;
-    overflow:hidden;white-space:nowrap;cursor:grab;user-select:none}
-  .evt-bar:active{cursor:grabbing}
+  .evt-bar{position:relative;border-radius:8px;padding:7px 16px 7px 22px;font-size:12.5px;font-weight:600;display:flex;align-items:center;
+    overflow:hidden;white-space:nowrap;cursor:pointer;user-select:none}
   .evt-bar.quest{background:rgba(39,227,255,.18);border:1px solid rgba(39,227,255,.5);color:var(--cyan)}
   .evt-bar.code{background:rgba(255,45,75,.18);border:1px solid rgba(255,45,75,.5);color:#ffb0bd}
-  .evt-bar .grip{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize;z-index:2}
+  .evt-bar .grip{position:absolute;top:0;bottom:0;width:9px;cursor:grab;z-index:2;display:flex;align-items:center;justify-content:center;
+    font-size:10px;color:rgba(255,255,255,.35);background:rgba(255,255,255,.04)}
+  .evt-bar .grip:hover{background:rgba(255,255,255,.12);color:rgba(255,255,255,.75)}
+  .evt-bar .grip:active{cursor:grabbing}
   .evt-bar .grip-l{left:0} .evt-bar .grip-r{right:0}
-  .evt-bar .evt-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .ev-thumb{width:20px;height:20px;border-radius:5px;object-fit:cover;flex-shrink:0;margin-right:4px;cursor:pointer}
-  .ev-thumb-empty{width:20px;height:20px;border-radius:5px;flex-shrink:0;margin-right:4px;cursor:pointer;display:inline-flex;
-    align-items:center;justify-content:center;font-size:11px;background:rgba(255,255,255,.08);border:1px dashed rgba(255,255,255,.25)}
-  .evt-name-inline{flex:1;min-width:0;background:transparent;border:none;color:inherit;font:inherit;padding:0;outline:none}
-  .evt-name-inline:focus{border-bottom:1px dashed currentColor}
+  .evt-name-inline{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .evt-bar .ex{font-size:10px;line-height:1;opacity:.6;cursor:pointer;padding:2px;flex-shrink:0;margin-left:4px}
   .evt-bar .ex:hover{opacity:1}
+  .event-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+  .event-modal{background:#0a0f18;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px;max-width:380px;width:100%;position:relative}
+  .event-modal .x{position:absolute;top:10px;right:14px;cursor:pointer;color:var(--muted);font-size:18px}
+  .event-modal .x:hover{color:var(--text)}
+  .event-modal .modal-actions{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+  .event-modal .modal-actions .btn{margin-top:0;flex:1}
   .ev-empty{text-align:center;color:var(--muted);font-size:12px;padding:10px 0}
   .unscheduled-tray{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
   .chip{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:999px;
@@ -1001,22 +1004,40 @@ function addDays(dateKey, n){
 
 function evCardHtml(e, idx){
   return `
-    <img class="ev-thumb" id="ev-thumb-${idx}" src="${esc(e.image||'')}" style="${e.image?'':'display:none'}" onclick="promptImage(${idx})" title="Click to change image"/>
-    ${e.image?'':`<span class="ev-thumb ev-thumb-empty" onclick="promptImage(${idx})" title="Click to set image">🖼</span>`}
-    <input class="evt-name-inline" value="${esc(e.name)}" oninput="STATE.events[${idx}].name=this.value" onmousedown="event.stopPropagation()"/>
-    <span class="ex" onmousedown="event.stopPropagation()" onclick="deleteEventSlot(${idx})" title="Delete this event slot">🗑</span>
+    <span class="evt-name-inline">${esc(e.name)}</span>
+    <span class="ex" onclick="event.stopPropagation();deleteEventSlot(${idx})" title="Delete this event slot">🗑</span>
   `;
-}
-function promptImage(idx){
-  const cur = STATE.events[idx].image || '';
-  const url = prompt('Paste an image link for this event:', cur);
-  if(url === null) return;
-  STATE.events[idx].image = url.trim();
-  refreshEvents();
 }
 function deleteEventSlot(idx){
   STATE.events.splice(idx,1);
+  closeEventModal();
   refreshEvents();
+}
+function openEventModal(idx){
+  const e = STATE.events[idx];
+  const wrap = document.createElement('div');
+  wrap.className = 'event-modal-overlay';
+  wrap.id = 'event-modal-overlay';
+  wrap.innerHTML = `
+    <div class="event-modal">
+      <span class="x" onclick="closeEventModal()">✕</span>
+      <div class="sect" style="margin-top:0">Edit event</div>
+      <label>Name</label>
+      <input type="text" id="ev-modal-name" value="${esc(e.name)}" oninput="STATE.events[${idx}].name=this.value"/>
+      <label>Date</label>
+      <input type="date" id="ev-modal-date" value="${esc(e.date||'')}" oninput="STATE.events[${idx}].date=this.value"/>
+      <div class="modal-actions">
+        ${e.date ? `<button class="btn" onclick="unscheduleEvent(${idx});closeEventModal()">📥 Remove from schedule</button>` : ''}
+        <button class="btn" style="border-color:rgba(255,45,75,.5);color:#ffb0bd" onclick="deleteEventSlot(${idx})">🗑 Delete event</button>
+        <button class="btn" onclick="closeEventModal();refreshEvents()">✅ Done</button>
+      </div>
+    </div>`;
+  wrap.addEventListener('click', (ev) => { if (ev.target === wrap) { closeEventModal(); refreshEvents(); } });
+  document.body.appendChild(wrap);
+}
+function closeEventModal(){
+  const el = $('event-modal-overlay');
+  if (el) el.remove();
 }
 
 function renderEvents(){
@@ -1038,21 +1059,22 @@ function renderEvents(){
     let col = week.indexOf(e.date);
     if(col===-1) return ''; // ngoài tuần đang xem
     return `<div class="ev-track">
-      <div class="evt-bar quest" style="grid-column:${col+1} / ${col+2}" onmousedown="startDragMove(event,${idx})">
+      <div class="evt-bar quest" style="grid-column:${col+1} / ${col+2}" onclick="openEventModal(${idx})">
+        <span class="grip grip-l" onmousedown="event.stopPropagation();startDragMove(event,${idx})" onclick="event.stopPropagation()" title="Drag to move day">⠿</span>
         ${evCardHtml(e, idx)}
-        <span class="ex" onmousedown="event.stopPropagation()" onclick="unscheduleEvent(${idx})" title="Remove from schedule">✕</span>
+        <span class="ex" onclick="event.stopPropagation();unscheduleEvent(${idx})" title="Remove from schedule">✕</span>
       </div>
     </div>`;
   }).filter(Boolean).join('') || (scheduledIdx.length ? '<div class="ev-empty">No events scheduled this week.</div>' : '<div class="ev-empty">Drag a card below onto a day to schedule it.</div>');
 
   const chips = unscheduledIdx.map(idx=>{
     const e = events[idx];
-    return `<span class="chip quest" draggable="true" ondragstart="onChipDragStart(event,${idx})">${evCardHtml(e, idx)}</span>`;
+    return `<span class="chip quest" draggable="true" ondragstart="onChipDragStart(event,${idx})" onclick="openEventModal(${idx})">${evCardHtml(e, idx)}</span>`;
   }).join('') || (events.length ? '<span class="hint-small">All events are scheduled.</span>' : '');
 
   const limit = eventsLimit();
   const addOrMsg = events.length < limit
-    ? `<button class="btn" onclick="STATE.events.push({id:'event_'+Date.now().toString(36),name:'Event '+(STATE.events.length+1),image:'',date:''});refreshEvents()">+ Add event slot (${events.length}/${limit})</button>`
+    ? `<button class="btn" onclick="STATE.events.push({id:'event_'+Date.now().toString(36),name:'Event '+(STATE.events.length+1),date:''});refreshEvents()">+ Add event slot (${events.length}/${limit})</button>`
     : `<p class="hint-small">${IS_PAID ? `Limit reached (${limit} slots).` : `Free plan limit reached (${limit} slots) — ⭐ upgrade to Paid for up to 10.`}</p>`;
 
   return `<div id="events-wrap">
@@ -1060,10 +1082,10 @@ function renderEvents(){
     <div class="panel">
       ${introBlock(
         "A simple calendar members see, announcing your livestreams, AMAs, or any event coming up — it doesn't give out any reward by itself, it's just a notice board.",
-        ["Click + Add event slot below", "Type the name, click the picture icon to add an image", "Drag the card onto the day it happens", "Save all"]
+        ["Click + Add event slot below", "Click the card to set its name and date in a popup", "Or drag the card onto the day it happens, and use the ⠿ handle to move a scheduled event to another day", "Save all"]
       )}
       ${toggleRow(STATE.eventsEnabled, 'STATE.eventsEnabled=this.checked;refreshEvents()', 'Enabled — the event calendar is visible to members.', 'Disabled — members see an empty event calendar.')}
-      <p class="hint-small" style="margin-bottom:10px">Type the name directly, click the image to change it, drag onto the calendar to set a date.</p>
+      <p class="hint-small" style="margin-bottom:10px">Click a card to edit its name/date, or drag it onto the calendar to set a date.</p>
       <div class="events-nav">
         <button class="btn" onclick="eventsWeekOffset--;refreshEvents()">‹ Previous week</button>
         <span class="lbl">${week[0].slice(8,10)}/${week[0].slice(5,7)} — ${week[6].slice(8,10)}/${week[6].slice(5,7)}</span>
