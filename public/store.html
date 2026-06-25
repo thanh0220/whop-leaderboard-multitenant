@@ -265,11 +265,6 @@ function render(){
     const thumb=rw.image
       ? `<div class="thumb" style="background-image:url('${esc(rw.image)}')"></div>`
       : `<div class="thumb" style="background:linear-gradient(135deg,#1a2236,#0a0f18)"></div>`;
-    const badge=rw.badge?`<span class="badge ${esc(rw.badge)}">${BADGE_LABEL[rw.badge]||rw.badge}</span>`:'';
-    const stockPill=(!done && rw.stock!=null&&rw.stock<=10)?`<span class="stock-pill">${rw.stock} left</span>`:'';
-    const priceAnchor=rw.originalPrice
-      ? `<div class="price-anchor"><s>${esc(rw.originalPrice)}</s> · <b>save 100%</b></div>`
-      : '';
     const progress=(!can && !done)
       ? `<div class="progress"><i style="width:${pct}%"></i></div>
          <div class="progress-label"><span>Need <b>${fmt(gap)} more XU</b></span><span>${pct}%</span></div>`
@@ -281,18 +276,18 @@ function render(){
       btnDisabled = false;
       btnOnclick = `openWhopSignin(event)`;
     } else if(done){ btnClass='btn done'; btnLabel='🔄 Flip to view reward'; btnDisabled=false; btnOnclick=`flipCard('${rw.id}',event)`; }
-    else if(can){ btnClass=rw.tier>=4?'btn primary':'btn'; btnLabel='🎁 Redeem now'; btnDisabled=false; btnOnclick=`redeem('${rw.id}',this)`; }
+    else if(can){ btnClass=rw.tier>=4?'btn primary':'btn'; btnLabel=esc(rw.buttonLabel||'GET'); btnDisabled=false; btnOnclick=`redeem('${rw.id}',this)`; }
     else { btnClass='btn'; btnLabel='Not enough XU'; btnDisabled=true; btnOnclick=''; }
 
     const costHtml = done
       ? `<span class="cost" style="color:#86efac">0 XU</span>
          <div class="price-anchor done"><s>${fmt(rw.cost)} XU</s> · <b>redeemed</b></div>`
-      : `<span class="cost">${fmt(rw.cost)} XU</span>${priceAnchor}`;
+      : `<span class="cost">${fmt(rw.cost)} XU</span>`;
     const doneBadge = done ? `<span class="done-badge">✅ Redeemed</span>` : '';
 
     const frontInner = `
       <div class="card flip-face flip-front">
-        ${thumb}${badge}${stockPill}${doneBadge}
+        ${thumb}${doneBadge}
         <div class="body">
           <h3>${esc(rw.name)}</h3>
           <p>${esc(rw.desc)}</p>

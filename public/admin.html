@@ -154,6 +154,7 @@
   /* ===== #events — lịch kéo-thả ===== */
   .events-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
   .events-nav .lbl{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+  .ev-calendar{min-height:90px;position:relative}
   .ev-head-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:10px;user-select:none}
   .ev-head-cell{text-align:center;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;padding:6px 2px;border-radius:6px}
   .ev-head-cell.today{color:var(--cyan);background:rgba(39,227,255,.08)}
@@ -248,16 +249,13 @@ const BADGE_LABEL={hot:'🔥 Hot',new:'⚡ New',vip:'👑 VIP',bestseller:'⭐ B
 
 function storeCardHtml(r){
   const thumb=r.image?`<div class="thumb2" style="background-image:url('${esc(r.image)}')"></div>`:`<div class="thumb2" style="background:linear-gradient(135deg,#1a2236,#0a0f18)"></div>`;
-  const badge=r.badge?`<span class="pv-badge ${esc(r.badge)}">${BADGE_LABEL[r.badge]||r.badge}</span>`:'';
-  const stockPill=(r.stock!=null&&r.stock<=10)?`<span class="pv-stock">${r.stock} left</span>`:'';
-  const priceAnchor=r.originalPrice?`<div class="pv-price-anchor"><s>${esc(r.originalPrice)}</s> · <b>save 100%</b></div>`:'';
   return `<div class="pv-card">
-    ${thumb}${badge}${stockPill}
+    ${thumb}
     <div class="body2">
       <h3>${esc(r.name||'(Unnamed)')}</h3>
       <p>${esc(r.desc||'')}</p>
-      <div class="pv-cost-row"><span class="pv-cost">${fmt(r.cost)} XU</span>${priceAnchor}</div>
-      <div class="pv-btn ${(r.tier>=4)?'primary':''}">🎁 Redeem now</div>
+      <div class="pv-cost-row"><span class="pv-cost">${fmt(r.cost)} XU</span></div>
+      <div class="pv-btn ${(r.tier>=4)?'primary':''}">${esc(r.buttonLabel||'GET')}</div>
     </div>
   </div>`;
 }
@@ -652,26 +650,21 @@ function renderStore(){
       <summary>${esc(r.name||'(Unnamed)')} — ${r.cost||0} XU</summary>
       <div class="edit-row">
         <div>
-          <label>Reward name</label>
-          <input value="${esc(r.name)}" oninput="setPath(STATE,'rewards.${i}.name',this.value);refreshStorePreview(${i})"/>
-          <div class="row2">
-            <div><label>Price (XU)</label><input type="number" value="${r.cost||0}" oninput="setPath(STATE,'rewards.${i}.cost',Number(this.value)||0);refreshStorePreview(${i})"/></div>
-            <div><label>Stock (leave blank = unlimited)</label><input type="number" value="${r.stock??''}" oninput="setPath(STATE,'rewards.${i}.stock',this.value===''?null:Number(this.value));refreshStorePreview(${i})"/></div>
-          </div>
-          <label>Description</label>
-          <textarea oninput="setPath(STATE,'rewards.${i}.desc',this.value);refreshStorePreview(${i})">${esc(r.desc)}</textarea>
+          <div class="hint-small" style="font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">🎴 Front side (shown before redeem)</div>
           <label>Reward image (paste image link)</label>
           <img class="thumb" id="thumb-${i}" src="${esc(r.image||'')}" alt="" style="${r.image?'':'display:none'}"/>
           <input value="${esc(r.image||'')}" placeholder="https://..." oninput="setPath(STATE,'rewards.${i}.image',this.value);const t=$('thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none';refreshStorePreview(${i})"/>
-          <div class="hint-small">Host the image elsewhere (Imgur, free Cloudinary, an existing product link...) then paste the URL here.</div>
-          <div class="row2">
-            <div><label>Badge</label>
-              <select onchange="setPath(STATE,'rewards.${i}.badge',this.value);refreshStorePreview(${i})">
-                ${['','hot','new','vip','bestseller','limited'].map(b=>`<option value="${b}" ${r.badge===b?'selected':''}>${b||'(none)'}</option>`).join('')}
-              </select>
-            </div>
-            <div><label>Displayed original price (e.g. $97)</label><input value="${esc(r.originalPrice||'')}" oninput="setPath(STATE,'rewards.${i}.originalPrice',this.value);refreshStorePreview(${i})"/></div>
-          </div>
+          <div class="hint-small">Host the image elsewhere (Imgur, free Cloudinary, an existing product link...) then paste the URL here. Recommended: square image, 600×600px or larger.</div>
+          <label>Reward name</label>
+          <input value="${esc(r.name)}" oninput="setPath(STATE,'rewards.${i}.name',this.value);refreshStorePreview(${i})"/>
+          <label>Price (XU)</label>
+          <input type="number" value="${r.cost||0}" oninput="setPath(STATE,'rewards.${i}.cost',Number(this.value)||0);refreshStorePreview(${i})"/>
+          <label>Description</label>
+          <textarea oninput="setPath(STATE,'rewards.${i}.desc',this.value);refreshStorePreview(${i})">${esc(r.desc)}</textarea>
+          <label>Button label</label>
+          <input value="${esc(r.buttonLabel||'GET')}" placeholder="GET" oninput="setPath(STATE,'rewards.${i}.buttonLabel',this.value);refreshStorePreview(${i})"/>
+
+          <div class="hint-small" style="font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:16px 0 6px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px">🎁 Back side (shown after a successful redeem)</div>
           <label>Reward type after redeem</label>
           <select onchange="setPath(STATE,'rewards.${i}.payload.kind',this.value);renderAll()">
             <option value="code" ${p.kind==='code'?'selected':''}>Code</option>
@@ -692,7 +685,7 @@ function renderStore(){
   const rewardLimit = IS_PAID ? 10 : 2;
   const rewardCount = (STATE.rewards||[]).length;
   const addRewardOrMsg = rewardCount < rewardLimit
-    ? `<button class="btn" onclick="STATE.rewards.push({id:'reward_'+Date.now().toString(36),name:'',cost:100,desc:'',image:'',badge:'',originalPrice:'',stock:null,tier:1,payload:{kind:'code',code:''}});renderAll()">+ Add new reward (${rewardCount}/${rewardLimit})</button>`
+    ? `<button class="btn" onclick="STATE.rewards.push({id:'reward_'+Date.now().toString(36),name:'',cost:100,desc:'',image:'',buttonLabel:'GET',tier:1,payload:{kind:'code',code:''}});renderAll()">+ Add new reward (${rewardCount}/${rewardLimit})</button>`
     : `<p class="hint-small">${IS_PAID ? `Limit reached (${rewardLimit} rewards).` : `Free plan limit reached (${rewardLimit} rewards) — ⭐ upgrade to Paid for up to 10.`}</p>`;
   return `
     <div class="sect" id="store">🎁 Reward Store</div>
@@ -1035,8 +1028,10 @@ function renderEvents(){
         <span class="lbl">${week[0].slice(8,10)}/${week[0].slice(5,7)} — ${week[6].slice(8,10)}/${week[6].slice(5,7)}</span>
         <button class="btn" onclick="eventsWeekOffset++;refreshEvents()">Next week ›</button>
       </div>
-      <div class="ev-head-row">${headCells}</div>
-      ${bars}
+      <div class="ev-calendar" ondragover="event.preventDefault()" ondrop="onEvCalendarDrop(event)">
+        <div class="ev-head-row">${headCells}</div>
+        ${bars}
+      </div>
       <div class="unscheduled-tray">
         <div class="prev-label" style="text-align:left">📥 Unscheduled (drag onto a day above)</div>
         ${chips}
@@ -1075,6 +1070,17 @@ function onEvDrop(e, dateKey){
   STATE.events[dragChip].date = dateKey;
   dragChip = null;
   refreshEvents();
+}
+// Thả lệch xuống dưới hàng tiêu đề ngày (vd lên vùng event đã lên lịch, hoặc vùng
+// trống chưa có event) vẫn tính đúng cột/ngày theo vị trí X — bọc cả khối lịch
+// (.ev-calendar) thành 1 vùng nhận thả lớn, không chỉ riêng ô tiêu đề nhỏ.
+function onEvCalendarDrop(e){
+  e.preventDefault();
+  if(dragChip == null) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const col = Math.min(6, Math.max(0, Math.floor((e.clientX - rect.left) / (rect.width / 7))));
+  const week = evWeekDates(eventsWeekOffset);
+  onEvDrop(e, week[col]);
 }
 
 // ===== Lưu tất cả =====
