@@ -94,19 +94,20 @@ export const DEFAULT_TENANT = {
     buyerReward: { min: 80, max: 200 },
     expiryHours: 48,
   },
-  // Nạp lũy kế: member tự cộng dồn USD đã nạp THẬT trong 1 kỳ (periodDays),
-  // đạt mốc (thresholdUsd) thì claim quà — ưu tiên giao 1 reward có sẵn trong
-  // `rewards` (rewardId) nếu admin gắn, không thì thưởng thẳng xu khai báo
-  // trên tier. Mặc định tắt vì cần admin tự đặt mốc trước khi bật.
+  // Mốc theo SỐ LƯỢT GIỚI THIỆU (referral, tính LIFETIME — dùng đúng số
+  // `referrals` đã tính ở computeEarned(), giống Leaderboard/Store), đạt mốc
+  // (thresholdReferrals) thì claim quà — ưu tiên giao 1 reward có sẵn trong
+  // `rewards` (rewardId) nếu admin gắn, hoặc vé Lucky Spin (rewardId="__spin__"
+  // + spinTickets), không thì thưởng thẳng xu khai báo trên tier. Mặc định tắt
+  // vì cần admin tự đặt mốc trước khi bật.
   milestoneRules: {
     enabled: false,
-    periodDays: 7,
     tiers: [
-      { thresholdUsd: 5,   rewardId: null, xu: 50,   label: "Starter Reward", icon: "🎁" },
-      { thresholdUsd: 10,  rewardId: null, xu: 150,  label: "Bronze Reward",  icon: "🎁" },
-      { thresholdUsd: 20,  rewardId: null, xu: 400,  label: "Silver Reward",  icon: "🎁" },
-      { thresholdUsd: 50,  rewardId: null, xu: 900,  label: "Gold Reward",    icon: "🎁" },
-      { thresholdUsd: 100, rewardId: null, xu: 2000, label: "Diamond Reward", icon: "🎁" },
+      { thresholdReferrals: 1,  rewardId: null, xu: 50,   label: "Starter Reward", icon: "🎁" },
+      { thresholdReferrals: 3,  rewardId: null, xu: 150,  label: "Bronze Reward",  icon: "🎁" },
+      { thresholdReferrals: 5,  rewardId: null, xu: 400,  label: "Silver Reward",  icon: "🎁" },
+      { thresholdReferrals: 10, rewardId: null, xu: 900,  label: "Gold Reward",    icon: "🎁" },
+      { thresholdReferrals: 20, rewardId: null, xu: 2000, label: "Diamond Reward", icon: "🎁" },
     ],
   },
   // Lucky Spin: thanh toán THẬT tự động cộng vé quay (ticketsPerPayment, flat

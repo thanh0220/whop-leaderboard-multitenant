@@ -1,6 +1,8 @@
 import { pointsStore, tenantKey } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getTenantConfig } from "./_tenant.mjs";
+import { getCompanyAccessToken } from "./_tokens.mjs";
+import { computeEarned } from "./_points.mjs";
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -16,19 +18,18 @@ function summarize(payload) {
   return "";
 }
 
-// Tiến độ lưu theo blob `milestone-progress:<tenantId>:<userId>` — được CỘNG
-// DỒN bởi webhook.mjs mỗi khi buyer đó có thanh toán thật. Function này chỉ
-// đọc (GET) và xử lý claim (POST), KHÔNG tự cộng usd ở đây.
-async function loadProgress(store, tenantId, userId, periodDays) {
-  const key = tenantKey("milestone-progress", tenantId, userId);
-  const periodMs = (periodDays || 7) * 86400000;
-  const now = Date.now();
-  let progress = null;
-  try { progress = await store.get(key, { type: "json" }); } catch (_) {}
-  if (!progress || now - progress.periodStart >= periodMs) {
-    progress = { periodStart: now, usd: 0, claimedTiers: [] };
-  }
-  return { key, progress };
+// Mốc theo SỐ LƯỢT GIỚI THIỆU (referral) — dùng đúng số `referrals` đã tính ở
+// computeEarned() (giống Leaderboard/Store, không định nghĩa lại referral khác
+// đi). Đây là số LIFETIME (không reset theo kỳ như USD nạp trước đây), nên chỉ
+// cần lưu lại tier nào đã claim — không còn periodStart/usd.
+async function loadClaimed(store, tenantId, userId) {
+  const key = tenantKey("milestone-claimed", tenantId, userId);
+  let claimedTiers = [];
+  try {
+    const v = await store.get(key, { type: "json" });
+    if (Array.isArray(v)) claimedTiers = v;
+  } catch (_) {}
+  return { key, claimedTiers };
 }
 
 export const handler = async (event) => {
@@ -37,29 +38,30 @@ export const handler = async (event) => {
   if (!companyId) return json(400, { error: "Could not identify the community (companyId)." });
 
   const cfg = await getTenantConfig(companyId);
-  const rules = cfg.milestoneRules || { enabled: false, periodDays: 7, tiers: [] };
+  const rules = cfg.milestoneRules || { enabled: false, tiers: [] };
   const store = pointsStore();
-  const { progress } = await loadProgress(store, companyId, userId, rules.periodDays);
+  const apiKey = await getCompanyAccessToken(companyId);
+  const { earned: _earned, referrals } = await computeEarned(userId, apiKey, companyId, cfg);
+  const { key: claimedKey, claimedTiers } = await loadClaimed(store, companyId, userId);
 
   if (event.httpMethod === "GET") {
     const tiers = (rules.tiers || []).map((t, i) => {
-      const reward = t.rewardId ? cfg.rewards.find((r) => r.id === t.rewardId) : null;
+      const isSpin = t.rewardId === "__spin__";
+      const reward = t.rewardId && !isSpin ? cfg.rewards.find((r) => r.id === t.rewardId) : null;
       return {
-        thresholdUsd: t.thresholdUsd,
+        thresholdReferrals: t.thresholdReferrals,
         label: reward ? reward.name : t.label,
-        icon: reward ? "🎁" : t.icon,
-        xu: reward ? null : t.xu,
+        icon: reward ? "🎁" : (isSpin ? "🎰" : t.icon),
+        xu: (!reward && !isSpin) ? t.xu : null,
+        spinTickets: isSpin ? (t.spinTickets || 1) : null,
         image: reward ? (reward.image || null) : null,
-        unlocked: progress.usd >= t.thresholdUsd,
-        claimed: progress.claimedTiers.includes(i),
+        unlocked: referrals >= t.thresholdReferrals,
+        claimed: claimedTiers.includes(i),
       };
     });
     return json(200, {
       enabled: !!rules.enabled,
-      periodDays: rules.periodDays || 7,
-      periodStart: progress.periodStart,
-      periodEnd: progress.periodStart + (rules.periodDays || 7) * 86400000,
-      usd: progress.usd,
+      referrals,
       tiers,
       branding: cfg.branding,
     });
@@ -73,15 +75,24 @@ export const handler = async (event) => {
   const tierIndex = Number(body.tierIndex);
   const tier = (rules.tiers || [])[tierIndex];
   if (!tier) return json(400, { error: "Invalid milestone." });
-  if (progress.usd < tier.thresholdUsd) return json(402, { error: "You haven't reached this milestone yet." });
-  if (progress.claimedTiers.includes(tierIndex)) return json(409, { error: "This milestone has already been claimed." });
+  if (referrals < tier.thresholdReferrals) return json(402, { error: "You haven't reached this milestone yet." });
+  if (claimedTiers.includes(tierIndex)) return json(409, { error: "This milestone has already been claimed." });
 
-  const key = tenantKey("milestone-progress", companyId, userId);
   let resultPayload = null;
   let resultCode = "";
   let xuGranted = 0;
+  let ticketsGranted = 0;
 
-  if (tier.rewardId) {
+  if (tier.rewardId === "__spin__") {
+    ticketsGranted = tier.spinTickets || 1;
+    let tickets = 0;
+    try {
+      const v = await store.get(tenantKey("spin-tickets", companyId, userId));
+      if (v) tickets = Number(v) || 0;
+    } catch (_) {}
+    tickets += ticketsGranted;
+    await store.set(tenantKey("spin-tickets", companyId, userId), String(tickets));
+  } else if (tier.rewardId) {
     const reward = cfg.rewards.find((r) => r.id === tier.rewardId);
     if (reward) {
       resultPayload = reward.payload || { kind: "code", code: "" };
@@ -100,8 +111,7 @@ export const handler = async (event) => {
       });
       await store.setJSON(tenantKey("history", companyId, userId), history);
     }
-  }
-  if (!resultPayload) {
+  } else {
     xuGranted = tier.xu || 0;
     let bonus = 0;
     try { const b = await store.get(tenantKey("bonus", companyId, userId)); if (b) bonus = Number(b) || 0; } catch (_) {}
@@ -109,8 +119,14 @@ export const handler = async (event) => {
     await store.set(tenantKey("bonus", companyId, userId), String(bonus));
   }
 
-  progress.claimedTiers.push(tierIndex);
-  await store.setJSON(key, progress);
+  claimedTiers.push(tierIndex);
+  await store.setJSON(claimedKey, claimedTiers);
 
-  return json(200, { ok: true, xu: xuGranted || null, payload: resultPayload, code: resultCode || null });
+  return json(200, {
+    ok: true,
+    xu: xuGranted || null,
+    tickets: ticketsGranted || null,
+    payload: resultPayload,
+    code: resultCode || null,
+  });
 };
