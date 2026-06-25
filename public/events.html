@@ -44,6 +44,8 @@
   .event-modal .x:hover{color:var(--text)}
   .event-modal .ev-modal-name{font-family:'Oswald',sans-serif;font-size:17px;font-weight:700;color:var(--cyan);margin:6px 0 8px}
   .event-modal .ev-modal-date{font-size:13px;color:var(--muted)}
+  .event-modal .ev-modal-img{width:100%;aspect-ratio:2/1;object-fit:cover;border-radius:10px;margin-bottom:6px}
+  .event-modal .ev-modal-desc{font-size:13px;color:var(--text);line-height:1.5;margin-top:12px;text-align:left;white-space:pre-wrap}
 
   .empty{text-align:center;color:var(--muted);font-size:13px;padding:14px 0}
 
@@ -136,28 +138,49 @@ function weekDates(todayKey){
 }
 function dayCol(dateKey, week){ return week.indexOf(dateKey); } // -1 nếu ngoài tuần
 
+// Cột hiển thị trong tuần đang xem, CLIP nếu event nhiều ngày bắt đầu/kết thúc
+// lệch ra ngoài tuần — so sánh thẳng chuỗi "YYYY-MM-DD" (đúng thứ tự ISO).
+function weekOverlapCols(item, week){
+  const start = item.date, end = item.endDate || item.date;
+  if(!start) return null;
+  const weekStart = week[0], weekEnd = week[6];
+  if(end < weekStart || start > weekEnd) return null;
+  const clipStart = start < weekStart ? weekStart : start;
+  const clipEnd = end > weekEnd ? weekEnd : end;
+  return { startCol: week.indexOf(clipStart), endCol: week.indexOf(clipEnd) };
+}
+
 let CURRENT_EVENTS = [];
 
 function evtRow(item, week, idx){
-  const col = dayCol(item.date, week);
-  if(col===-1) return ''; // ngoài tuần đang xem
-  return `<div class="track"><div class="evt" style="grid-column:${col+1} / ${col+2}" onclick="openEventModal(${idx})"><span class="nm">${esc(item.name)}</span></div></div>`;
+  const overlap = weekOverlapCols(item, week);
+  if(!overlap) return ''; // ngoài tuần đang xem
+  const { startCol, endCol } = overlap;
+  return `<div class="track"><div class="evt" style="grid-column:${startCol+1} / ${endCol+2}" onclick="openEventModal(${idx})"><span class="nm">${esc(item.name)}</span></div></div>`;
 }
 
 function fmtEventDate(dateKey){
   const [y,m,d] = dateKey.split('-');
   return `${d}/${m}/${y}`;
 }
+function fmtEventDateRange(item){
+  const end = item.endDate || item.date;
+  return end === item.date ? fmtEventDate(item.date) : `${fmtEventDate(item.date)} - ${fmtEventDate(end)}`;
+}
 function openEventModal(idx){
   const item = CURRENT_EVENTS[idx];
   const wrap = document.createElement('div');
   wrap.className = 'event-modal-overlay';
   wrap.id = 'event-modal-overlay';
+  const imgHtml = item.image ? `<img class="ev-modal-img" src="${esc(item.image)}"/>` : '';
+  const descHtml = item.desc ? `<div class="ev-modal-desc">${esc(item.desc)}</div>` : '';
   wrap.innerHTML = `
     <div class="event-modal">
       <span class="x" onclick="closeEventModal()">✕</span>
+      ${imgHtml}
       <div class="ev-modal-name">${esc(item.name)}</div>
-      <div class="ev-modal-date">📅 ${fmtEventDate(item.date)}</div>
+      <div class="ev-modal-date">📅 ${fmtEventDateRange(item)}</div>
+      ${descHtml}
     </div>`;
   wrap.addEventListener('click', (ev) => { if (ev.target === wrap) closeEventModal(); });
   document.body.appendChild(wrap);
