@@ -1,5 +1,5 @@
 import { verifyUserToken } from "@whop/api";
-import { getTenantIdByRealCompanyId, getTenantIdByExperienceId } from "./_tenant.mjs";
+import { getTenantIdByRealCompanyId, getTenantIdByExperienceId, linkExperienceToTenant } from "./_tenant.mjs";
 
 // App ID của CHÍNH app này (đăng ký trên dev.whop.com) — dùng để verify user
 // token. KHÔNG còn dùng app API key để xin access token company-scoped nữa
@@ -57,6 +57,30 @@ function resolveTenantIdFromReferer(event) {
 // Experience View (trang member): chỉ nhận được experienceId (exp_xxx),
 // KHÔNG có companyId — phải tra qua bảng "tenant-by-experience" (điền tự
 // động bởi admin-config.mjs ngay sau khi admin lưu Company API key/ID).
+// ĐÃ XÁC MINH qua docs Whop (api-reference/experiences/retrieve-experience):
+// GET /api/v1/experiences/{id} (Bearer App API key) trả về field `company:
+// {id,...}` — tra ĐÚNG 1 experienceId là biết ngay company thật sở hữu nó,
+// đáng tin cậy hơn nhiều so với cách cũ "liệt kê hết experience của 1 company
+// rồi tự khớp" (autoLinkExperiences trong admin-config.mjs) — cách cũ đã quan
+// sát thấy thất bại (linkedCount: 0) ngay cả với company thật của GTVăn, khiến
+// trang member rơi về fallback referer cũ (SAI, đã biết 2 company khác nhau
+// có thể ra cùng 1 subdomain) — trong khi trang admin (Dashboard View) vẫn
+// resolve đúng tenant khác hẳn, gây lệch dữ liệu giữa admin và member.
+async function fetchCompanyIdForExperience(experienceId) {
+  const appApiKey = process.env.WHOP_APP_API_KEY;
+  if (!appApiKey) return null;
+  try {
+    const r = await fetch(`https://api.whop.com/api/v1/experiences/${experienceId}`, {
+      headers: { Authorization: `Bearer ${appApiKey}` },
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j?.company?.id || null;
+  } catch (_) {
+    return null;
+  }
+}
+
 async function resolveCompanyId(event) {
   const q = event.queryStringParameters || {};
   if (q.companyId) {
@@ -64,11 +88,18 @@ async function resolveCompanyId(event) {
     return existing || q.companyId;
   }
   if (q.experienceId) {
-    const tenantId = await getTenantIdByExperienceId(q.experienceId);
-    if (tenantId) return tenantId;
+    const cached = await getTenantIdByExperienceId(q.experienceId);
+    if (cached) return cached;
+    const realId = await fetchCompanyIdForExperience(q.experienceId);
+    if (realId) {
+      const tenantId = (await getTenantIdByRealCompanyId(realId)) || realId;
+      await linkExperienceToTenant(q.experienceId, tenantId);
+      return tenantId;
+    }
   }
-  // Fallback cho link cũ/trường hợp Whop chưa cấu hình lại path — vẫn hoạt
-  // động như trước (có rủi ro nhầm tenant đã biết), tốt hơn là lỗi cứng.
+  // Fallback cho link cũ/trường hợp Whop chưa cấu hình lại path, hoặc API
+  // experience lookup ở trên lỗi (mất mạng, thiếu WHOP_APP_API_KEY...) — vẫn
+  // hoạt động như trước (có rủi ro nhầm tenant đã biết), tốt hơn là lỗi cứng.
   return resolveTenantIdFromReferer(event);
 }
 
