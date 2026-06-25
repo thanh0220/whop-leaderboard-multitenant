@@ -2,7 +2,7 @@ import { pointsStore, tenantKey } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getCompanyAccessToken } from "./_tokens.mjs";
 import { computeEarned } from "./_points.mjs";
-import { getTenantConfig, isPaidTier } from "./_tenant.mjs";
+import { getTenantConfig } from "./_tenant.mjs";
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -24,10 +24,6 @@ export const handler = async (event) => {
   const { userId, companyId } = await getAuthContext(event);
   if (!userId) return json(401, { error: "Could not identify the user." });
   if (!companyId) return json(400, { error: "Could not identify the community (companyId)." });
-
-  if (!(await isPaidTier(companyId))) {
-    return json(402, { error: "Redeeming rewards is a paid feature. Upgrade to unlock it." });
-  }
 
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
