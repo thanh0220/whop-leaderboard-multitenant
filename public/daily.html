@@ -153,10 +153,7 @@ function calendarHTML(ck){
 
 function render(d){
   const ck=d.checkin, se=d.season||{};
-  const locked = d.tier==='free';
-  const upsell = locked ? `<div class="upsell">🔒 Daily check-in is a <b>paid</b> feature. Upgrade in Whop to unlock it and start earning XU every day.</div>` : '';
   const html=`
-    ${upsell}
     <div class="bal">
       <div class="b main"><div class="v">${fmt(d.available)}</div><div class="l">🪙 Available XU</div></div>
       <div class="b"><div class="v">${fmt(ck.streak)}</div><div class="l">🔥 Day streak</div></div>
@@ -164,11 +161,11 @@ function render(d){
     </div>
 
     <div class="sect">📅 Daily check-in</div>
-    <div class="panel ${locked?'locked':''}">
+    <div class="panel">
       <div class="streak-head">
         <div class="streak-big"><span>${ck.streak}</span>-day streak</div>
-        <button class="btn gold" id="claim-ck" ${(locked||!ck.canClaim)?'disabled':''}>
-          ${locked?'🔒 Upgrade to unlock':(ck.canClaim?`Claim +${ck.nextReward} XU`:'Claimed today')}
+        <button class="btn gold" id="claim-ck" ${!ck.canClaim?'disabled':''}>
+          ${ck.canClaim?`Claim +${ck.nextReward} XU`:'Claimed today'}
         </button>
       </div>
       <div class="calendar">${calendarHTML(ck)}</div>
@@ -192,18 +189,16 @@ function render(d){
     </div>`;
   $('content').innerHTML=html;
 
-  if(!locked){
-    $('claim-ck').onclick=async ()=>{
-      $('claim-ck').disabled=true;
-      try{
-        const r=await tenantFetch('/.netlify/functions/checkin',{method:'POST'});
-        const j=await r.json();
-        if(!r.ok) throw new Error(j.error||'Error');
-        toast(j.message||`+${j.reward} XU`);
-        setTimeout(load,400);
-      }catch(e){toast('⚠ '+e.message);$('claim-ck').disabled=false;}
-    };
-  }
+  $('claim-ck').onclick=async ()=>{
+    $('claim-ck').disabled=true;
+    try{
+      const r=await tenantFetch('/.netlify/functions/checkin',{method:'POST'});
+      const j=await r.json();
+      if(!r.ok) throw new Error(j.error||'Error');
+      toast(j.message||`+${j.reward} XU`);
+      setTimeout(load,400);
+    }catch(e){toast('⚠ '+e.message);$('claim-ck').disabled=false;}
+  };
 
   // countdown
   if(se.endsAt){

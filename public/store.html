@@ -233,12 +233,9 @@ const BADGE_LABEL={hot:'🔥 Hot',new:'⚡ New',vip:'👑 VIP',bestseller:'⭐ B
 function render(){
   const d=DATA;
   $('powered-badge').style.display=(d.tier==='paid'&&d.branding?.logoUrl)?'none':'block';
-  const locked = d.tier==='free' && !d.demo;
-  const upsell = locked ? `<div class="upsell">🔒 The reward store is a <b>paid</b> feature. Upgrade in Whop to unlock it and start redeeming XU for rewards.</div>` : '';
 
   if(!d.rewards || d.rewards.length===0){
     $('content').innerHTML=`
-      ${upsell}
       <div class="bal">
         <div class="b main"><div class="v" id="v-av">${fmt(d.available)}</div><div class="l">🪙 Available XU</div></div>
         <div class="b"><div class="v">${fmt(d.earned)}</div><div class="l">🪙 Total earned</div></div>
@@ -273,7 +270,7 @@ function render(){
     const priceAnchor=rw.originalPrice
       ? `<div class="price-anchor"><s>${esc(rw.originalPrice)}</s> · <b>save 100%</b></div>`
       : '';
-    const progress=(!can && !done && !locked)
+    const progress=(!can && !done)
       ? `<div class="progress"><i style="width:${pct}%"></i></div>
          <div class="progress-label"><span>Need <b>${fmt(gap)} more XU</b></span><span>${pct}%</span></div>`
       : '';
@@ -283,8 +280,7 @@ function render(){
       btnLabel = '🔐 Sign in to redeem';
       btnDisabled = false;
       btnOnclick = `openWhopSignin(event)`;
-    } else if(locked){ btnClass='btn'; btnLabel='🔒 Upgrade to unlock'; btnDisabled=true; btnOnclick=''; }
-    else if(done){ btnClass='btn done'; btnLabel='🔄 Flip to view reward'; btnDisabled=false; btnOnclick=`flipCard('${rw.id}',event)`; }
+    } else if(done){ btnClass='btn done'; btnLabel='🔄 Flip to view reward'; btnDisabled=false; btnOnclick=`flipCard('${rw.id}',event)`; }
     else if(can){ btnClass=rw.tier>=4?'btn primary':'btn'; btnLabel='🎁 Redeem now'; btnDisabled=false; btnOnclick=`redeem('${rw.id}',this)`; }
     else { btnClass='btn'; btnLabel='Not enough XU'; btnDisabled=true; btnOnclick=''; }
 
@@ -350,7 +346,6 @@ function render(){
 
   $('content').innerHTML=`
     ${demoBanner}
-    ${upsell}
     <div class="bal">
       <div class="b main"><div class="v" id="v-av">${fmt(d.available)}</div><div class="l">🪙 Available XU</div></div>
       <div class="b"><div class="v">${fmt(d.earned)}</div><div class="l">🪙 Total earned</div></div>
