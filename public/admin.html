@@ -199,9 +199,21 @@
   .mini-preview .nm{font-size:13px;font-weight:600}
   .mini-preview .sub{font-size:10.5px;color:var(--muted);margin-top:1px}
   .mini-preview.big img,.mini-preview.big .ic{width:64px;height:64px;font-size:30px}
-  .branding-mock{background:#070b16;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px;margin-top:10px}
-  .branding-mock .logo{width:38px;height:38px;border-radius:8px;object-fit:cover;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-  .branding-mock .nm{font-family:'Oswald',sans-serif;font-weight:700;font-size:14px}
+
+  /* ===== Khối "Mức dùng hiện tại" (giới hạn bản Free) — tab Billing ===== */
+  .usage-card{background:rgba(255,45,75,.06);border:1px solid rgba(255,45,75,.25);border-radius:14px;padding:14px 16px;margin-bottom:16px}
+  .usage-card h4{font-family:'Oswald',sans-serif;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:#ffb0bd;margin-bottom:10px}
+  .usage-row{margin-bottom:10px}
+  .usage-row .lbl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text);margin-bottom:4px}
+  .usage-row .lbl b{color:var(--gold)}
+  .usage-bar{height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+  .usage-bar .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--gold))}
+  .usage-locked{list-style:none;margin:10px 0 4px;padding:0}
+  .usage-locked li{font-size:12.5px;color:var(--muted);padding:5px 0;border-top:1px solid rgba(255,255,255,.06)}
+  .usage-locked li:first-child{border-top:none}
+  .usage-locked b{color:#ffb0bd}
+  .usage-check-btn{margin-top:4px}
+  .usage-member-result{font-size:12px;color:var(--cyan);margin-top:6px}
 </style>
 </head>
 <body>
@@ -211,7 +223,6 @@
   <div class="nav">
     <a href="#conn" onclick="switchTab('conn');return false">🔌 Connect</a>
     <a href="#billing" onclick="switchTab('billing');return false">💎 Billing</a>
-    <a href="#branding" onclick="switchTab('branding');return false">🎨 Branding</a>
     <a href="#season" onclick="switchTab('season');return false">🏆 Season</a>
     <a href="#daily" onclick="switchTab('daily');return false">📅 Check-in</a>
     <a href="#store" onclick="switchTab('store');return false">🎁 Store</a>
@@ -347,7 +358,7 @@ async function load(){
 }
 
 const TAB_RENDERERS = {
-  conn: renderConn, billing: renderBilling, branding: renderBranding,
+  conn: renderConn, billing: renderBilling,
   season: renderSeason, daily: renderDaily, store: renderStore,
   codes: renderCodes, events: renderEvents, chests: renderChests,
   milestones: renderMilestones, spin: renderSpin, auction: renderAuction,
@@ -435,12 +446,12 @@ function renderConn(){
     <div class="panel">
       ${introBlock(
         "This links the app to YOUR Whop community so it can read your real members and payments. Without this, nothing else in this app will work.",
-        ["Open your Whop dashboard → Settings → Developer → API keys → create a new key", "Copy that key and your Company ID, paste them below", "Click Save all at the bottom of the page"]
+        ["Open your Whop dashboard → Developer → Company API keys → create a new key. Tick: Members → Read members, Payments → Read payments, Affiliates → Read affiliates, Checkout configurations → Create checkout configurations", "Copy that key and your Company ID, paste them below", "Click Save all at the bottom of the page"]
       )}
       ${statusHtml}
       <label>Company API key (leave blank to keep current)</label>
       <input id="conn-key" type="password" placeholder="apik_..." autocomplete="off" value="${esc(typedApiKey)}" oninput="typedApiKey=this.value"/>
-      <div class="hint-small">Get this from your Whop: Settings → Developer → API keys.</div>
+      <div class="hint-small">Get this from your Whop: Developer → Company API keys.</div>
       <label>Company ID</label>
       <input id="conn-id" type="text" value="${esc(STATE.whopCompanyId)}" oninput="STATE.whopCompanyId=this.value" autocomplete="off"/>
       <div class="hint-small">Find it in the URL when you open your business Dashboard: whop.com/dashboard/<b>biz_xxx</b>/</div>
@@ -448,6 +459,58 @@ function renderConn(){
 }
 
 // ===== #billing =====
+// Khối "Mức dùng hiện tại" — chỉ hiện khi đang Free, cho admin thấy rõ đang
+// chạm giới hạn nào. Event/Reward đếm thẳng từ STATE (miễn phí, không gọi
+// API). Member dùng nút bấm riêng — KHÔNG tự gọi whop-data.mjs (function đó
+// tốn 30-70 API call thật tới Whop mỗi lần chạy), chỉ gọi khi admin chủ động
+// bấm kiểm tra.
+function usageBarRow(label, used, limit){
+  const pct = Math.min(100, (used/limit)*100);
+  return `<div class="usage-row">
+    <div class="lbl"><span>${label}</span><b>${used}/${limit}</b></div>
+    <div class="usage-bar"><div class="fill" style="width:${pct}%"></div></div>
+  </div>`;
+}
+function renderUsagePanel(){
+  if (IS_PAID) return '';
+  const eventsUsed = (STATE.events||[]).length;
+  const rewardsUsed = (STATE.rewards||[]).length;
+  return `<div class="usage-card">
+    <h4>⚠ You're on the Free plan — here's what's limited right now</h4>
+    ${usageBarRow('🗓 Event slots', eventsUsed, 2)}
+    ${usageBarRow('🎁 Reward Store items', rewardsUsed, 2)}
+    <div class="usage-row">
+      <div class="lbl"><span>👥 Members shown on leaderboard</span><b>up to 50</b></div>
+      <button class="btn usage-check-btn" type="button" onclick="checkMemberCap(this)">🔄 Check how many of my real members are hidden</button>
+      <div class="usage-member-result" id="usage-member-result"></div>
+    </div>
+    <ul class="usage-locked">
+      <li>🔒 <b>Daily Check-in</b> — members can't claim daily XU at all</li>
+      <li>🔒 <b>Redeem Codes</b> — secret codes you hand out won't work for members</li>
+      <li>🔒 <b>Reward Store redemption</b> — members can see rewards but can't redeem them</li>
+    </ul>
+  </div>`;
+}
+async function checkMemberCap(btn){
+  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Checking...';
+  const out = $('usage-member-result');
+  try{
+    const r = await tenantFetch('/.netlify/functions/whop-data');
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    const real = j.stats?.totalMembersReal ?? 0;
+    const shown = j.stats?.totalMembers ?? 0;
+    const hidden = Math.max(0, real - shown);
+    out.textContent = hidden > 0
+      ? `You have ${real} real members — ${hidden} are currently hidden from the leaderboard.`
+      : `You have ${real} real members — none are hidden yet.`;
+  }catch(e){
+    out.textContent = '⚠ ' + e.message;
+  }finally{
+    btn.disabled = false; btn.textContent = old;
+  }
+}
+
 function renderBilling(){
   const features = [
     'Daily check-in rewards',
@@ -455,7 +518,6 @@ function renderBilling(){
     'Reward Store (up to 10 items)',
     'Up to 10 event slots',
     'Leaderboard up to 500 members',
-    'Custom branding — remove "Powered by" badge',
   ];
   const cta = IS_PAID
     ? `<button class="pricing-cta is-active" disabled>✅ Current plan</button>`
@@ -467,6 +529,7 @@ function renderBilling(){
         "This is YOUR subscription as the community owner — it upgrades what YOU can do in this admin panel (more events, more rewards, custom branding). It has nothing to do with what members pay for.",
         ["If you want more event slots, more rewards, and custom branding, click Upgrade now below", "Otherwise you can ignore this tab completely — the free plan already works"]
       )}
+      ${renderUsagePanel()}
       <div class="pricing-card ${IS_PAID?'is-active':''}">
         <span class="pricing-badge">${IS_PAID?'Active':'Recommended'}</span>
         <div class="pricing-name">Leaderboard Pro</div>
@@ -508,40 +571,6 @@ function closeCheckoutModal(){
   const el = $('checkout-overlay');
   if (el) el.remove();
   load();
-}
-
-// ===== #branding — tuỳ chỉnh thương hiệu, chỉ Paid mới sửa được =====
-function brandingMockHtml(b){
-  const logo = b.logoUrl ? `<img class="logo" src="${esc(b.logoUrl)}" alt="" style="object-fit:cover"/>` : `<div class="logo">🏆</div>`;
-  return `<div class="branding-mock" style="border-color:${esc(b.primaryColor||'#7c3aed')}66">
-    ${logo}<div class="nm" style="color:${esc(b.primaryColor||'#7c3aed')}">${esc(b.displayName||'Your Community')}</div>
-  </div>`;
-}
-function refreshBrandingMock(){
-  const el = $('branding-mock');
-  if (el) el.innerHTML = brandingMockHtml(STATE.branding);
-}
-function renderBranding(){
-  const b = STATE.branding || {};
-  const dis = IS_PAID ? '' : 'disabled';
-  const lockHint = IS_PAID ? '' : `<p class="hint-small">🔒 Upgrade to Paid to customize branding and remove the "Powered by GTVăn" badge from member pages.</p>`;
-  return `
-    <div class="sect" id="branding">🎨 Branding</div>
-    <div class="panel">
-      ${introBlock(
-        "This changes the name, color, and logo members see at the top of the leaderboard and other pages — purely cosmetic, it doesn't affect how the app works.",
-        ["Type the name you want members to see", "Pick a color", "Paste a logo image link (optional) — this also removes the small \"Powered by\" badge", "Save all"]
-      )}
-      ${lockHint}
-      <label>Display name (shown on the leaderboard header)</label>
-      <input ${dis} value="${esc(b.displayName||'')}" oninput="STATE.branding.displayName=this.value;refreshBrandingMock()"/>
-      <label>Primary color</label>
-      <input ${dis} type="color" value="${esc(b.primaryColor||'#7c3aed')}" oninput="STATE.branding.primaryColor=this.value;refreshBrandingMock()" style="width:60px;padding:2px;height:36px"/>
-      <label>Logo URL (paste an image link — also hides the "Powered by" badge)</label>
-      <input ${dis} value="${esc(b.logoUrl||'')}" placeholder="https://..." oninput="STATE.branding.logoUrl=this.value;refreshBrandingMock()"/>
-      <div class="prev-label" style="margin-top:10px">👀 What members will see</div>
-      <div id="branding-mock">${brandingMockHtml(b)}</div>
-    </div>`;
 }
 
 // ===== #season =====
