@@ -3,10 +3,14 @@
 // Calendly, không ảnh brand). Mỗi business tự thêm phần thưởng riêng của họ
 // qua trang admin (Dashboard View — xem _tenant.mjs + admin-config.mjs).
 export const DEFAULT_TENANT = {
-  // Admin của tenant tự dán qua trang Settings (admin-config.mjs). Whop
-  // không cấp companyId cho app theo cách tự động — đây là Company API key
-  // (apik_...) + Company ID (biz_...) thật của business đó, lấy từ chính
-  // Whop của họ. KHÔNG BAO GIỜ trả 2 field này ra response cho trang member.
+  // ĐÃ ĐỔI: không còn admin tự dán Company API key nữa — dùng 1 App API key
+  // chung (process.env.WHOP_APP_API_KEY, xem _tokens.mjs). whopApiKey giữ lại
+  // CHỈ để tương thích ngược với tenant cũ đã lưu (không xoá DB), KHÔNG còn
+  // được ghi mới. whopCompanyId: company_id THẬT (biz_...) — với tenant MỚI,
+  // companyId (tenantId nội bộ) đã chính là biz_... thật nên field này có thể
+  // null (xem getRealCompanyId() trong _tokens.mjs tự fallback) — chỉ tenant
+  // CŨ (migrate từ referer cũ) mới cần giá trị này. KHÔNG BAO GIỜ trả 2 field
+  // này ra response cho trang member.
   whopApiKey: null,
   whopCompanyId: null,
   // "Mật khẩu" đơn giản để khoá trang Settings — người đầu tiên cấu hình đặt

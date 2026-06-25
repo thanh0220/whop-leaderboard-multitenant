@@ -65,6 +65,29 @@ export async function getTenantIdByRealCompanyId(realCompanyId) {
   }
 }
 
+// Trang member (Experience View) chỉ nhận được experienceId thật từ Whop,
+// KHÔNG nhận companyId — cần bảng tra ngược riêng (khác "tenant-by-realid" ở
+// trên, vốn tra theo company_id thật cho webhook). Bảng này được điền tự động
+// trong admin-config.mjs ngay sau khi admin lưu đúng Company API key +
+// Company ID (gọi 1 lần API "list experiences" của Whop), không cần admin tự
+// dán Experience ID.
+export async function getTenantIdByExperienceId(experienceId) {
+  if (!experienceId) return null;
+  const store = pointsStore();
+  try {
+    const tenantId = await store.get(tenantKey("tenant-by-experience", experienceId));
+    return tenantId || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+export async function linkExperienceToTenant(experienceId, tenantId) {
+  if (!experienceId || !tenantId) return;
+  const store = pointsStore();
+  try { await store.set(tenantKey("tenant-by-experience", experienceId), tenantId); } catch (_) {}
+}
+
 export async function isPaidTier(companyId) {
   if (!companyId) return false;
   const cfg = await getTenantConfig(companyId);

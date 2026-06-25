@@ -82,6 +82,13 @@ function tenantQS(){
   return s ? '?' + s : '';
 }
 function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
+(function propagateTenantQS(){
+  const qs = tenantQS();
+  if (!qs) return;
+  document.querySelectorAll('a[href^="/"]').forEach(a=>{
+    if (!a.getAttribute('href').includes('?')) a.href = a.getAttribute('href') + qs;
+  });
+})();
 
 async function load(){
   $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading...</div>`;

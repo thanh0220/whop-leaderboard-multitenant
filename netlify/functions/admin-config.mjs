@@ -1,5 +1,32 @@
 import { getAuthContext, lastVerifyError } from "./_auth.mjs";
-import { getTenantConfig, saveTenantConfig, isPaidTier } from "./_tenant.mjs";
+import { getTenantConfig, saveTenantConfig, isPaidTier, linkExperienceToTenant } from "./_tenant.mjs";
+import { getCompanyAccessToken, getRealCompanyId } from "./_tokens.mjs";
+
+// ĐÃ ĐỔI: không còn admin tự dán Company API key/Company ID nữa (xem
+// _tokens.mjs — dùng 1 App API key chung, company nào cài app + bấm Approve
+// đều dùng được ngay). Lần đầu admin mở trang Settings, tự gọi 1 lần API
+// Whop để tìm các Experience (exp_xxx) thuộc company đó đang dùng CHÍNH app
+// này, lưu bảng tra "tenant-by-experience" — để trang member (Experience
+// View, chỉ nhận được experienceId, không có companyId) tìm đúng tenant.
+// Đánh dấu đã link rồi (`experienceLinkedAt`) để không gọi lại API Whop mỗi
+// lần admin mở trang — chỉ gọi lại nếu user bấm nút "Re-sync" (chưa có, có
+// thể thêm sau nếu cần). Không chặn/làm fail GET nếu bước này lỗi.
+async function autoLinkExperiences(tenantId, realCompanyId) {
+  const appId = process.env.WHOP_APP_ID || process.env.NEXT_PUBLIC_WHOP_APP_ID;
+  if (!realCompanyId || !appId) return;
+  try {
+    const apiKey = await getCompanyAccessToken(tenantId);
+    const url = `https://api.whop.com/api/v1/experiences?company_id=${encodeURIComponent(realCompanyId)}&app_id=${encodeURIComponent(appId)}`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
+    if (!r.ok) return;
+    const j = await r.json();
+    const list = j.data || j.experiences || [];
+    for (const exp of list) {
+      if (exp?.id) await linkExperienceToTenant(exp.id, tenantId);
+    }
+    await saveTenantConfig(tenantId, { experienceLinkedAt: new Date().toISOString() });
+  } catch (_) {}
+}
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -56,9 +83,15 @@ export const handler = async (event) => {
   const cfg = await getTenantConfig(companyId);
 
   if (event.httpMethod === "GET") {
+    if (!cfg.experienceLinkedAt) {
+      // Netlify Functions không đảm bảo code chạy tiếp sau khi response trả
+      // về (không có "background task" như edge runtime) — phải await ở đây,
+      // chỉ xảy ra 1 lần (lần đầu) nên chấp nhận load chậm hơn 1 chút.
+      await autoLinkExperiences(companyId, await getRealCompanyId(companyId));
+    }
     return json(200, {
-      configured: !!cfg.whopApiKey,
-      whopCompanyId: cfg.whopCompanyId || null,
+      configured: true,
+      whopCompanyId: await getRealCompanyId(companyId),
       isPaid: await isPaidTier(companyId),
       branding: cfg.branding,
       points: cfg.points,
@@ -82,17 +115,6 @@ export const handler = async (event) => {
 
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
-  const { whopApiKey, whopCompanyId } = body;
-
-  // whopApiKey/whopCompanyId: chỉ validate + áp dụng NẾU có gửi field đó
-  // trong request này (để các lần lưu CMS khác — vd chỉ sửa rewards — không
-  // bị bắt phải gửi lại API key).
-  if (whopApiKey !== undefined && !String(whopApiKey).trim()) {
-    return json(400, { error: "Company API key cannot be empty." });
-  }
-  if (whopCompanyId !== undefined && !String(whopCompanyId).trim()) {
-    return json(400, { error: "Company ID cannot be empty." });
-  }
 
   const partial = {};
   for (const k of ALLOWED_KEYS) {
@@ -137,14 +159,10 @@ export const handler = async (event) => {
     partial.branding = { ...partial.branding, logoUrl: cfg.branding.logoUrl || null };
   }
 
-  if (whopApiKey) partial.whopApiKey = String(whopApiKey).trim();
-  if (whopCompanyId) partial.whopCompanyId = String(whopCompanyId).trim();
-
   const updated = await saveTenantConfig(companyId, partial);
 
   return json(200, {
     ok: true,
-    configured: !!updated.whopApiKey,
-    whopCompanyId: updated.whopCompanyId,
+    configured: true,
   });
 };

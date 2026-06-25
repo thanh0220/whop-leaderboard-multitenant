@@ -7,3 +7,28 @@
   [headers.values]
     X-Frame-Options = "ALLOWALL"
     Content-Security-Policy = "frame-ancestors *"
+
+# Whop nhúng app theo URL có chứa companyId/experienceId THẬT (xem Developer
+# dashboard -> Hosting -> Dashboard path/Experience path). Chuyển 2 dạng URL
+# này thành query string để các trang tĩnh + Netlify Functions đọc được đúng
+# company/experience thật, thay vì đoán nhầm qua referer (đã gây lỗi nhầm
+# dữ liệu giữa các tenant khác nhau).
+[[redirects]]
+  from = "/dashboard/:companyId/*"
+  to = "/admin.html?companyId=:companyId"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/:companyId"
+  to = "/admin.html?companyId=:companyId"
+  status = 200
+
+[[redirects]]
+  from = "/experiences/:experienceId/*"
+  to = "/index.html?experienceId=:experienceId"
+  status = 200
+
+[[redirects]]
+  from = "/experiences/:experienceId"
+  to = "/index.html?experienceId=:experienceId"
+  status = 200

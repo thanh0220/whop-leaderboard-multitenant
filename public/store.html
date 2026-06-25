@@ -160,6 +160,13 @@ function tenantQS(){
 function tenantFetch(path, opts){
   return fetch(path + tenantQS(), opts);
 }
+(function propagateTenantQS(){
+  const qs = tenantQS();
+  if (!qs) return;
+  document.querySelectorAll('a[href^="/"]').forEach(a=>{
+    if (!a.getAttribute('href').includes('?')) a.href = a.getAttribute('href') + qs;
+  });
+})();
 
 // ===== Whop sign-in =====
 const WHOP_SIGNIN_URL = "https://whop.com/login";

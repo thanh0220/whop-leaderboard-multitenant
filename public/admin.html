@@ -304,9 +304,6 @@ let STATE = null;
 let CONFIGURED = false;
 let IS_PAID = false;
 let activeTab = (location.hash||'#conn').slice(1);
-let typedApiKey = ''; // ô API key không bind vào STATE (nhạy cảm) — phải giữ
-                       // riêng 1 biến, không thì renderAll() do section khác
-                       // gọi sẽ xoá mất giá trị đang gõ trong ô này.
 
 function setPath(obj, path, value){
   const parts = path.split('.');
@@ -329,7 +326,6 @@ async function load(){
       const j = await loadOnce();
       CONFIGURED = j.configured;
       IS_PAID = !!j.isPaid;
-      typedApiKey = '';
       STATE = {
         whopCompanyId: j.whopCompanyId || '',
         seasonTopRewards: j.seasonTopRewards || [],
@@ -356,19 +352,6 @@ async function load(){
   }
   $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${lastErr.message}</div></div>`;
 }
-
-// TẠM THỜI — debug để tìm nguyên nhân nhầm tenant, sẽ xoá sau khi xác định xong.
-async function showDebugBox(){
-  try{
-    const r = await tenantFetch('/.netlify/functions/admin-config?debug=1');
-    const j = await r.json();
-    const box = document.createElement('div');
-    box.style = 'position:fixed;bottom:8px;left:8px;right:8px;z-index:9999;background:#000;color:#0f0;font:11px monospace;padding:10px;border-radius:8px;white-space:pre-wrap;max-height:40vh;overflow:auto;border:1px solid #0f0';
-    box.textContent = JSON.stringify(j, null, 2);
-    document.body.appendChild(box);
-  }catch(e){}
-}
-showDebugBox();
 
 const TAB_RENDERERS = {
   conn: renderConn, billing: renderBilling,
@@ -453,21 +436,15 @@ function initChestPreviews(){
 function renderConn(){
   const statusHtml = CONFIGURED
     ? `<span class="status on">✅ Connected — Company ID: ${esc(STATE.whopCompanyId)}</span>`
-    : `<span class="status off">⚠ Not connected</span>`;
+    : `<span class="status off">⚠ Not connected yet — close this and reopen the app inside Whop</span>`;
   return `
     <div class="sect" id="conn">🔌 Connect Whop</div>
     <div class="panel">
       ${introBlock(
-        "This links the app to YOUR Whop community so it can read your real members and payments. Without this, nothing else in this app will work.",
-        ["Open your Whop dashboard → Developer → Company API keys → create a new key. Tick: Members → Read members, Payments → Read payments, Affiliates → Read affiliates, Checkout configurations → Create checkout configurations", "Copy that key and your Company ID, paste them below", "Click Save all at the bottom of the page"]
+        "This app automatically connects to YOUR Whop community as soon as you open it from inside Whop — there is nothing for you to set up here.",
+        ["Just make sure you opened this Settings page from inside your own Whop dashboard (not a link someone else sent you)", "The status below should say \"Connected\" — if it doesn't, close and reopen the app"]
       )}
       ${statusHtml}
-      <label>Company API key (leave blank to keep current)</label>
-      <input id="conn-key" type="password" placeholder="apik_..." autocomplete="off" value="${esc(typedApiKey)}" oninput="typedApiKey=this.value"/>
-      <div class="hint-small">Get this from your Whop: Developer → Company API keys.</div>
-      <label>Company ID</label>
-      <input id="conn-id" type="text" value="${esc(STATE.whopCompanyId)}" oninput="STATE.whopCompanyId=this.value" autocomplete="off"/>
-      <div class="hint-small">Find it in the URL when you open your business Dashboard: whop.com/dashboard/<b>biz_xxx</b>/</div>
     </div>`;
 }
 
@@ -1130,9 +1107,6 @@ async function saveAll(){
     auctionRules: STATE.auctionRules,
     branding: STATE.branding,
   };
-  if (typedApiKey.trim()) payload.whopApiKey = typedApiKey.trim();
-  if ((STATE.whopCompanyId||'').trim()) payload.whopCompanyId = STATE.whopCompanyId.trim();
-
   try{
     const r = await tenantFetch('/.netlify/functions/admin-config', {
       method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)

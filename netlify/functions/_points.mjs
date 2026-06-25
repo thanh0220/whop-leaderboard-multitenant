@@ -1,4 +1,5 @@
 import { pointsStore, tenantKey } from "./_store.mjs";
+import { getRealCompanyId } from "./_tokens.mjs";
 
 const WHOP_API = "https://api.whop.com/api/v5";
 const norm = (s) => String(s || "").toLowerCase().trim().replace(/\s+/g, "_");
@@ -17,11 +18,12 @@ export async function computeEarned(userId, apiKey, companyId, tenantCfg) {
   const POINTS = tenantCfg.points;
   const FX = tenantCfg.fx;
   const headers = { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" };
+  const realCompanyId = await getRealCompanyId(companyId);
 
   // 1) tổng tiền đã thanh toán thật của user (quy ~USD)
   let usd = 0;
   for (let page = 1; page <= 3; page++) {
-    const r = await fetch(`${WHOP_API}/company/payments?page=${page}&per_page=100`, { headers });
+    const r = await fetch(`${WHOP_API}/company/payments?company_id=${realCompanyId}&page=${page}&per_page=100`, { headers });
     if (!r.ok) break;
     const j = await r.json();
     const arr = j.data || [];
@@ -58,7 +60,7 @@ export async function computeEarned(userId, apiKey, companyId, tenantCfg) {
     // Map user_id của các thành viên do user này giới thiệu
     const referredUserIds = new Set();
     for (let page = 1; page <= 3; page++) {
-      const r = await fetch(`${WHOP_API}/company/memberships?page=${page}&per_page=100`, { headers });
+      const r = await fetch(`${WHOP_API}/company/memberships?company_id=${realCompanyId}&page=${page}&per_page=100`, { headers });
       if (!r.ok) break;
       const j = await r.json();
       const arr = j.data || [];
@@ -80,7 +82,7 @@ export async function computeEarned(userId, apiKey, companyId, tenantCfg) {
     // Quét lại payments để cộng dồn USD các đơn THẬT của người được giới thiệu
     if (referredUserIds.size > 0) {
       for (let page = 1; page <= 3; page++) {
-        const r = await fetch(`${WHOP_API}/company/payments?page=${page}&per_page=100`, { headers });
+        const r = await fetch(`${WHOP_API}/company/payments?company_id=${realCompanyId}&page=${page}&per_page=100`, { headers });
         if (!r.ok) break;
         const j = await r.json();
         const arr = j.data || [];

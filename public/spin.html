@@ -99,6 +99,13 @@ function tenantQS(){
   return s ? '?' + s : '';
 }
 function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
+(function propagateTenantQS(){
+  const qs = tenantQS();
+  if (!qs) return;
+  document.querySelectorAll('a[href^="/"]').forEach(a=>{
+    if (!a.getAttribute('href').includes('?')) a.href = a.getAttribute('href') + qs;
+  });
+})();
 
 const SLICE_COLORS = ['#f72585','#9d4edd','#4cc9f0','#06d6a0','#ffd166','#ff6b6b','#4895ef','#7209b7'];
 let DATA = null;

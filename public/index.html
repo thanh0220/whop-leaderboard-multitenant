@@ -307,6 +307,15 @@ function tenantQS(){
 function tenantFetch(path, opts){
   return fetch(path + tenantQS(), opts);
 }
+// Giữ companyId/experienceId khi bấm sang trang khác trong nav (mỗi trang là
+// 1 file tĩnh riêng, không tự nhớ query string nếu không gắn lại vào href).
+(function propagateTenantQS(){
+  const qs = tenantQS();
+  if (!qs) return;
+  document.querySelectorAll('a[href^="/"]').forEach(a=>{
+    if (!a.getAttribute('href').includes('?')) a.href = a.getAttribute('href') + qs;
+  });
+})();
 
 /* Tỉ giá ~USD (chỉ để xếp BẬC danh hiệu, hiển thị vẫn theo tiền gốc) */
 const FX = { usd:1, vnd:1/25000, eur:1.08, gbp:1.27, aud:0.66, cad:0.73 };

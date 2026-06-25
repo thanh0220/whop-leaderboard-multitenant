@@ -1,5 +1,5 @@
 import { getAuthContext } from "./_auth.mjs";
-import { getCompanyAccessToken } from "./_tokens.mjs";
+import { getCompanyAccessToken, getRealCompanyId } from "./_tokens.mjs";
 import { getTenantConfig, isPaidTier } from "./_tenant.mjs";
 
 const WHOP_API = "https://api.whop.com/api/v5";
@@ -79,10 +79,11 @@ export const handler = async (event) => {
 
   const cfg = await getTenantConfig(companyId);
   const FX = cfg.fx;
-  // companyId ở trên là tenantId suy ra từ subdomain cài app (xem _auth.mjs),
-  // KHÔNG phải company_id thật dạng biz_xxx — 2 endpoint dưới đây cần đúng
-  // biz_xxx thật, lấy từ whopCompanyId admin đã dán qua trang Settings.
-  const realCompanyId = cfg.whopCompanyId;
+  // companyId ở trên là tenantId nội bộ (có thể = company_id thật, hoặc là
+  // tenantId cũ với tenant đã migrate) — 2 endpoint dưới đây + memberships
+  // cần company_id THẬT dạng biz_xxx (bắt buộc từ khi đổi sang App API key
+  // chung, xem _tokens.mjs).
+  const realCompanyId = await getRealCompanyId(companyId);
 
   try {
     // 1) Memberships — phân trang để lấy HẾT (không dừng ở 50)
@@ -90,7 +91,7 @@ export const handler = async (event) => {
     let membersStatus = null;
     for (let page = 1; page <= 5; page++) {
       const r = await fetch(
-        `${WHOP_API}/company/memberships?page=${page}&per_page=100&expand[]=user&expand[]=plan`,
+        `${WHOP_API}/company/memberships?company_id=${realCompanyId}&page=${page}&per_page=100&expand[]=user&expand[]=plan`,
         { headers }
       );
       if (page === 1) membersStatus = r.status;
@@ -123,7 +124,7 @@ export const handler = async (event) => {
       const j = await affiliatesRes.json();
       affiliatesData = { data: j.nodes || j.data || [] };
     } else {
-      const fallback = await fetch(`${WHOP_API}/company/affiliates?page=1&per_page=50`, { headers });
+      const fallback = await fetch(`${WHOP_API}/company/affiliates?company_id=${realCompanyId}&page=1&per_page=50`, { headers });
       if (fallback.ok) affiliatesData = await fallback.json();
     }
     const affiliates = affiliatesData.data || [];
@@ -207,7 +208,7 @@ export const handler = async (event) => {
     }
     for (let page = 1; page <= 3; page++) {
       try {
-        const r = await fetch(`${WHOP_API}/company/payments?page=${page}&per_page=100`, { headers });
+        const r = await fetch(`${WHOP_API}/company/payments?company_id=${realCompanyId}&page=${page}&per_page=100`, { headers });
         if (page === 1) paymentsStatus = r.status;
         if (!r.ok) break;
         const j = await r.json();

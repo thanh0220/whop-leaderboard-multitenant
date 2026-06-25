@@ -1,4 +1,5 @@
 import { verifyUserToken } from "@whop/api";
+import { getTenantIdByRealCompanyId, getTenantIdByExperienceId } from "./_tenant.mjs";
 
 // App ID của CHÍNH app này (đăng ký trên dev.whop.com) — dùng để verify user
 // token. KHÔNG còn dùng app API key để xin access token company-scoped nữa
@@ -40,14 +41,42 @@ function resolveTenantIdFromReferer(event) {
   return m ? m[1] : null;
 }
 
-// Trả { userId, companyId }. companyId ở đây thực chất là "tenantId" suy ra
-// từ subdomain cài app (xem trên) — KHÔNG phải company_id thật dạng biz_xxx
-// của Whop. Để gọi API Whop lấy dữ liệu thành viên/thanh toán thật, admin của
-// từng tenant phải tự dán Company API key + Company ID thật của họ qua trang
-// Settings (xem admin-config.mjs) — _tokens.mjs sẽ đọc giá trị đó.
+// ĐÃ SỬA (phát hiện lỗi nghiêm trọng: nhiều business khác nhau bị tính lẫn
+// vào CÙNG 1 tenant vì subdomain referer KHÔNG khác nhau theo từng lượt cài
+// app — test thật cho thấy 2 company khác nhau ra CÙNG 1 subdomain). Whop
+// thực ra CÓ truyền đúng companyId/experienceId thật, nhưng qua URL của
+// trang (Dashboard View: .../dashboard/[companyId], Experience View:
+// .../experiences/[experienceId] — xem netlify.toml đã thêm redirect chuyển
+// 2 dạng URL này thành query string ?companyId=...&?experienceId=...).
+//
+// Dashboard View (trang admin): companyId nhận được là company_id THẬT
+// (biz_xxx) — dùng thẳng làm tenantId, ngoại trừ tenant CŨ đã từng lưu config
+// dưới tenantId giả (referer cũ) thì tra qua getTenantIdByRealCompanyId để
+// giữ nguyên data cũ, không mất.
+//
+// Experience View (trang member): chỉ nhận được experienceId (exp_xxx),
+// KHÔNG có companyId — phải tra qua bảng "tenant-by-experience" (điền tự
+// động bởi admin-config.mjs ngay sau khi admin lưu Company API key/ID).
+async function resolveCompanyId(event) {
+  const q = event.queryStringParameters || {};
+  if (q.companyId) {
+    const existing = await getTenantIdByRealCompanyId(q.companyId);
+    return existing || q.companyId;
+  }
+  if (q.experienceId) {
+    const tenantId = await getTenantIdByExperienceId(q.experienceId);
+    if (tenantId) return tenantId;
+  }
+  // Fallback cho link cũ/trường hợp Whop chưa cấu hình lại path — vẫn hoạt
+  // động như trước (có rủi ro nhầm tenant đã biết), tốt hơn là lỗi cứng.
+  return resolveTenantIdFromReferer(event);
+}
+
+// Trả { userId, companyId }. Xem resolveCompanyId() ngay trên để biết
+// companyId thật ra suy từ đâu.
 export async function getAuthContext(event) {
   const userId = await verifyUser(event);
-  const companyId = resolveTenantIdFromReferer(event);
+  const companyId = await resolveCompanyId(event);
   return { userId, companyId };
 }
 

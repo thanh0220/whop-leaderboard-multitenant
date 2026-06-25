@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { pointsStore, tenantKey } from "./_store.mjs";
 import { getTenantConfig, getTenantIdByRealCompanyId, setTenantTier } from "./_tenant.mjs";
+import { getCompanyAccessToken } from "./_tokens.mjs";
 
 const WHOP_API = "https://api.whop.com/api/v5";
 
@@ -20,12 +21,12 @@ function pickUsername(u) {
   return u.username || u.name || (u.email ? String(u.email).split("@")[0] : null) || null;
 }
 
-async function fetchAllActiveMembers(apiKey) {
+async function fetchAllActiveMembers(apiKey, realCompanyId) {
   const headers = { Authorization: `Bearer ${apiKey}` };
   const REAL_STATUS = ["active", "completed", "trialing", "past_due", "canceling"];
   let members = [];
   for (let page = 1; page <= 10; page++) {
-    const r = await fetch(`${WHOP_API}/company/memberships?page=${page}&per_page=100&expand[]=user`, { headers });
+    const r = await fetch(`${WHOP_API}/company/memberships?company_id=${realCompanyId}&page=${page}&per_page=100&expand[]=user`, { headers });
     if (!r.ok) break;
     const j = await r.json();
     const batch = j.data || [];
@@ -142,12 +143,14 @@ export const handler = async (event) => {
   const realCompanyId = data.company_id || data.company?.id || data.business_id || null;
   if (!realCompanyId) return json(200, { ok: true, skipped: "no-company-id" });
 
-  const tenantId = await getTenantIdByRealCompanyId(realCompanyId);
-  if (!tenantId) return json(200, { ok: true, skipped: "tenant-not-found" });
+  // Tenant MỚI (sau khi đổi sang App API key): chưa từng có ai lưu mapping
+  // qua bước Connect cũ (đã bỏ) — realCompanyId THẬT từ webhook dùng thẳng
+  // làm tenantId luôn được, vì companyId nội bộ giờ = company_id thật.
+  const tenantId = (await getTenantIdByRealCompanyId(realCompanyId)) || realCompanyId;
 
   try {
     const cfg = await getTenantConfig(tenantId);
-    if (!cfg.whopApiKey) return json(200, { ok: true, skipped: "tenant-not-configured" });
+    const apiKey = await getCompanyAccessToken(tenantId);
 
     const amount = Number(data.final_amount ?? data.amount ?? data.subtotal ?? data.total ?? 0);
     if (amount <= 0) return json(200, { ok: true, skipped: "zero-amount" });
@@ -175,9 +178,23 @@ export const handler = async (event) => {
       } catch (_) {}
     }
 
+    // Lucky Spin: cộng vé quay tự động mỗi lần thanh toán thật — độc lập với
+    // chest/milestone, bật/tắt riêng qua spinRules.enabled.
+    let spinTicketsGranted = null;
+    if (buyerUserId && cfg.spinRules?.enabled) {
+      try {
+        const tKey = tenantKey("spin-tickets", tenantId, buyerUserId);
+        let tickets = 0;
+        try { const v = await store.get(tKey); if (v) tickets = Number(v) || 0; } catch (_) {}
+        tickets += cfg.spinRules.ticketsPerPayment || 0;
+        await store.set(tKey, String(tickets));
+        spinTicketsGranted = cfg.spinRules.ticketsPerPayment || 0;
+      } catch (_) {}
+    }
+
     const rules = cfg.chestRules;
     if (rules?.enabled === false) {
-      return json(200, { ok: true, skipped: "chest-disabled", milestone: milestoneResult });
+      return json(200, { ok: true, skipped: "chest-disabled", milestone: milestoneResult, spinTicketsGranted });
     }
     const tier = pickTier(usd, rules.thresholds);
     const xu = rollXu(rules.rewardRange[tier.tier]);
@@ -186,13 +203,13 @@ export const handler = async (event) => {
     if (!data.user?.username && buyerUserId) {
       try {
         const r = await fetch(`https://api.whop.com/api/v1/users/${buyerUserId}`, {
-          headers: { Authorization: `Bearer ${cfg.whopApiKey}` },
+          headers: { Authorization: `Bearer ${apiKey}` },
         });
         if (r.ok) { const u = await r.json(); buyerName = pickUsername(u) || buyerName; }
       } catch (_) {}
     }
 
-    const members = await fetchAllActiveMembers(cfg.whopApiKey);
+    const members = await fetchAllActiveMembers(apiKey, realCompanyId);
     const now = Date.now();
     const expiresAt = new Date(now + (rules.expiryHours || 48) * 3600 * 1000).toISOString();
     const entryBase = {
@@ -243,7 +260,7 @@ export const handler = async (event) => {
       });
     }
 
-    return json(200, { ok: true, tenantId, tier: tier.tier, xu, buyerXu, grantedTo: members.length, milestone: milestoneResult });
+    return json(200, { ok: true, tenantId, tier: tier.tier, xu, buyerXu, grantedTo: members.length, milestone: milestoneResult, spinTicketsGranted });
   } catch (err) {
     return json(500, { error: err.message });
   }

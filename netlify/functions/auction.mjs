@@ -54,7 +54,7 @@ async function settleIfNeeded(store, tenantId, state, cfg) {
   let winner = null;
   for (const c of candidates) {
     try {
-      const apiKey = cfg.whopApiKey;
+      const apiKey = await getCompanyAccessToken(tenantId);
       const { available, spent } = await availableXu(store, tenantId, c.userId, apiKey, cfg);
       if (available >= c.amount) {
         await store.set(tenantKey("spent", tenantId, c.userId), String(spent + c.amount));
@@ -163,7 +163,7 @@ export const handler = async (event) => {
     if (!amount || amount < minNext) return json(400, { error: `Bid must be at least ${minNext} XU.` });
 
     try {
-      const apiKey = cfg.whopApiKey;
+      const apiKey = await getCompanyAccessToken(companyId);
       const { available } = await availableXu(store, companyId, userId, apiKey, cfg);
       if (available < amount) return json(402, { error: "Not enough XU.", available });
 
