@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -355,20 +354,6 @@ async function load(){
   }
   $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${lastErr.message}</div></div>`;
 }
-
-// TẠM THỜI — debug tìm nguyên nhân lẫn tenant, xoá sau khi xác định xong.
-(async function showDebugBox3(){
-  try{
-    const qs = tenantQS();
-    const url = '/.netlify/functions/admin-config' + (qs ? qs + '&debug=1' : '?debug=1');
-    const r = await fetch(url);
-    const j = await r.json();
-    const box = document.createElement('div');
-    box.style = 'position:fixed;bottom:8px;left:8px;right:8px;z-index:9999;background:#000;color:#0f0;font:11px monospace;padding:10px;border-radius:8px;white-space:pre-wrap;max-height:40vh;overflow:auto;border:1px solid #0f0';
-    box.textContent = 'location.pathname: ' + location.pathname + '\nfetch url: ' + url + '\n' + JSON.stringify(j, null, 2);
-    document.body.appendChild(box);
-  }catch(e){}
-})();
 
 const TAB_RENDERERS = {
   conn: renderConn, billing: renderBilling,
