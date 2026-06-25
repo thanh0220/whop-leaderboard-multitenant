@@ -419,6 +419,7 @@ function renderAll(){
   $('save-all').onclick = saveAll;
   applyNavActive();
   if (activeTab === 'chests') initChestPreviews();
+  if (activeTab === 'auction') refreshAuctionStatus();
 }
 
 // Rương 3D dùng làm preview tĩnh (không animate) cho mỗi tier — dispose canvas cũ
@@ -883,48 +884,85 @@ function renderSpin(){
 }
 
 // ===== #auction — 1 vật phẩm duy nhất đấu giá bằng xu =====
+function stepHeader(text){
+  return `<div class="hint-small" style="font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:16px 0 6px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px">${text}</div>`;
+}
+
+let auctionIsActive = false;
+async function refreshAuctionStatus(){
+  const el = $('auction-live-status');
+  if(!el) return;
+  try{
+    const r = await tenantFetch('/.netlify/functions/auction');
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error||'Error');
+    auctionIsActive = !!j.active;
+    if(j.active){
+      el.innerHTML = `<span class="msg ok">🟢 Live now — ends ${new Date(j.endsAt).toLocaleString()}. Highest bid: ${fmt(j.highestBid||j.startingBid)} XU${j.highestBidderName?' by '+esc(j.highestBidderName):''}.</span>`;
+    } else if(j.settled){
+      el.innerHTML = `<span class="hint-small">🏁 Last auction ended${j.winnerName?' — winner: '+esc(j.winnerName):' — no bids.'}</span>`;
+    } else {
+      el.innerHTML = `<span class="hint-small">⚪ No auction has been started yet.</span>`;
+    }
+    const btn = $('start-auction-btn');
+    if(btn) btn.textContent = auctionIsActive ? '🔄 Restart auction' : '🔨 Start New Auction';
+  }catch(_){ el.innerHTML = ''; }
+}
+
 function renderAuction(){
   const rules = STATE.auctionRules || {enabled:false,rewardId:null,startingBid:5000,minIncrement:100,durationHours:48};
   const reward = rules.rewardId ? (STATE.rewards||[]).find(rw=>rw.id===rules.rewardId) : null;
   const rewardOptions = `
     <option value="">— Pick a Reward Store item —</option>
     ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${rules.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
+
+  const body = (STATE.rewards||[]).length===0 ? rewardEmptyWarning(true) : `
+    ${stepHeader('1. Pick the item')}
+    <select onchange="setPath(STATE,'auctionRules.rewardId',this.value||null);renderAll()">${rewardOptions}</select>
+    ${miniPreview(reward, true)}
+
+    ${stepHeader('2. Set the price')}
+    <div class="row2">
+      <div><label>Starting price — lowest possible bid (XU)</label><input type="number" min="0" value="${rules.startingBid||0}" oninput="setPath(STATE,'auctionRules.startingBid',Number(this.value)||0)"/></div>
+      <div><label>Each new bid must beat the last by at least (XU)</label><input type="number" min="1" value="${rules.minIncrement||100}" oninput="setPath(STATE,'auctionRules.minIncrement',Number(this.value)||100)"/></div>
+    </div>
+    <div class="hint-small" style="margin:4px 0 10px">Example: if the current top bid is 5,000 XU and this is set to 100, the next bid must be at least 5,100 XU.</div>
+    <label>How long it runs (hours)</label>
+    <input type="number" min="1" value="${rules.durationHours||48}" oninput="setPath(STATE,'auctionRules.durationHours',Number(this.value)||48)"/>
+
+    ${stepHeader('3. Make it visible to members')}
+    ${toggleRow(rules.enabled, "setPath(STATE,'auctionRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Auction page.', "Disabled — members can't see this program.")}
+
+    <button class="btn" id="start-auction-btn" onclick="startAuction(this)">🔨 Start New Auction</button>
+    <div class="msg" id="auction-status"></div>`;
+
   return `
     <div class="sect" id="auction">🔨 Auction</div>
     <div class="panel">
-      ${introBlock(
-        "ONE single item that members fight over by bidding XU — like a real auction house. Whoever has the highest bid when time runs out wins it automatically (as long as they still have enough XU).",
-        ["Add the item you want to auction in 🎁 Store first (this is REQUIRED)", "Come back here, pick that item, and set a starting price", "Save all, THEN click Start New Auction below"]
-      )}
-      ${(STATE.rewards||[]).length===0 ? rewardEmptyWarning(true) : ''}
-      ${toggleRow(rules.enabled, "setPath(STATE,'auctionRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Auction page.', "Disabled — members can't see this program.")}
-      <label>Item being auctioned (from Reward Store)</label>
-      <select onchange="setPath(STATE,'auctionRules.rewardId',this.value||null);renderAll()">${rewardOptions}</select>
-      ${miniPreview(reward, true)}
-      <div class="row2">
-        <div><label>Starting price — lowest possible bid (XU)</label><input type="number" min="0" value="${rules.startingBid||0}" oninput="setPath(STATE,'auctionRules.startingBid',Number(this.value)||0)"/></div>
-        <div><label>Each new bid must beat the last by at least (XU)</label><input type="number" min="1" value="${rules.minIncrement||100}" oninput="setPath(STATE,'auctionRules.minIncrement',Number(this.value)||100)"/></div>
-      </div>
-      <div class="hint-small" style="margin:4px 0 10px">Example: if the current top bid is 5,000 XU and this is set to 100, the next bid must be at least 5,100 XU.</div>
-      <label>How long the auction runs (hours)</label>
-      <input type="number" min="1" value="${rules.durationHours||48}" oninput="setPath(STATE,'auctionRules.durationHours',Number(this.value)||48)"/>
-      <div class="hint-small" style="margin:8px 0">⚠ Save all first, THEN start the auction — starting uses the saved settings.</div>
-      <button class="btn" onclick="startAuction(this)">🔨 Start New Auction</button>
-      <div class="msg" id="auction-status"></div>
+      <p class="hint-small">One item, members bid XU to win it — highest bid when time's up wins automatically.</p>
+      <div id="auction-live-status" class="hint-small">⏳ Checking current status…</div>
+      ${body}
     </div>`;
 }
 
 async function startAuction(btn){
+  if(auctionIsActive && !confirm('An auction is already running — starting a new one will end it early and pick a winner from the current bids. Continue?')) return;
   btn.disabled = true;
+  const old = btn.textContent;
   try{
+    btn.textContent = 'Saving settings...';
+    await saveConfig();
+    btn.textContent = '🔨 Starting...';
     const r = await tenantFetch('/.netlify/functions/auction', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'start'})});
     const j = await r.json();
     if(!r.ok) throw new Error(j.error||'Error');
     $('auction-status').innerHTML = `<span class="msg ok">✅ Auction started — ends ${new Date(j.endsAt).toLocaleString()}.</span>`;
+    refreshAuctionStatus();
   }catch(e){
     $('auction-status').innerHTML = `<span class="msg err">⚠ ${e.message}</span>`;
   }finally{
     btn.disabled = false;
+    btn.textContent = old;
   }
 }
 
@@ -1084,10 +1122,7 @@ function onEvCalendarDrop(e){
 }
 
 // ===== Lưu tất cả =====
-async function saveAll(){
-  const btn = $('save-all');
-  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Saving...';
-
+function buildSavePayload(){
   const redeemCodes = {};
   (STATE.redeemCodesList||[]).forEach(c=>{
     const code = (c.code||'').trim().toLowerCase();
@@ -1101,7 +1136,7 @@ async function saveAll(){
     redeemCodes[code] = entry;
   });
 
-  const payload = {
+  return {
     seasonTopRewards: STATE.seasonTopRewards,
     checkinRewards: STATE.checkinRewards,
     rewards: STATE.rewards,
@@ -1115,12 +1150,19 @@ async function saveAll(){
     auctionRules: STATE.auctionRules,
     branding: STATE.branding,
   };
+}
+async function saveConfig(){
+  const r = await tenantFetch('/.netlify/functions/admin-config', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(buildSavePayload())
+  });
+  const j = await r.json();
+  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+}
+async function saveAll(){
+  const btn = $('save-all');
+  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Saving...';
   try{
-    const r = await tenantFetch('/.netlify/functions/admin-config', {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
-    });
-    const j = await r.json();
-    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    await saveConfig();
     btn.textContent = '✅ Saved!';
     setTimeout(load, 700);
   }catch(e){
