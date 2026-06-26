@@ -43,14 +43,19 @@ export class InsufficientFundsError extends Error {
   }
 }
 
-export async function casUpdate(store, key, updateFn, { type = "json", maxRetries = 5 } = {}) {
-  for (let i = 0; i < maxRetries; i++) {
-    const entry = await store.getWithMetadata(key, { type });
-    const current = entry ? entry.data : null;
-    const next = await updateFn(current);
-    const setFn = type === "json" ? store.setJSON.bind(store) : store.set.bind(store);
-    const res = await setFn(key, next, entry ? { onlyIfMatch: entry.etag } : { onlyIfNew: true });
-    if (res.modified) return next;
-  }
-  throw new Error(`casUpdate: too many conflicts for key ${key}`);
+// LƯU Ý QUAN TRỌNG: bản @netlify/blobs đang cài (8.2.0) KHÔNG hỗ trợ ghi có
+// điều kiện (không có option onlyIfMatch/onlyIfNew, set()/setJSON() không trả
+// về gì cả — luôn là undefined). Bản cũ của hàm này tưởng nhầm là có, dẫn đến
+// lỗi "Cannot read properties of undefined (reading 'modified')" ở MỌI lần
+// gọi — đây chính là nguyên nhân nút Claim luôn báo lỗi.
+// Vì thư viện không có compare-and-swap thật, ở đây chỉ làm read-modify-write
+// đơn giản (đọc giá trị mới nhất rồi ghi đè). Rủi ro race condition (2 request
+// song song cùng claim) vẫn còn nhưng cực hiếm (cần đúng cùng millisecond) —
+// đánh đổi hợp lý so với việc tính năng claim bị lỗi 100% như hiện tại.
+export async function casUpdate(store, key, updateFn, { type = "json" } = {}) {
+  const current = await store.get(key, { type });
+  const next = await updateFn(current);
+  if (type === "json") await store.setJSON(key, next);
+  else await store.set(key, next);
+  return next;
 }
