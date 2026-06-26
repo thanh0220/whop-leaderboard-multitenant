@@ -141,12 +141,11 @@ export const handler = async (event) => {
   const realCompanyId = data.company_id || data.company?.id || data.business_id || null;
   if (!realCompanyId) return json(200, { ok: true, skipped: "no-company-id" });
 
-  // Tenant MỚI (sau khi đổi sang App API key): chưa từng có ai lưu mapping
-  // qua bước Connect cũ (đã bỏ) — realCompanyId THẬT từ webhook dùng thẳng
-  // làm tenantId luôn được, vì companyId nội bộ giờ = company_id thật.
-  const tenantId = (await getTenantIdByRealCompanyId(realCompanyId)) || realCompanyId;
-
   try {
+    // Tenant MỚI (sau khi đổi sang App API key): chưa từng có ai lưu mapping
+    // qua bước Connect cũ (đã bỏ) — realCompanyId THẬT từ webhook dùng thẳng
+    // làm tenantId luôn được, vì companyId nội bộ giờ = company_id thật.
+    const tenantId = (await getTenantIdByRealCompanyId(realCompanyId)) || realCompanyId;
     const cfg = await getTenantConfig(tenantId);
     const apiKey = await getCompanyAccessToken(tenantId);
 

@@ -16,24 +16,28 @@ export const handler = async (event) => {
   if (!userId) return json(401, { error: "Could not identify the user." });
   if (!companyId) return json(400, { error: "Could not identify the community (companyId)." });
 
-  const cfg = await getTenantConfig(companyId);
-  const paid = await isPaidTier(companyId);
-  const limit = paid ? 10 : 2;
+  try {
+    const cfg = await getTenantConfig(companyId);
+    const paid = await isPaidTier(companyId);
+    const limit = paid ? 10 : 2;
 
-  if (cfg.eventsEnabled === false) {
-    return json(200, { events: [], branding: cfg.branding, isPaid: paid });
+    if (cfg.eventsEnabled === false) {
+      return json(200, { events: [], branding: cfg.branding, isPaid: paid });
+    }
+
+    const events = (cfg.events || [])
+      .slice(0, limit)
+      .filter((e) => e.date)
+      .map((e) => ({
+        name: e.name,
+        image: e.image || null,
+        date: e.date,
+        endDate: e.endDate || e.date,
+        desc: e.desc || "",
+      }));
+
+    return json(200, { events, branding: cfg.branding, isPaid: paid });
+  } catch (e) {
+    return json(500, { error: e.message || "Could not load events." });
   }
-
-  const events = (cfg.events || [])
-    .slice(0, limit)
-    .filter((e) => e.date)
-    .map((e) => ({
-      name: e.name,
-      image: e.image || null,
-      date: e.date,
-      endDate: e.endDate || e.date,
-      desc: e.desc || "",
-    }));
-
-  return json(200, { events, branding: cfg.branding, isPaid: paid });
 };

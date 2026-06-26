@@ -52,28 +52,35 @@ export const handler = async (event) => {
 
   const store = pointsStore();
   const redeemedKey = tenantKey("redeemed-codes", companyId, userId);
-  let alreadyUsed = false;
-  await casUpdate(store, redeemedKey, (current) => {
-    const map = current && typeof current === "object" ? current : {};
-    if (map[code] === cycleId) { alreadyUsed = true; return map; }
-    return { ...map, [code]: cycleId };
-  });
-  if (alreadyUsed) {
-    return json(409, { error: "You have already redeemed this code." });
+  // Cả 2 lần casUpdate bọc trong 1 try/catch DUY NHẤT — lỗi tạm thời (vd hết
+  // retry do tranh chấp ETag) không được làm function crash với response
+  // không phải JSON (client gọi r.json() sẽ lỗi parse nếu để lọt).
+  try {
+    let alreadyUsed = false;
+    await casUpdate(store, redeemedKey, (current) => {
+      const map = current && typeof current === "object" ? current : {};
+      if (map[code] === cycleId) { alreadyUsed = true; return map; }
+      return { ...map, [code]: cycleId };
+    });
+    if (alreadyUsed) {
+      return json(409, { error: "You have already redeemed this code." });
+    }
+
+    let bonusTotal = 0;
+    await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
+      const prev = Number(current) || 0;
+      bonusTotal = prev + reward.xu;
+      return String(bonusTotal);
+    }, { type: "text" });
+
+    return json(200, {
+      ok: true,
+      code,
+      added: reward.xu,
+      bonusTotal,
+      message: `+${reward.xu} XU added!`,
+    });
+  } catch (e) {
+    return json(500, { error: e.message || "Could not redeem this code." });
   }
-
-  let bonusTotal = 0;
-  await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
-    const prev = Number(current) || 0;
-    bonusTotal = prev + reward.xu;
-    return String(bonusTotal);
-  }, { type: "text" });
-
-  return json(200, {
-    ok: true,
-    code,
-    added: reward.xu,
-    bonusTotal,
-    message: `+${reward.xu} XU added!`,
-  });
 };

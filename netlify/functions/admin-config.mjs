@@ -94,89 +94,93 @@ export const handler = async (event) => {
   if (!userId) return json(401, { error: "Could not identify the user." });
   if (!companyId) return json(400, { error: "Could not identify the community. Please open this page inside Whop." });
 
-  const cfg = await getTenantConfig(companyId);
+  try {
+    const cfg = await getTenantConfig(companyId);
 
-  if (event.httpMethod === "GET") {
-    if (!cfg.experienceLinkedAt) {
-      // Netlify Functions không đảm bảo code chạy tiếp sau khi response trả
-      // về (không có "background task" như edge runtime) — phải await ở đây,
-      // chỉ xảy ra 1 lần (lần đầu) nên chấp nhận load chậm hơn 1 chút.
-      await autoLinkExperiences(companyId, await getRealCompanyId(companyId));
+    if (event.httpMethod === "GET") {
+      if (!cfg.experienceLinkedAt) {
+        // Netlify Functions không đảm bảo code chạy tiếp sau khi response trả
+        // về (không có "background task" như edge runtime) — phải await ở đây,
+        // chỉ xảy ra 1 lần (lần đầu) nên chấp nhận load chậm hơn 1 chút.
+        await autoLinkExperiences(companyId, await getRealCompanyId(companyId));
+      }
+      return json(200, {
+        configured: true,
+        whopCompanyId: await getRealCompanyId(companyId),
+        isPaid: await isPaidTier(companyId),
+        branding: cfg.branding,
+        points: cfg.points,
+        fx: cfg.fx,
+        checkinRewards: cfg.checkinRewards,
+        seasonTopRewards: cfg.seasonTopRewards,
+        rewards: cfg.rewards,
+        redeemCodes: cfg.redeemCodes,
+        codesEnabled: cfg.codesEnabled,
+        unlockAllFeatures: cfg.unlockAllFeatures,
+        chestRules: cfg.chestRules,
+        events: cfg.events,
+        eventsEnabled: cfg.eventsEnabled,
+        milestoneRules: cfg.milestoneRules,
+        spinRules: cfg.spinRules,
+        auctionRules: cfg.auctionRules,
+      });
     }
+
+    if (event.httpMethod !== "POST") return json(405, { error: "GET or POST" });
+
+    let body = {};
+    try { body = JSON.parse(event.body || "{}"); } catch (_) {}
+
+    const partial = {};
+    for (const k of ALLOWED_KEYS) {
+      if (Object.prototype.hasOwnProperty.call(body, k)) partial[k] = body[k];
+    }
+    // Light shape validation — avoids saving the wrong type and breaking the member-facing pages.
+    for (const k of ["checkinRewards", "seasonTopRewards", "rewards", "events"]) {
+      if (k in partial && !Array.isArray(partial[k])) {
+        return json(400, { error: `${k} must be an array.` });
+      }
+    }
+    if ("redeemCodes" in partial && (typeof partial.redeemCodes !== "object" || partial.redeemCodes === null || Array.isArray(partial.redeemCodes))) {
+      return json(400, { error: "redeemCodes must be an object of { code: xu amount }." });
+    }
+    if ("chestRules" in partial && (typeof partial.chestRules !== "object" || partial.chestRules === null || Array.isArray(partial.chestRules))) {
+      return json(400, { error: "chestRules must be an object." });
+    }
+    if ("milestoneRules" in partial && (typeof partial.milestoneRules !== "object" || partial.milestoneRules === null || Array.isArray(partial.milestoneRules))) {
+      return json(400, { error: "milestoneRules must be an object." });
+    }
+    if ("spinRules" in partial && (typeof partial.spinRules !== "object" || partial.spinRules === null || Array.isArray(partial.spinRules))) {
+      return json(400, { error: "spinRules must be an object." });
+    }
+    if ("auctionRules" in partial && (typeof partial.auctionRules !== "object" || partial.auctionRules === null || Array.isArray(partial.auctionRules))) {
+      return json(400, { error: "auctionRules must be an object." });
+    }
+
+    // Chặn bypass cap Free/Paid bằng cách gọi API thẳng (UI admin.html đã tự
+    // chặn nhưng không tin client) — Free: 2 events / 2 rewards, Paid: 10 / 10.
+    const paid = await isPaidTier(companyId);
+    const limit = paid ? 10 : 2;
+    if ("events" in partial && partial.events.length > limit) {
+      return json(400, { error: `Free plan allows up to ${limit} events. Upgrade to Paid for more.` });
+    }
+    if ("rewards" in partial && partial.rewards.length > limit) {
+      return json(400, { error: `Free plan allows up to ${limit} rewards. Upgrade to Paid for more.` });
+    }
+    // branding.logoUrl ẩn badge "Powered by GTVăn" — admin.html disable input
+    // này khi free, nhưng vẫn gửi nguyên branding cũ trong mọi lần Save all, nên
+    // chặn ở đây là chống gọi API thẳng để bypass, KHÔNG phải chặn save thường.
+    if ("branding" in partial && !paid) {
+      partial.branding = { ...partial.branding, logoUrl: cfg.branding.logoUrl || null };
+    }
+
+    await saveTenantConfig(companyId, partial);
+
     return json(200, {
+      ok: true,
       configured: true,
-      whopCompanyId: await getRealCompanyId(companyId),
-      isPaid: await isPaidTier(companyId),
-      branding: cfg.branding,
-      points: cfg.points,
-      fx: cfg.fx,
-      checkinRewards: cfg.checkinRewards,
-      seasonTopRewards: cfg.seasonTopRewards,
-      rewards: cfg.rewards,
-      redeemCodes: cfg.redeemCodes,
-      codesEnabled: cfg.codesEnabled,
-      unlockAllFeatures: cfg.unlockAllFeatures,
-      chestRules: cfg.chestRules,
-      events: cfg.events,
-      eventsEnabled: cfg.eventsEnabled,
-      milestoneRules: cfg.milestoneRules,
-      spinRules: cfg.spinRules,
-      auctionRules: cfg.auctionRules,
     });
+  } catch (e) {
+    return json(500, { error: e.message || "Could not load or save settings." });
   }
-
-  if (event.httpMethod !== "POST") return json(405, { error: "GET or POST" });
-
-  let body = {};
-  try { body = JSON.parse(event.body || "{}"); } catch (_) {}
-
-  const partial = {};
-  for (const k of ALLOWED_KEYS) {
-    if (Object.prototype.hasOwnProperty.call(body, k)) partial[k] = body[k];
-  }
-  // Light shape validation — avoids saving the wrong type and breaking the member-facing pages.
-  for (const k of ["checkinRewards", "seasonTopRewards", "rewards", "events"]) {
-    if (k in partial && !Array.isArray(partial[k])) {
-      return json(400, { error: `${k} must be an array.` });
-    }
-  }
-  if ("redeemCodes" in partial && (typeof partial.redeemCodes !== "object" || partial.redeemCodes === null || Array.isArray(partial.redeemCodes))) {
-    return json(400, { error: "redeemCodes must be an object of { code: xu amount }." });
-  }
-  if ("chestRules" in partial && (typeof partial.chestRules !== "object" || partial.chestRules === null || Array.isArray(partial.chestRules))) {
-    return json(400, { error: "chestRules must be an object." });
-  }
-  if ("milestoneRules" in partial && (typeof partial.milestoneRules !== "object" || partial.milestoneRules === null || Array.isArray(partial.milestoneRules))) {
-    return json(400, { error: "milestoneRules must be an object." });
-  }
-  if ("spinRules" in partial && (typeof partial.spinRules !== "object" || partial.spinRules === null || Array.isArray(partial.spinRules))) {
-    return json(400, { error: "spinRules must be an object." });
-  }
-  if ("auctionRules" in partial && (typeof partial.auctionRules !== "object" || partial.auctionRules === null || Array.isArray(partial.auctionRules))) {
-    return json(400, { error: "auctionRules must be an object." });
-  }
-
-  // Chặn bypass cap Free/Paid bằng cách gọi API thẳng (UI admin.html đã tự
-  // chặn nhưng không tin client) — Free: 2 events / 2 rewards, Paid: 10 / 10.
-  const paid = await isPaidTier(companyId);
-  const limit = paid ? 10 : 2;
-  if ("events" in partial && partial.events.length > limit) {
-    return json(400, { error: `Free plan allows up to ${limit} events. Upgrade to Paid for more.` });
-  }
-  if ("rewards" in partial && partial.rewards.length > limit) {
-    return json(400, { error: `Free plan allows up to ${limit} rewards. Upgrade to Paid for more.` });
-  }
-  // branding.logoUrl ẩn badge "Powered by GTVăn" — admin.html disable input
-  // này khi free, nhưng vẫn gửi nguyên branding cũ trong mọi lần Save all, nên
-  // chặn ở đây là chống gọi API thẳng để bypass, KHÔNG phải chặn save thường.
-  if ("branding" in partial && !paid) {
-    partial.branding = { ...partial.branding, logoUrl: cfg.branding.logoUrl || null };
-  }
-
-  const updated = await saveTenantConfig(companyId, partial);
-
-  return json(200, {
-    ok: true,
-    configured: true,
-  });
 };

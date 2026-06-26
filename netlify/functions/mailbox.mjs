@@ -44,6 +44,9 @@ export const handler = async (event) => {
 
   // Khoá claim bằng casUpdate trên đúng list mailbox của user — chống 2
   // request claim CÙNG 1 rương song song đều pass kiểm tra "chưa claim".
+  // Cả 2 lần casUpdate bọc trong 1 try/catch DUY NHẤT — lỗi tạm thời (vd hết
+  // retry do tranh chấp ETag) không làm function crash với response không
+  // phải JSON (client gọi r.json() sẽ lỗi parse nếu để lọt).
   let claimedEntry = null;
   try {
     await casUpdate(store, key, (current) => {
@@ -56,16 +59,16 @@ export const handler = async (event) => {
       claimedEntry = e;
       return curList;
     });
+
+    const bonus = Number(await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
+      return String((Number(current) || 0) + claimedEntry.xu);
+    }, { type: "text" }));
+
+    return json(200, { ok: true, xu: claimedEntry.xu, tier: claimedEntry.tier, bonusTotal: bonus, message: `+${claimedEntry.xu} XU from ${claimedEntry.label}!` });
   } catch (e) {
     if (e instanceof InvalidEntryError) return json(400, { error: "Invalid or expired chest." });
     if (e instanceof AlreadyClaimedEntryError) return json(409, { error: "This chest has already been claimed." });
     if (e instanceof ExpiredEntryError) return json(400, { error: "This chest has expired." });
-    throw e;
+    return json(500, { error: e.message || "Could not claim this chest." });
   }
-
-  const bonus = Number(await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
-    return String((Number(current) || 0) + claimedEntry.xu);
-  }, { type: "text" }));
-
-  return json(200, { ok: true, xu: claimedEntry.xu, tier: claimedEntry.tier, bonusTotal: bonus, message: `+${claimedEntry.xu} XU from ${claimedEntry.label}!` });
 };

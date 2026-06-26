@@ -61,6 +61,11 @@ export const handler = async (event) => {
   // POST: claim — dùng casUpdate (không phải check rồi ghi thường) để chặn
   // nhiều request Check-in song song đều đọc thấy "chưa check-in hôm nay" và
   // đều được cộng thưởng (double-claim trong 1 ngày).
+  // Toàn bộ logic claim bọc trong 1 try/catch DUY NHẤT (bao cả 2 lần
+  // casUpdate) — nếu không, 1 lỗi tạm thời (vd casUpdate hết retry do tranh
+  // chấp ETag) sẽ làm function crash với response không phải JSON, khiến
+  // client (`daily.html`) gọi r.json() bị lỗi parse và hiện toast lỗi khó
+  // hiểu — đây chính là nguyên nhân Whop review báo "Claim button trả lỗi".
   let newStreak;
   try {
     await casUpdate(store, tenantKey("checkin", companyId, userId), (current) => {
@@ -71,25 +76,25 @@ export const handler = async (event) => {
       newStreak = cur.lastDay === yesterday(today) ? cur.streak + 1 : 1;
       return { lastDay: today, streak: newStreak };
     });
+
+    const idx = ((newStreak - 1) % CHECKIN_REWARDS.length + CHECKIN_REWARDS.length) % CHECKIN_REWARDS.length;
+    const reward = CHECKIN_REWARDS[idx];
+
+    const bonus = Number(await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
+      return String((Number(current) || 0) + reward);
+    }, { type: "text" }));
+
+    return json(200, {
+      ok: true,
+      streak: newStreak,
+      reward,
+      bonusTotal: bonus,
+      message: `+${reward} XU — ${newStreak}-day streak!`,
+    });
   } catch (e) {
     if (e instanceof AlreadyCheckedInError) {
       return json(409, { error: "You've already checked in today.", streak: e.streak });
     }
-    throw e;
+    return json(500, { error: e.message || "Could not process check-in." });
   }
-
-  const idx = ((newStreak - 1) % CHECKIN_REWARDS.length + CHECKIN_REWARDS.length) % CHECKIN_REWARDS.length;
-  const reward = CHECKIN_REWARDS[idx];
-
-  const bonus = Number(await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
-    return String((Number(current) || 0) + reward);
-  }, { type: "text" }));
-
-  return json(200, {
-    ok: true,
-    streak: newStreak,
-    reward,
-    bonusTotal: bonus,
-    message: `+${reward} XU — ${newStreak}-day streak!`,
-  });
 };

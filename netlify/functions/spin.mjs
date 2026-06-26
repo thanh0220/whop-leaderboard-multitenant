@@ -115,58 +115,62 @@ export const handler = async (event) => {
   if (body.action === "spin") {
     if (!rules.prizes || !rules.prizes.length) return json(400, { error: "No prizes configured." });
 
+    // Toàn bộ luồng quay (trừ vé, chọn giải, ghi lịch sử/cộng xu) bọc trong 1
+    // try/catch DUY NHẤT — lỗi tạm thời ở bất kỳ bước nào không được làm
+    // function crash với response không phải JSON (client gọi r.json() sẽ lỗi
+    // parse nếu để lọt).
     try {
       await casUpdate(store, tenantKey("spin-tickets", companyId, userId), (current) => {
         const tickets = Number(current) || 0;
         if (tickets <= 0) throw new InsufficientFundsError({ available: 0, cost: 1 });
         return String(tickets - 1);
       }, { type: "text" });
+
+      const prize = pickWeighted(rules.prizes);
+      let resultPayload = null;
+      let resultCode = "";
+      let xuGranted = 0;
+
+      if (prize.rewardId) {
+        const reward = cfg.rewards.find((r) => r.id === prize.rewardId);
+        if (reward) {
+          resultPayload = reward.payload || { kind: "code", code: "" };
+          resultCode = summarize(resultPayload);
+          let history = [];
+          try {
+            const h = await store.get(tenantKey("history", companyId, userId), { type: "json" });
+            if (Array.isArray(h)) history = h;
+          } catch (_) {}
+          history.unshift({
+            at: new Date().toISOString(),
+            rewardId: reward.id,
+            reward: reward.name,
+            cost: 0,
+            code: resultCode,
+          });
+          await store.setJSON(tenantKey("history", companyId, userId), history);
+        }
+      }
+      if (!resultPayload) {
+        xuGranted = prize.xu || 0;
+        await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
+          return String((Number(current) || 0) + xuGranted);
+        }, { type: "text" });
+      }
+
+      const ticketsLeft = Number((await store.get(tenantKey("spin-tickets", companyId, userId))) || 0);
+      return json(200, {
+        ok: true,
+        prizeId: prize.id,
+        label: prize.rewardId ? (cfg.rewards.find((r) => r.id === prize.rewardId)?.name || prize.label) : prize.label,
+        xu: xuGranted || null,
+        code: resultCode || null,
+        ticketsLeft,
+      });
     } catch (e) {
       if (e instanceof InsufficientFundsError) return json(402, { error: "No tickets left." });
-      throw e;
+      return json(500, { error: e.message || "Could not process spin." });
     }
-
-    const prize = pickWeighted(rules.prizes);
-    let resultPayload = null;
-    let resultCode = "";
-    let xuGranted = 0;
-
-    if (prize.rewardId) {
-      const reward = cfg.rewards.find((r) => r.id === prize.rewardId);
-      if (reward) {
-        resultPayload = reward.payload || { kind: "code", code: "" };
-        resultCode = summarize(resultPayload);
-        let history = [];
-        try {
-          const h = await store.get(tenantKey("history", companyId, userId), { type: "json" });
-          if (Array.isArray(h)) history = h;
-        } catch (_) {}
-        history.unshift({
-          at: new Date().toISOString(),
-          rewardId: reward.id,
-          reward: reward.name,
-          cost: 0,
-          code: resultCode,
-        });
-        await store.setJSON(tenantKey("history", companyId, userId), history);
-      }
-    }
-    if (!resultPayload) {
-      xuGranted = prize.xu || 0;
-      await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
-        return String((Number(current) || 0) + xuGranted);
-      }, { type: "text" });
-    }
-
-    const ticketsLeft = Number((await store.get(tenantKey("spin-tickets", companyId, userId))) || 0);
-    return json(200, {
-      ok: true,
-      prizeId: prize.id,
-      label: prize.rewardId ? (cfg.rewards.find((r) => r.id === prize.rewardId)?.name || prize.label) : prize.label,
-      xu: xuGranted || null,
-      code: resultCode || null,
-      ticketsLeft,
-    });
   }
 
   return json(400, { error: "Unknown action." });

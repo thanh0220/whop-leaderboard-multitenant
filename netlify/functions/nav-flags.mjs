@@ -15,12 +15,16 @@ export const handler = async (event) => {
   const { companyId } = await getAuthContext(event);
   if (!companyId) return json(400, { error: "Could not identify the community (companyId)." });
 
-  const cfg = await getTenantConfig(companyId);
-  return json(200, {
-    eventsEnabled: !!cfg.eventsEnabled,
-    milestonesEnabled: !!cfg.milestoneRules?.enabled,
-    spinEnabled: !!cfg.spinRules?.enabled,
-    auctionEnabled: !!cfg.auctionRules?.enabled,
-    codesEnabled: !!cfg.codesEnabled,
-  });
+  try {
+    const cfg = await getTenantConfig(companyId);
+    return json(200, {
+      eventsEnabled: !!cfg.eventsEnabled,
+      milestonesEnabled: !!cfg.milestoneRules?.enabled,
+      spinEnabled: !!cfg.spinRules?.enabled,
+      auctionEnabled: !!cfg.auctionRules?.enabled,
+      codesEnabled: !!cfg.codesEnabled,
+    });
+  } catch (e) {
+    return json(500, { error: e.message || "Could not load nav flags." });
+  }
 };

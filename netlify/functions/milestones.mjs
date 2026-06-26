@@ -81,59 +81,61 @@ export const handler = async (event) => {
 
   // Khoá claim bằng casUpdate (không phải check rồi push thường) — chống 2
   // request claim CÙNG 1 tier song song đều pass kiểm tra "chưa claim" và đều
-  // được phát quà 2 lần.
+  // được phát quà 2 lần. Toàn bộ phần phát quà sau đó cũng bọc cùng 1
+  // try/catch — lỗi tạm thời không được làm function crash với response
+  // không phải JSON (client gọi r.json() sẽ lỗi parse nếu để lọt).
   try {
     await casUpdate(store, claimedKey, (current) => {
       const list = Array.isArray(current) ? current : [];
       if (list.includes(tierIndex)) throw new AlreadyClaimedError();
       return [...list, tierIndex];
     });
+
+    let resultPayload = null;
+    let resultCode = "";
+    let xuGranted = 0;
+    let ticketsGranted = 0;
+
+    if (tier.rewardId === "__spin__") {
+      ticketsGranted = tier.spinTickets || 1;
+      await casUpdate(store, tenantKey("spin-tickets", companyId, userId), (current) => {
+        return String((Number(current) || 0) + ticketsGranted);
+      }, { type: "text" });
+    } else if (tier.rewardId) {
+      const reward = cfg.rewards.find((r) => r.id === tier.rewardId);
+      if (reward) {
+        resultPayload = reward.payload || { kind: "code", code: "" };
+        resultCode = summarize(resultPayload);
+        let history = [];
+        try {
+          const h = await store.get(tenantKey("history", companyId, userId), { type: "json" });
+          if (Array.isArray(h)) history = h;
+        } catch (_) {}
+        history.unshift({
+          at: new Date().toISOString(),
+          rewardId: reward.id,
+          reward: reward.name,
+          cost: 0,
+          code: resultCode,
+        });
+        await store.setJSON(tenantKey("history", companyId, userId), history);
+      }
+    } else {
+      xuGranted = tier.xu || 0;
+      await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
+        return String((Number(current) || 0) + xuGranted);
+      }, { type: "text" });
+    }
+
+    return json(200, {
+      ok: true,
+      xu: xuGranted || null,
+      tickets: ticketsGranted || null,
+      payload: resultPayload,
+      code: resultCode || null,
+    });
   } catch (e) {
     if (e instanceof AlreadyClaimedError) return json(409, { error: "This milestone has already been claimed." });
-    throw e;
+    return json(500, { error: e.message || "Could not claim this milestone." });
   }
-
-  let resultPayload = null;
-  let resultCode = "";
-  let xuGranted = 0;
-  let ticketsGranted = 0;
-
-  if (tier.rewardId === "__spin__") {
-    ticketsGranted = tier.spinTickets || 1;
-    await casUpdate(store, tenantKey("spin-tickets", companyId, userId), (current) => {
-      return String((Number(current) || 0) + ticketsGranted);
-    }, { type: "text" });
-  } else if (tier.rewardId) {
-    const reward = cfg.rewards.find((r) => r.id === tier.rewardId);
-    if (reward) {
-      resultPayload = reward.payload || { kind: "code", code: "" };
-      resultCode = summarize(resultPayload);
-      let history = [];
-      try {
-        const h = await store.get(tenantKey("history", companyId, userId), { type: "json" });
-        if (Array.isArray(h)) history = h;
-      } catch (_) {}
-      history.unshift({
-        at: new Date().toISOString(),
-        rewardId: reward.id,
-        reward: reward.name,
-        cost: 0,
-        code: resultCode,
-      });
-      await store.setJSON(tenantKey("history", companyId, userId), history);
-    }
-  } else {
-    xuGranted = tier.xu || 0;
-    await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
-      return String((Number(current) || 0) + xuGranted);
-    }, { type: "text" });
-  }
-
-  return json(200, {
-    ok: true,
-    xu: xuGranted || null,
-    tickets: ticketsGranted || null,
-    payload: resultPayload,
-    code: resultCode || null,
-  });
 };
