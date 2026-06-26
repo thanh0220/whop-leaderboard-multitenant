@@ -248,6 +248,7 @@
   @media (prefers-color-scheme: light){
     .panel{box-shadow:0 4px 14px rgba(22,28,44,.07)}
     .item{box-shadow:0 2px 8px rgba(22,28,44,.05)}
+    .err,.btn.del,.status.off,.pv-badge.hot,.pv-badge.limited,.evt-bar.code,.chip.code,.reward-empty p,.usage-card h4,.usage-locked b{color:#9a2030}
   }
 </style>
 </head>
@@ -1095,7 +1096,7 @@ function eventModalBodyHtml(idx){
     <div id="ev-img-control-${idx}">${imgControl}</div>
     <div class="modal-actions">
       ${e.date ? `<button class="btn" onclick="unscheduleEvent(${idx});closeEventModal()">📥 Remove from schedule</button>` : ''}
-      <button class="btn" style="border-color:rgba(255,45,75,.5);color:#ffb0bd" onclick="deleteEventSlot(${idx})">🗑 Delete event</button>
+      <button class="btn del" onclick="deleteEventSlot(${idx})">🗑 Delete event</button>
       <button class="btn" onclick="closeEventModal();refreshEvents()">✅ Done</button>
     </div>`;
 }

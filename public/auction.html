@@ -41,6 +41,11 @@
     padding:5px 12px;border-radius:999px}
   .badge.mine{background:rgba(34,197,94,.18);color:#86efac;border:1px solid rgba(34,197,94,.4)}
   .badge.win{background:rgba(255,217,102,.18);color:var(--gold);border:1px solid rgba(255,217,102,.5)}
+  .au-live{display:inline-flex;align-items:center;gap:6px;font-family:'Oswald',sans-serif;font-size:10.5px;font-weight:700;
+    letter-spacing:.1em;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,#c026d3,#a855f7);
+    padding:5px 12px;border-radius:999px;margin-bottom:14px;box-shadow:0 3px 10px rgba(168,85,247,.4);position:relative;z-index:1}
+  .au-live .dot{width:6px;height:6px;border-radius:50%;background:#fff;animation:auPulse 1.2s ease-in-out infinite}
+  @keyframes auPulse{0%,100%{opacity:1}50%{opacity:.3}}
 
   .bid-controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
   .quick-btn{flex:1;min-width:70px;font-family:'Oswald',sans-serif;letter-spacing:.04em;font-size:12.5px;font-weight:700;
@@ -233,6 +238,7 @@ function render(j){
 
   $('content').innerHTML = `
     <div class="stage">
+      ${j.active ? `<div class="au-live"><span class="dot"></span> LIVE AUCTION</div>` : ''}
       <div class="item-spot">${itemVisual}</div>
       <div class="item-name">${esc(j.item.name)}</div>
       ${j.item.desc ? `<div class="item-desc">${esc(j.item.desc)}</div>` : ''}
