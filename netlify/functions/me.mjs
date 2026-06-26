@@ -71,36 +71,33 @@ export const handler = async (event) => {
   try {
     const cfg = await getTenantConfig(companyId);
     const apiKey = await getCompanyAccessToken(companyId);
-    const { earned, paidUsd, referrals, months, bonus } = await computeEarned(userId, apiKey, companyId, cfg);
-
     const store = pointsStore();
-    let spent = 0, history = [];
-    try { const s = await store.get(tenantKey("spent", companyId, userId)); if (s) spent = Number(s) || 0; } catch (_) {}
-    try { const h2 = await store.get(tenantKey("history", companyId, userId), { type: "json" }); if (Array.isArray(h2)) history = h2; } catch (_) {}
+
+    // Các lệnh đọc Blobs dưới đây độc lập với nhau — chạy song song thay vì
+    // tuần tự để giảm thời gian load trang.
+    const [{ earned, paidUsd, referrals, months, bonus, username }, spentRaw, historyRaw, checkinRaw, paid] =
+      await Promise.all([
+        computeEarned(userId, apiKey, companyId, cfg),
+        store.get(tenantKey("spent", companyId, userId)).catch(() => null),
+        store.get(tenantKey("history", companyId, userId), { type: "json" }).catch(() => null),
+        store.get(tenantKey("checkin", companyId, userId), { type: "json" }).catch(() => null),
+        isPaidTier(companyId, cfg),
+      ]);
+
+    const spent = Number(spentRaw) || 0;
+    const history = Array.isArray(historyRaw) ? historyRaw : [];
 
     // ---- daily check-in state ----
     const today = utcDayKey();
     let ck = { lastDay: null, streak: 0 };
-    try {
-      const s = await store.get(tenantKey("checkin", companyId, userId), { type: "json" });
-      if (s && typeof s === "object") ck = { lastDay: s.lastDay || null, streak: Number(s.streak) || 0 };
-    } catch (_) {}
+    if (checkinRaw && typeof checkinRaw === "object") {
+      ck = { lastDay: checkinRaw.lastDay || null, streak: Number(checkinRaw.streak) || 0 };
+    }
     const checkinCanClaim = ck.lastDay !== today;
     const nextStreak = checkinCanClaim
       ? (ck.lastDay === yesterday(today) ? ck.streak + 1 : 1)
       : ck.streak;
     const nextReward = cfg.checkinRewards[((nextStreak - 1) % cfg.checkinRewards.length + cfg.checkinRewards.length) % cfg.checkinRewards.length];
-
-    // username để chào
-    let username = userId;
-    try {
-      const r = await fetch(`https://api.whop.com/api/v1/users/${userId}`, {
-        headers: { Authorization: `Bearer ${apiKey}` },
-      });
-      if (r.ok) { const u = await r.json(); username = u.username || u.name || userId; }
-    } catch (_) {}
-
-    const paid = await isPaidTier(companyId);
 
     return json(200, {
       userId, username,

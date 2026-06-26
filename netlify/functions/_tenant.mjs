@@ -88,9 +88,9 @@ export async function linkExperienceToTenant(experienceId, tenantId) {
   try { await store.set(tenantKey("tenant-by-experience", experienceId), tenantId); } catch (_) {}
 }
 
-export async function isPaidTier(companyId) {
+export async function isPaidTier(companyId, tenantCfg) {
   if (!companyId) return false;
-  const cfg = await getTenantConfig(companyId);
+  const cfg = tenantCfg || (await getTenantConfig(companyId));
   if (cfg.unlockAllFeatures) return true;
   const store = pointsStore();
   try {

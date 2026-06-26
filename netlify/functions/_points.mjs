@@ -7,17 +7,59 @@ const BAD = ["fail", "incomplete", "open", "draft", "void", "cancel", "expire",
   "refund", "dispute", "chargeback", "resolution_lost", "lost", "uncollect",
   "pending", "processing", "requires_"];
 
+// Cache kết quả computeEarned (phần chậm nhất của me.mjs vì gọi nhiều API
+// thật của Whop, phân trang tuần tự) theo (companyId, userId) trong vài phút —
+// hầu hết các lần load trang sau đó chỉ cần đọc Blobs (nhanh) thay vì gọi lại
+// Whop API. Số liệu vẫn cập nhật trong tối đa CACHE_TTL_MS sau khi user mua
+// hàng/giới thiệu thật — đánh đổi hợp lý giữa tốc độ và độ mới.
+const CACHE_TTL_MS = 4 * 60 * 1000;
+
+export async function computeEarned(userId, apiKey, companyId, tenantCfg) {
+  const store = pointsStore();
+  const cacheKey = tenantKey("earned-cache", companyId, userId);
+
+  let heavy = null;
+  try {
+    const cached = await store.get(cacheKey, { type: "json" });
+    if (cached && typeof cached === "object" && Date.now() - cached.ts < CACHE_TTL_MS) {
+      heavy = cached.data;
+    }
+  } catch (_) {}
+
+  if (!heavy) {
+    heavy = await computeEarnedUncached(userId, apiKey, companyId, tenantCfg);
+    try { await store.setJSON(cacheKey, { ts: Date.now(), data: heavy }); } catch (_) {}
+  }
+
+  let bonus = 0;
+  try {
+    const b = await store.get(tenantKey("bonus", companyId, userId));
+    if (b) bonus = Number(b) || 0;
+  } catch (_) {}
+
+  return {
+    earned: heavy.core + bonus,
+    paidUsd: heavy.paidUsd,
+    referrals: heavy.referrals,
+    referralUsd: heavy.referralUsd,
+    referralPoints: heavy.referralPoints,
+    months: heavy.months,
+    username: heavy.username || userId,
+    bonus,
+  };
+}
+
 // Tính xu KIẾM ĐƯỢC của 1 user trong 1 tenant cụ thể: từ tiền đã trả (thật) +
 // đơn giới thiệu + thâm niên + xu thưởng (check-in/quest).
 // apiKey ở đây là access token company-scoped (xem _tokens.mjs), không còn là
 // 1 key tĩnh dùng chung cho mọi business như bản single-tenant cũ.
 // tenantCfg.points / tenantCfg.fx thay cho POINTS/FX import cứng trước đây —
 // mỗi business có thể chỉnh tỉ lệ kiếm xu riêng của họ qua trang admin.
-export async function computeEarned(userId, apiKey, companyId, tenantCfg) {
+async function computeEarnedUncached(userId, apiKey, companyId, tenantCfg) {
   const POINTS = tenantCfg.points;
   const FX = tenantCfg.fx;
   const headers = { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" };
-  const realCompanyId = await getRealCompanyId(companyId);
+  const realCompanyId = await getRealCompanyId(companyId, tenantCfg);
 
   // 1) tổng tiền đã thanh toán thật của user (quy ~USD)
   let usd = 0;
@@ -51,8 +93,8 @@ export async function computeEarned(userId, apiKey, companyId, tenantCfg) {
   let referralUsd = 0;     // tổng USD các đơn mà user này giới thiệu được
   let referralPoints = 0;  // tổng xu referral đã tính (đã áp cap mỗi đơn)
   let firstJoinTs = null;
+  let username = null;
   try {
-    let username = null;
     const ur = await fetch(`https://api.whop.com/api/v1/users/${userId}`, { headers });
     if (ur.ok) { const u = await ur.json(); username = u.username || u.name || null; }
 
@@ -121,28 +163,21 @@ export async function computeEarned(userId, apiKey, companyId, tenantCfg) {
     months = Math.min(Math.floor(days / 30), POINTS.maxMonths ?? 12);
   }
 
-  // 4) xu thưởng từ daily check-in & quest (lưu trong Blobs, namespace theo
-  //    companyId để không lẫn với business khác)
-  let bonus = 0;
-  try {
-    const store = pointsStore();
-    const b = await store.get(tenantKey("bonus", companyId, userId));
-    if (b) bonus = Number(b) || 0;
-  } catch (_) {}
-
   const core =
     Math.floor(usd * POINTS.perUsd) +
     Math.floor(referralPoints) +
     months * (POINTS.perMonth ?? 0);
-  const earned = core + bonus;
 
+  // "bonus" (xu từ check-in/quest/claim) KHÔNG nằm trong phần cache ở
+  // computeEarned() bên dưới — nó đổi liên tục mỗi lần user bấm Claim nên
+  // luôn phải đọc tươi, không được để dính cache TTL của phần gọi API Whop.
   return {
-    earned,
+    core,
     paidUsd: Math.round(usd),
     referrals,
     referralUsd: Math.round(referralUsd),
     referralPoints: Math.floor(referralPoints),
     months,
-    bonus,
+    username,
   };
 }

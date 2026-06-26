@@ -23,8 +23,8 @@ export async function getCompanyAccessToken(companyId) {
 // Company ID THẬT (biz_xxx) của tenant — cần truyền vào mọi request REST API
 // dạng ?company_id=... khi dùng App API key (key chung, không tự scope theo
 // company như Company API key cũ).
-export async function getRealCompanyId(companyId) {
-  const cfg = await getTenantConfig(companyId);
+export async function getRealCompanyId(companyId, tenantCfg) {
+  const cfg = tenantCfg || (await getTenantConfig(companyId));
   const raw = cfg.whopCompanyId || companyId;
   // Tenant cũ có thể còn lưu giá trị bẩn (admin lỡ dán cả URL dài thời còn
   // dán tay) — tự lọc lại đúng "biz_xxx" mỗi lần đọc, không chỉ lúc lưu.
