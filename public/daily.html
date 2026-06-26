@@ -8,15 +8,23 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#070910;--red:#ff2d4b;--cyan:#27e3ff;--gold:#f4c441;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3)}
+  :root{--bg:#070910;--red:#ff2d4b;--cyan:#27e3ff;--gold:#f4c441;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3);
+    --ctrl-bg:rgba(255,255,255,.03);--ctrl-border:rgba(255,255,255,.12)}
+  /* Chỉ đổi nền/chữ trung tính theo theme — các màu nhấn (cyan/gold/red) giữ
+     nguyên nguyên bản vì chúng còn được dùng BÊN TRONG các card nền tối luôn
+     giữ tối (.panel, .b) — đổi màu nhấn riêng sẽ vừa sai chỗ trong card vừa
+     sai chỗ ngoài card, không có 1 giá trị nào đúng cho cả 2 nơi. */
+  @media (prefers-color-scheme: light){
+    :root{--bg:#f4f6fb;--muted:#5b6576;--text:#1a2230;--ctrl-bg:rgba(10,20,40,.04);--ctrl-border:rgba(10,20,40,.14)}
+  }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:0 0 60px;
     background:radial-gradient(120% 70% at 50% -10%,rgba(255,45,75,.13),var(--bg) 55%),var(--bg);background-attachment:fixed}
   .wrap{max-width:960px;margin:0 auto;padding:22px 18px}
   .nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
   .nav a{font-family:'Oswald',sans-serif;letter-spacing:.1em;text-transform:uppercase;font-size:11px;
-    padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.12);
-    background:rgba(255,255,255,.03);color:var(--muted);text-decoration:none;transition:.15s}
+    padding:8px 14px;border-radius:999px;border:1px solid var(--ctrl-border);
+    background:var(--ctrl-bg);color:var(--muted);text-decoration:none;transition:.15s}
   .nav a.on{border-color:var(--line2);background:rgba(39,227,255,.1);color:var(--cyan);box-shadow:0 0 14px rgba(39,227,255,.25)}
   .top{display:flex;align-items:center;gap:10px;font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:.14em;
     text-transform:uppercase;font-size:16px;margin-bottom:14px}
@@ -28,15 +36,15 @@
   .upsell b{color:var(--gold)}
 
   .bal{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
-  .b{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;text-align:center}
+  .b{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;text-align:center;color:#eef2f8}
   .b.main{border-color:var(--line2);box-shadow:0 0 22px rgba(39,227,255,.18)}
   .b .v{font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;color:#fff;line-height:1}
   .b.main .v{color:var(--cyan);text-shadow:0 0 16px rgba(39,227,255,.4)}
-  .b .l{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+  .b .l{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#8a93a6;margin-top:6px}
 
   .sect{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--gold);margin:22px 2px 12px}
 
-  .panel{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px;position:relative}
+  .panel{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px;position:relative;color:#eef2f8}
   .panel.locked{opacity:.55;filter:saturate(.5)}
   .streak-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px}
   .streak-big{font-family:'Oswald',sans-serif;font-size:32px;color:#fff;font-weight:700}
@@ -44,7 +52,7 @@
   .btn{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:12px;font-weight:700;
     padding:11px 20px;border-radius:10px;border:1px solid var(--line2);background:rgba(39,227,255,.1);color:var(--cyan);cursor:pointer;transition:.15s}
   .btn:hover:not(:disabled){background:rgba(39,227,255,.22);box-shadow:0 0 14px rgba(39,227,255,.3)}
-  .btn:disabled{opacity:.45;cursor:not-allowed;border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:var(--muted)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:#8a93a6}
   .btn.gold{border-color:rgba(244,196,65,.5);background:rgba(244,196,65,.12);color:var(--gold)}
   .btn.gold:hover:not(:disabled){background:rgba(244,196,65,.22);box-shadow:0 0 14px rgba(244,196,65,.3)}
 
@@ -52,7 +60,7 @@
   @media(max-width:560px){.calendar{grid-template-columns:repeat(5,1fr)}}
   .day{position:relative;aspect-ratio:1;border-radius:10px;border:1px solid rgba(255,255,255,.08);
     background:rgba(255,255,255,.02);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px}
-  .day .n{font-size:10px;color:var(--muted);letter-spacing:.05em}
+  .day .n{font-size:10px;color:#8a93a6;letter-spacing:.05em}
   .day .r{font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;color:#fff}
   .day.done{background:rgba(39,227,255,.08);border-color:var(--line2)}
   .day.done::after{content:"✓";position:absolute;top:4px;right:6px;color:var(--cyan);font-size:11px;font-weight:700}
@@ -183,7 +191,7 @@ function render(d){
         </button>
       </div>
       <div class="calendar">${calendarHTML(ck)}</div>
-      <p style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center">
+      <p style="font-size:12px;color:#8a93a6;margin-top:12px;text-align:center">
         Breaking the streak resets you to day 1. Milestone days have bigger rewards 🎉
       </p>
     </div>
@@ -191,13 +199,13 @@ function render(d){
     <div class="sect">🏆 Season ${se.label||''}</div>
     <div class="panel">
       <div style="text-align:center;margin-bottom:14px">
-        <div style="font-family:'Oswald',sans-serif;font-size:11px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase">Time left</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:11px;color:#8a93a6;letter-spacing:.15em;text-transform:uppercase">Time left</div>
         <div id="cd" style="font-family:'Oswald',sans-serif;font-size:30px;font-weight:700;color:var(--gold);text-shadow:0 0 16px rgba(244,196,65,.35)">--</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         ${(se.topRewards||[]).map(t=>`
           <div style="display:flex;justify-content:space-between;gap:10px;padding:10px 14px;background:rgba(255,255,255,.03);border-radius:10px;font-size:13px">
-            <b style="color:var(--gold)">${t.rank}</b><span style="color:var(--muted);text-align:right">${t.prize}</span>
+            <b style="color:var(--gold)">${t.rank}</b><span style="color:#8a93a6;text-align:right">${t.prize}</span>
           </div>`).join('')}
       </div>
     </div>`;

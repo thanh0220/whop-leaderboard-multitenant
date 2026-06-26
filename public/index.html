@@ -15,6 +15,21 @@
     --gold:#f4c441; --silver:#cbd5e1; --bronze:#e1955a; --diamond:#9beaff;
     --muted:#8a93a6; --text:#eef2f8;
     --line:rgba(255,45,75,.22); --line2:rgba(39,227,255,.3);
+    /* Surface "viền/nền mờ" dùng trực tiếp trên nền trang (không phải trong
+       card tối) — đổi riêng theo theme để không bị "trắng trên trắng". */
+    --ctrl-bg:rgba(255,255,255,.02); --ctrl-border:rgba(255,255,255,.12);
+    --topbar-bg:rgba(7,9,16,.92); --text2:#fff;
+  }
+  /* Light mode: chỉ đổi nền/chữ trang chính + control nổi trực tiếp trên nền
+     trang. Các card tối (podium, row, code-card...) CHỦ Ý giữ phong cách tối
+     (đã có color cố định riêng) — xem .pcard,.row,.code-card ở dưới. */
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f4f6fb; --text:#1a2230; --muted:#5b6576;
+      --ctrl-bg:rgba(10,20,40,.04); --ctrl-border:rgba(10,20,40,.14);
+      --topbar-bg:rgba(255,255,255,.9); --text2:#101826;
+    }
+    body::before{display:none}
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-text-size-adjust:100%}
@@ -33,10 +48,10 @@
   .topbar,.wrap{position:relative;z-index:1}
 
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
-    padding:13px 18px;position:sticky;top:0;z-index:30;background:rgba(7,9,16,.92);
+    padding:13px 18px;position:sticky;top:0;z-index:30;background:var(--topbar-bg);
     backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
   .brand{font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-    font-size:16px;color:#fff;display:flex;align-items:center;gap:10px}
+    font-size:16px;color:var(--text2);display:flex;align-items:center;gap:10px}
   .brand .suit{color:var(--red);text-shadow:0 0 12px rgba(255,45,75,.7);font-size:18px}
   .topbar-right{display:flex;align-items:center;gap:9px}
   .updated{font-size:11px;letter-spacing:.04em;color:var(--muted)}
@@ -56,11 +71,11 @@
     font-size:12px;font-weight:600;color:var(--cyan);padding:7px 18px;border:1px solid var(--line2);
     border-radius:999px;box-shadow:0 0 18px rgba(39,227,255,.18) inset}
   .hero-title{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
-    font-size:clamp(26px,5vw,46px);margin-top:14px;color:#fff;text-shadow:0 0 22px rgba(255,45,75,.45),0 2px 4px rgba(0,0,0,.5)}
+    font-size:clamp(26px,5vw,46px);margin-top:14px;color:var(--text2);text-shadow:0 0 22px rgba(255,45,75,.45),0 2px 4px rgba(0,0,0,.5)}
   .hero-stats{display:flex;gap:0;justify-content:center;flex-wrap:wrap;margin:16px 0 4px}
-  .hero-stats .hs{padding:0 22px;border-right:1px solid rgba(255,255,255,.1);text-align:center}
+  .hero-stats .hs{padding:0 22px;border-right:1px solid var(--ctrl-border);text-align:center}
   .hero-stats .hs:last-child{border-right:0}
-  .hero-stats .hv{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;color:#fff;line-height:1}
+  .hero-stats .hv{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;color:var(--text2);line-height:1}
   .hero-stats .hl{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}
 
   /* PRIZE / SEASON BANNER */
@@ -91,15 +106,15 @@
   .controls{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:20px 0 8px}
   .tabs{display:flex;gap:6px;flex-wrap:wrap}
   .tab{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:11.5px;font-weight:600;
-    padding:8px 15px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.02);
+    padding:8px 15px;border-radius:999px;border:1px solid var(--ctrl-border);background:var(--ctrl-bg);
     color:var(--muted);cursor:pointer;transition:.15s}
-  .tab.active{border-color:var(--cyan);color:#fff;background:rgba(39,227,255,.12);box-shadow:0 0 16px rgba(39,227,255,.3)}
+  .tab.active{border-color:var(--cyan);color:var(--text2);background:rgba(39,227,255,.12);box-shadow:0 0 16px rgba(39,227,255,.3)}
   .tab:hover:not(.active){border-color:var(--line2);color:var(--cyan)}
   .tab[data-sort="season"].active{border-color:var(--gold);background:rgba(244,196,65,.14);box-shadow:0 0 16px rgba(244,196,65,.3)}
   .tab-note{font-size:11.5px;color:var(--muted);line-height:1.5;margin:2px 0 14px}
   .tab-note b{color:var(--gold)}
   .search{position:relative}
-  .search input{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);color:#fff;
+  .search input{background:var(--ctrl-bg);border:1px solid var(--ctrl-border);color:var(--text2);
     padding:9px 14px 9px 36px;border-radius:999px;font:inherit;font-size:13px;width:190px;outline:none;transition:.15s}
   .search input::placeholder{color:var(--muted)}
   .search input:focus{border-color:var(--line2);box-shadow:0 0 14px rgba(39,227,255,.2)}
@@ -108,14 +123,17 @@
   /* SCOPE TOGGLE (tháng/tất cả) */
   .scope{display:flex;gap:5px;margin:0 0 16px}
   .scope button{font-family:'Oswald',sans-serif;letter-spacing:.06em;text-transform:uppercase;font-size:11px;
-    font-weight:600;padding:6px 13px;border-radius:8px;border:1px solid rgba(255,255,255,.12);
-    background:rgba(255,255,255,.02);color:var(--muted);cursor:pointer;transition:.15s}
+    font-weight:600;padding:6px 13px;border-radius:8px;border:1px solid var(--ctrl-border);
+    background:var(--ctrl-bg);color:var(--muted);cursor:pointer;transition:.15s}
   .scope button.on{border-color:var(--gold);color:var(--gold);background:rgba(244,196,65,.1)}
 
   /* PODIUM */
   .podium{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:end;margin-bottom:24px}
+  /* Card podium/row CỐ Ý luôn giữ nền tối (không đổi theo theme) — nên gán
+     color cố định #eef2f8, KHÔNG dùng var(--text) (var này đổi theo theme,
+     sẽ ra chữ tối trên nền tối ở light mode nếu không cố định). */
   .pcard{position:relative;border-radius:16px;padding:24px 16px 20px;text-align:center;overflow:hidden;
-    background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);color:#eef2f8;
     box-shadow:inset 0 2px 14px rgba(0,0,0,.6);animation:rise .55s cubic-bezier(.2,.8,.2,1) both}
   .pcard .watersuit{position:absolute;right:8px;bottom:-6px;font-size:64px;line-height:1;opacity:.07;z-index:0}
   .pcard>*{position:relative;z-index:1}
@@ -124,7 +142,7 @@
   .pcard.second{border-color:rgba(203,213,225,.25);animation-delay:.16s}
   .pcard.third{border-color:rgba(255,45,75,.3);box-shadow:inset 0 0 22px rgba(255,45,75,.14),0 0 16px rgba(255,45,75,.18);animation-delay:.26s}
   @keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
-  .ptag{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .ptag{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#8a93a6;margin-bottom:8px}
   .pcard.first .ptag{color:var(--cyan)}
   .ptrophy{font-size:30px;line-height:1;margin-bottom:8px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))}
   .pcard.first .ptrophy{font-size:40px}
@@ -142,7 +160,7 @@
   /* LIST */
   .list{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
   .row{display:flex;align-items:center;gap:13px;padding:11px 15px;border-radius:12px;
-    background:linear-gradient(160deg,#121b27,#0a0f18);border:1px solid rgba(255,255,255,.07);transition:.15s}
+    background:linear-gradient(160deg,#121b27,#0a0f18);border:1px solid rgba(255,255,255,.07);color:#eef2f8;transition:.15s}
   .row:hover{border-color:var(--line2);box-shadow:0 0 16px rgba(39,227,255,.16);transform:translateY(-1px)}
   .rank{flex:0 0 auto;width:34px;height:34px;border-radius:8px;display:grid;place-items:center;
     font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;color:#fff;background:#0c1320;
@@ -159,7 +177,9 @@
   /* BADGES: tier + free */
   .tier,.free{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;display:inline-flex;
     align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px}
-  .free{color:var(--muted);border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03)}
+  /* .free luôn nằm trong .pcard/.row (card luôn tối) — gán cố định, không
+     dùng var(--muted) (đổi theo theme sẽ ra chữ tối trên card tối ở light mode) */
+  .free{color:#8a93a6;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03)}
   .tier.dong{color:var(--bronze);border:1px solid rgba(225,149,90,.5);background:rgba(225,149,90,.1)}
   .tier.bac{color:var(--silver);border:1px solid rgba(203,213,225,.5);background:rgba(203,213,225,.1)}
   .tier.vang{color:var(--gold);border:1px solid rgba(244,196,65,.5);background:rgba(244,196,65,.1)}
@@ -202,17 +222,17 @@
     background:rgba(4,6,12,.7);backdrop-filter:blur(4px);padding:18px}
   .code-modal.show{display:flex}
   .code-card{width:min(380px,100%);background:#0c1020;border:1px solid var(--line);
-    border-radius:14px;padding:18px;color:var(--text);
+    border-radius:14px;padding:18px;color:#eef2f8;
     box-shadow:0 24px 60px rgba(0,0,0,.6)}
   .code-card h3{font-size:15px;margin-bottom:4px}
-  .code-card p{font-size:12px;color:var(--muted);margin-bottom:12px}
+  .code-card p{font-size:12px;color:#8a93a6;margin-bottom:12px}
   .code-card input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
-    background:#070b16;color:var(--text);font:500 14px 'Be Vietnam Pro',sans-serif;outline:none;
+    background:#070b16;color:#eef2f8;font:500 14px 'Be Vietnam Pro',sans-serif;outline:none;
     letter-spacing:.5px}
   .code-card input:focus{border-color:var(--gold)}
   .code-actions{display:flex;gap:8px;margin-top:12px}
   .code-actions button{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
-    background:#11172a;color:var(--text);font:600 13px 'Be Vietnam Pro',sans-serif;cursor:pointer}
+    background:#11172a;color:#eef2f8;font:600 13px 'Be Vietnam Pro',sans-serif;cursor:pointer}
   .code-actions .primary{background:linear-gradient(180deg,#f4c441,#d39a11);color:#1a1200;border-color:transparent}
   .code-actions .primary:disabled{opacity:.6;cursor:not-allowed}
   .code-msg{margin-top:10px;font-size:12.5px;min-height:1.2em}

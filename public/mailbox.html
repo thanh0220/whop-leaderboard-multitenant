@@ -8,22 +8,26 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#070910;--red:#ff2d4b;--cyan:#27e3ff;--gold:#f4c441;--silver:#cbd5e1;--bronze:#e1955a;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3)}
+  :root{--bg:#070910;--red:#ff2d4b;--cyan:#27e3ff;--gold:#f4c441;--silver:#cbd5e1;--bronze:#e1955a;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3);
+    --ctrl-bg:rgba(255,255,255,.03);--ctrl-border:rgba(255,255,255,.12)}
+  @media (prefers-color-scheme: light){
+    :root{--bg:#f4f6fb;--muted:#5b6576;--text:#1a2230;--ctrl-bg:rgba(10,20,40,.04);--ctrl-border:rgba(10,20,40,.14)}
+  }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:0 0 60px;
     background:radial-gradient(120% 70% at 50% -10%,rgba(255,45,75,.13),var(--bg) 55%),var(--bg);background-attachment:fixed}
   .wrap{max-width:680px;margin:0 auto;padding:22px 18px}
   .nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
   .nav a{font-family:'Oswald',sans-serif;letter-spacing:.1em;text-transform:uppercase;font-size:11px;
-    padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.12);
-    background:rgba(255,255,255,.03);color:var(--muted);text-decoration:none;transition:.15s}
+    padding:8px 14px;border-radius:999px;border:1px solid var(--ctrl-border);
+    background:var(--ctrl-bg);color:var(--muted);text-decoration:none;transition:.15s}
   .nav a.on{border-color:var(--line2);background:rgba(39,227,255,.1);color:var(--cyan);box-shadow:0 0 14px rgba(39,227,255,.25)}
   .top{display:flex;align-items:center;gap:10px;font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:.14em;
     text-transform:uppercase;font-size:16px;margin-bottom:14px}
   .top .s{color:var(--red);font-size:18px;text-shadow:0 0 12px rgba(255,45,75,.7)}
   .top b{color:var(--red)}
 
-  .chest{display:flex;align-items:center;gap:14px;background:linear-gradient(160deg,#16202f,#0a0f18);
+  .chest{display:flex;align-items:center;gap:14px;background:linear-gradient(160deg,#16202f,#0a0f18);color:#eef2f8;
     border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;margin-bottom:10px;position:relative;overflow:hidden}
   .chest.wood{border-color:rgba(225,149,90,.45)}
   .chest.silver{border-color:rgba(203,213,225,.45)}
@@ -66,9 +70,9 @@
     15%{opacity:1}
     100%{opacity:0;transform:translate(calc(-50% + var(--sx,0px)),calc(-50% + var(--sy,-34px))) scale(1) rotate(var(--sr,30deg))}
   }
-  .chest .desc{font-size:12.5px;color:var(--muted);margin-top:2px}
-  .chest .desc b{color:var(--text)}
-  .chest .exp{font-size:10.5px;color:var(--muted);margin-top:4px;font-family:'Oswald',sans-serif;letter-spacing:.04em}
+  .chest .desc{font-size:12.5px;color:#8a93a6;margin-top:2px}
+  .chest .desc b{color:#eef2f8}
+  .chest .exp{font-size:10.5px;color:#8a93a6;margin-top:4px;font-family:'Oswald',sans-serif;letter-spacing:.04em}
   .chest .claimed-tag{font-size:11px;color:#86efac;font-family:'Oswald',sans-serif;letter-spacing:.06em}
   .btn{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:12px;font-weight:700;
     padding:10px 18px;border-radius:10px;border:1px solid var(--line2);background:rgba(39,227,255,.1);color:var(--cyan);cursor:pointer;transition:.15s;flex-shrink:0}
