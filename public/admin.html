@@ -9,12 +9,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#070910;--cyan:#27e3ff;--gold:#f4c441;--silver:#cbd5e1;--bronze:#e1955a;--diamond:#9beaff;--red:#ff2d4b;--muted:#a3acc2;--text:#eef2f8;--line2:rgba(39,227,255,.3);
-    --ctrl-bg:rgba(255,255,255,.03);--ctrl-border:rgba(255,255,255,.12)}
-  /* Light mode: nền/chữ trung tính trang đổi theo theme. Panel/input vẫn CỐ Ý
-     giữ nền tối (.panel, input/select/textarea) — đã gán color cố định
-     #eef2f8 riêng cho các phần tử đó nên không phụ thuộc --text ở đây. */
+    --ctrl-bg:rgba(255,255,255,.03);--ctrl-border:rgba(255,255,255,.12);
+    --card1:#16202f;--card2:#0a0f18;--card-border:rgba(255,255,255,.08);
+    --card-text:#eef2f8;--card-muted:#8a93a6;--chip-bg:rgba(0,0,0,.25);
+    --modal-bg:#0a0f18;--modal-border:rgba(255,255,255,.12)}
+  /* Light mode: đổi đồng bộ nền trang + nền card/panel/input/modal + màu nhấn —
+     giữ đúng "mood" ánh xanh-than + màu nhấn neon của bản tối, chỉ giảm độ
+     sáng cho đủ tương phản trên nền sáng (xem index.html cho giải thích đầy đủ). */
   @media (prefers-color-scheme: light){
-    :root{--bg:#f4f6fb;--muted:#5b6576;--text:#1a2230;--ctrl-bg:rgba(10,20,40,.04);--ctrl-border:rgba(10,20,40,.14)}
+    :root{--bg:#eef1f7;--muted:#5d6478;--text:#161c2c;--red:#c81f3d;--cyan:#0a91a8;--gold:#9a6b00;
+      --silver:#6b7686;--bronze:#9a5a28;--diamond:#0e7a93;
+      --line2:rgba(10,145,168,.3);--ctrl-bg:rgba(22,28,44,.04);--ctrl-border:rgba(22,28,44,.14);
+      --card1:#ffffff;--card2:#eef2f9;--card-border:rgba(22,28,44,.09);
+      --card-text:#161c2c;--card-muted:#5d6478;--chip-bg:#e4e9f2;
+      --modal-bg:#ffffff;--modal-border:rgba(22,28,44,.12)}
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:30px 18px 100px;
@@ -31,14 +39,14 @@
   .tab-panel{animation:tabIn .25s ease}
   @keyframes tabIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
   .sect{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:16px;color:var(--gold);margin:26px 0 12px;scroll-margin-top:60px}
-  .panel{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px;margin-bottom:8px;color:#eef2f8}
+  .panel{background:linear-gradient(160deg,var(--card1),var(--card2));border:1px solid var(--card-border);border-radius:16px;padding:18px;margin-bottom:8px;color:var(--card-text)}
   label{display:block;font-size:11.5px;letter-spacing:.04em;color:var(--gold);margin:10px 0 4px;text-transform:uppercase;font-family:'Oswald',sans-serif}
   label:first-of-type{margin-top:0}
-  input,select,textarea{width:100%;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.12);
-    background:#070b16;color:#eef2f8;font:500 13px 'Be Vietnam Pro',sans-serif;outline:none}
+  input,select,textarea{width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--card-border);
+    background:var(--chip-bg);color:var(--card-text);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none}
   textarea{min-height:60px;resize:vertical}
   input:focus,select:focus,textarea:focus{border-color:var(--cyan)}
-  .hint-small{font-size:12px;color:#8a93a6;margin-top:3px;line-height:1.5}
+  .hint-small{font-size:12px;color:var(--card-muted);margin-top:3px;line-height:1.5}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .btn{margin-top:10px;padding:9px 14px;border-radius:8px;border:1px solid var(--line2);
     background:rgba(39,227,255,.12);color:var(--cyan);font:700 13px 'Oswald',sans-serif;letter-spacing:.06em;
@@ -47,7 +55,7 @@
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn.del{border-color:rgba(255,45,75,.4);background:rgba(255,45,75,.1);color:#ffb0bd}
   .btn.big{width:100%;margin-top:18px;padding:13px;font-size:13px}
-  .item{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:10px;background:rgba(255,255,255,.02)}
+  .item{border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--chip-bg)}
   .chest-tier-row{display:flex;gap:12px;align-items:flex-start}
   .chest-tier-row .chest-preview{width:64px;height:64px;flex:none;border-radius:10px;background:radial-gradient(circle,rgba(255,255,255,.06),rgba(255,255,255,0) 70%)}
   .chest-tier-row .tier-fields{flex:1;min-width:0}
@@ -72,15 +80,15 @@
   .calgrid .cell label{margin:0 0 2px;font-size:9px}
   .calgrid input{padding:6px;text-align:center;font-size:12px}
   @media(max-width:560px){.calgrid{grid-template-columns:repeat(5,1fr)}.row2{grid-template-columns:1fr}}
-  .thumb{width:64px;height:64px;border-radius:8px;background:#0a0f18;object-fit:cover;display:block;margin-bottom:6px;border:1px solid rgba(255,255,255,.1)}
-  .save-bar{position:fixed;left:0;right:0;bottom:0;padding:12px 18px;background:rgba(7,9,16,.95);
-    border-top:1px solid rgba(255,255,255,.1);display:flex;justify-content:center;gap:10px;z-index:20;backdrop-filter:blur(6px)}
+  .thumb{width:64px;height:64px;border-radius:8px;background:var(--card2);object-fit:cover;display:block;margin-bottom:6px;border:1px solid var(--card-border)}
+  .save-bar{position:fixed;left:0;right:0;bottom:0;padding:12px 18px;background:var(--modal-bg);
+    border-top:1px solid var(--card-border);display:flex;justify-content:center;gap:10px;z-index:20;backdrop-filter:blur(6px)}
   .save-bar .btn.big{margin:0;max-width:400px}
 
   .checkout-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
-  .checkout-modal{background:#0a0f18;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px;max-width:460px;width:100%;max-height:90vh;overflow:auto;position:relative;color:#eef2f8}
-  .checkout-modal .x{position:absolute;top:10px;right:14px;cursor:pointer;color:#8a93a6;font-size:18px}
-  .checkout-modal .x:hover{color:var(--text)}
+  .checkout-modal{background:var(--modal-bg);border:1px solid var(--modal-border);border-radius:16px;padding:18px;max-width:460px;width:100%;max-height:90vh;overflow:auto;position:relative;color:var(--card-text)}
+  .checkout-modal .x{position:absolute;top:10px;right:14px;cursor:pointer;color:var(--card-muted);font-size:18px}
+  .checkout-modal .x:hover{color:var(--card-text)}
 
   .pricing-card{max-width:340px;margin:0 auto;border-radius:16px;padding:22px;text-align:center;position:relative;
     background:linear-gradient(160deg,rgba(244,196,65,.1),rgba(39,227,255,.06));border:1px solid rgba(244,196,65,.4)}
@@ -88,11 +96,11 @@
   .pricing-badge{display:inline-block;font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
     padding:4px 12px;border-radius:20px;background:var(--gold);color:#1a1200;font-weight:700;margin-bottom:14px}
   .pricing-card.is-active .pricing-badge{background:#34d37a;color:#06210f}
-  .pricing-name{font-family:'Oswald',sans-serif;font-size:18px;letter-spacing:.04em;color:var(--text);margin-bottom:4px}
+  .pricing-name{font-family:'Oswald',sans-serif;font-size:18px;letter-spacing:.04em;color:var(--card-text);margin-bottom:4px}
   .pricing-price{font-family:'Oswald',sans-serif;font-size:38px;font-weight:700;color:var(--gold);line-height:1}
-  .pricing-price span{font-size:14px;color:#8a93a6;font-weight:400;font-family:'Be Vietnam Pro',sans-serif}
+  .pricing-price span{font-size:14px;color:var(--card-muted);font-weight:400;font-family:'Be Vietnam Pro',sans-serif}
   .pricing-features{list-style:none;margin:18px 0;padding:0;text-align:left;display:inline-block}
-  .pricing-features li{font-size:13px;color:var(--text);padding:5px 0;display:flex;align-items:center;gap:8px}
+  .pricing-features li{font-size:13px;color:var(--card-text);padding:5px 0;display:flex;align-items:center;gap:8px}
   .pricing-features li::before{content:'✓';color:#34d37a;font-weight:700}
   .pricing-cta{width:100%;margin-top:6px;padding:13px;border-radius:10px;border:none;cursor:pointer;
     font:700 13px 'Oswald',sans-serif;letter-spacing:.05em;text-transform:uppercase;
@@ -106,11 +114,11 @@
   .prev-col{position:sticky;top:70px}
   .prev-label{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;text-align:center;font-family:'Oswald',sans-serif}
 
-  .pv-card{position:relative;background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:0;display:flex;flex-direction:column;overflow:hidden;color:#eef2f8}
-  .pv-card .thumb2{position:relative;width:100%;aspect-ratio:1/1;background:#0a0f18 center/cover no-repeat;border-bottom:1px solid rgba(255,255,255,.06)}
+  .pv-card{position:relative;background:linear-gradient(160deg,var(--card1),var(--card2));border:1px solid var(--card-border);border-radius:16px;padding:0;display:flex;flex-direction:column;overflow:hidden;color:var(--card-text)}
+  .pv-card .thumb2{position:relative;width:100%;aspect-ratio:1/1;background:var(--card2) center/cover no-repeat;border-bottom:1px solid var(--card-border)}
   .pv-card .body2{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
   .pv-card h3{font-size:15px;font-weight:700;line-height:1.3}
-  .pv-card p{font-size:12.5px;color:#8a93a6;flex:1;line-height:1.5}
+  .pv-card p{font-size:12.5px;color:var(--card-muted);flex:1;line-height:1.5}
   .pv-badge{position:absolute;top:10px;left:10px;font-family:'Oswald',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:5px 9px;border-radius:6px;backdrop-filter:blur(4px);z-index:2}
   .pv-badge.hot{background:rgba(255,45,75,.18);color:#ffb0bd;border:1px solid rgba(255,45,75,.5)}
   .pv-badge.new{background:rgba(39,227,255,.18);color:var(--cyan);border:1px solid rgba(39,227,255,.5)}
@@ -120,7 +128,7 @@
   .pv-stock{position:absolute;top:10px;right:10px;font-family:'Oswald',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:5px 9px;border-radius:6px;background:rgba(10,15,24,.7);color:#ffb0bd;border:1px solid rgba(255,45,75,.45);backdrop-filter:blur(4px);z-index:2}
   .pv-cost-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:2px}
   .pv-cost{font-family:'Oswald',sans-serif;font-weight:700;color:var(--gold);font-size:18px;letter-spacing:.04em}
-  .pv-price-anchor{font-size:11px;color:#8a93a6;letter-spacing:.04em}
+  .pv-price-anchor{font-size:11px;color:var(--card-muted);letter-spacing:.04em}
   .pv-price-anchor s{color:rgba(255,255,255,.55)}
   .pv-price-anchor b{color:var(--cyan);font-weight:600}
   .pv-btn{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:12px;font-weight:600;
@@ -139,7 +147,7 @@
   .pv-fb-link{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;background:linear-gradient(135deg,rgba(178,102,255,.18),rgba(244,196,65,.12));border:1px solid rgba(178,102,255,.5);color:#fff;font-weight:600;font-size:12.5px;width:100%;box-sizing:border-box}
   .pv-fb-link small{display:block;font-size:10px;font-weight:400;color:rgba(255,255,255,.55);margin-top:2px}
 
-  .pv-prize{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:11px 13px}
+  .pv-prize{background:var(--chip-bg);border:1px solid var(--card-border);border-radius:11px;padding:11px 13px}
   .pv-prize .pp{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
   .pv-prize .pxu{font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;line-height:1}
   .pv-prize.r1 .pp,.pv-prize.r1 .pxu{color:var(--gold)}
@@ -147,25 +155,25 @@
   .pv-prize.r3 .pp,.pv-prize.r3 .pxu{color:var(--bronze)}
   .pv-prize.r4 .pp,.pv-prize.r4 .pxu,.pv-prize.r5 .pp,.pv-prize.r5 .pxu,.pv-prize.r6 .pp,.pv-prize.r6 .pxu{color:var(--diamond)}
 
-  .pv-quest{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:11px}
+  .pv-quest{display:flex;align-items:center;gap:10px;background:var(--chip-bg);border:1px solid var(--card-border);border-radius:12px;padding:11px}
   .pv-quest .ic{font-size:20px}
   .pv-quest .info{flex:1;min-width:0}
-  .pv-quest .nm{font-size:13px;font-weight:600;color:#fff;margin-bottom:2px}
+  .pv-quest .nm{font-size:13px;font-weight:600;color:var(--card-text);margin-bottom:2px}
   .pv-quest .rw{font-family:'Oswald',sans-serif;font-size:11px;color:var(--gold);letter-spacing:.05em}
 
-  .pv-day{position:relative;aspect-ratio:1;border-radius:8px;border:1px solid rgba(255,255,255,.08);
-    background:rgba(255,255,255,.02);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin-top:4px}
-  .pv-day .n{font-size:8px;color:#8a93a6;letter-spacing:.04em}
-  .pv-day .r{font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;color:#fff}
+  .pv-day{position:relative;aspect-ratio:1;border-radius:8px;border:1px solid var(--card-border);
+    background:var(--chip-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin-top:4px}
+  .pv-day .n{font-size:8px;color:var(--card-muted);letter-spacing:.04em}
+  .pv-day .r{font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;color:var(--card-text)}
 
   /* ===== #events — lịch kéo-thả ===== */
   .events-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
-  .events-nav .lbl{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.06em;color:#8a93a6;text-transform:uppercase}
+  .events-nav .lbl{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.06em;color:var(--card-muted);text-transform:uppercase}
   .ev-calendar{min-height:90px;position:relative}
   .ev-head-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:10px;user-select:none}
-  .ev-head-cell{text-align:center;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.05em;color:#8a93a6;text-transform:uppercase;padding:6px 2px;border-radius:6px}
+  .ev-head-cell{text-align:center;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.05em;color:var(--card-muted);text-transform:uppercase;padding:6px 2px;border-radius:6px}
   .ev-head-cell.today{color:var(--cyan);background:rgba(39,227,255,.08)}
-  .ev-head-cell .dd{font-size:12px;color:#eef2f8;font-weight:700;margin-top:2px}
+  .ev-head-cell .dd{font-size:12px;color:var(--card-text);font-weight:700;margin-top:2px}
   .ev-track{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;min-height:34px}
   .evt-bar{position:relative;border-radius:8px;padding:7px 22px;font-size:12.5px;font-weight:600;display:flex;align-items:center;
     overflow:hidden;white-space:nowrap;cursor:pointer;user-select:none}
@@ -180,21 +188,21 @@
   .evt-bar .ex{font-size:10px;line-height:1;opacity:.6;cursor:pointer;padding:2px;flex-shrink:0;margin-left:4px}
   .evt-bar .ex:hover{opacity:1}
   .event-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
-  .event-modal{background:#0a0f18;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px;max-width:460px;width:100%;position:relative;color:#eef2f8}
-  .event-modal .x{position:absolute;top:10px;right:14px;cursor:pointer;color:#8a93a6;font-size:18px}
-  .event-modal .x:hover{color:var(--text)}
+  .event-modal{background:var(--modal-bg);border:1px solid var(--modal-border);border-radius:16px;padding:18px;max-width:460px;width:100%;position:relative;color:var(--card-text)}
+  .event-modal .x{position:absolute;top:10px;right:14px;cursor:pointer;color:var(--card-muted);font-size:18px}
+  .event-modal .x:hover{color:var(--card-text)}
   .event-modal .modal-actions{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
   .event-modal .modal-actions .btn{margin-top:0;flex:1}
   .event-modal .name-input{font-size:17px;font-weight:700;font-family:'Oswald',sans-serif;text-align:center;letter-spacing:.02em}
-  .event-modal .img-box{position:relative;width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#070b16;
-    border:1px dashed rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+  .event-modal .img-box{position:relative;width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:var(--chip-bg);
+    border:1px dashed var(--card-border);display:flex;align-items:center;justify-content:center;margin-bottom:8px}
   .event-modal .img-box img{width:100%;height:100%;object-fit:cover}
-  .event-modal .img-box .ph{color:rgba(255,255,255,.28);font-size:12px;text-align:center;padding:10px;font-style:italic}
+  .event-modal .img-box .ph{color:var(--card-muted);font-size:12px;text-align:center;padding:10px;font-style:italic}
   .event-modal .img-toggle{display:flex;gap:6px;margin-bottom:8px}
   .event-modal .img-toggle .btn{flex:1;margin-top:0;padding:7px 8px;font-size:11px}
   .event-modal .img-toggle .btn.locked{opacity:.55}
   .event-modal .img-toggle .btn.on{background:rgba(39,227,255,.3);border-color:var(--cyan)}
-  .ev-empty{text-align:center;color:#8a93a6;font-size:12px;padding:10px 0}
+  .ev-empty{text-align:center;color:var(--card-muted);font-size:12px;padding:10px 0}
   .unscheduled-tray{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
   .chip{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:999px;
     margin:0 6px 6px 0;cursor:grab;user-select:none;width:160px}
@@ -207,31 +215,31 @@
 
   /* ===== Khối giới thiệu/hướng dẫn đầu mỗi tab + cảnh báo reward rỗng + mini preview ===== */
   .intro-card{background:rgba(39,227,255,.06);border:1px solid rgba(39,227,255,.25);border-radius:12px;padding:13px 15px;margin-bottom:14px}
-  .intro-what{font-size:13px;color:#eef2f8;line-height:1.6;margin-bottom:8px}
-  .intro-steps{margin:0;padding-left:20px;font-size:12.5px;color:#8a93a6;line-height:1.8}
+  .intro-what{font-size:13px;color:var(--card-text);line-height:1.6;margin-bottom:8px}
+  .intro-steps{margin:0;padding-left:20px;font-size:12.5px;color:var(--card-muted);line-height:1.8}
   .intro-steps li{margin-bottom:2px}
   .reward-empty{background:rgba(255,45,75,.08);border:1px solid rgba(255,45,75,.3);border-radius:12px;padding:14px;text-align:center;margin-bottom:12px}
   .reward-empty p{font-size:13px;color:#ffd0d8;margin-bottom:8px;line-height:1.5}
   .step-head{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;
     text-transform:uppercase;color:var(--gold);margin:18px 0 8px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px}
   .spin-pct{font-size:11px;color:var(--cyan);margin-top:4px;font-family:'Oswald',sans-serif;letter-spacing:.04em}
-  .mini-preview{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px;margin:8px 0}
-  .mini-preview img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#0a0f18}
-  .mini-preview .ic{width:44px;height:44px;border-radius:8px;background:#0a0f18;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .mini-preview{display:flex;align-items:center;gap:10px;background:var(--chip-bg);border:1px solid var(--card-border);border-radius:10px;padding:10px;margin:8px 0}
+  .mini-preview img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--card2)}
+  .mini-preview .ic{width:44px;height:44px;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
   .mini-preview .nm{font-size:13px;font-weight:600}
-  .mini-preview .sub{font-size:10.5px;color:#8a93a6;margin-top:1px}
+  .mini-preview .sub{font-size:10.5px;color:var(--card-muted);margin-top:1px}
   .mini-preview.big img,.mini-preview.big .ic{width:64px;height:64px;font-size:30px}
 
   /* ===== Khối "Mức dùng hiện tại" (giới hạn bản Free) — tab Billing ===== */
   .usage-card{background:rgba(255,45,75,.06);border:1px solid rgba(255,45,75,.25);border-radius:14px;padding:14px 16px;margin-bottom:16px}
   .usage-card h4{font-family:'Oswald',sans-serif;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:#ffb0bd;margin-bottom:10px}
   .usage-row{margin-bottom:10px}
-  .usage-row .lbl{display:flex;justify-content:space-between;font-size:12.5px;color:#eef2f8;margin-bottom:4px}
+  .usage-row .lbl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--card-text);margin-bottom:4px}
   .usage-row .lbl b{color:var(--gold)}
   .usage-bar{height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
   .usage-bar .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--gold))}
   .usage-locked{list-style:none;margin:10px 0 4px;padding:0}
-  .usage-locked li{font-size:12.5px;color:#8a93a6;padding:5px 0;border-top:1px solid rgba(255,255,255,.06)}
+  .usage-locked li{font-size:12.5px;color:var(--card-muted);padding:5px 0;border-top:1px solid rgba(255,255,255,.06)}
   .usage-locked li:first-child{border-top:none}
   .usage-locked b{color:#ffb0bd}
   .usage-check-btn{margin-top:4px}
@@ -269,7 +277,7 @@ function fmt(n){return Number(n||0).toLocaleString('en-US');}
 const BADGE_LABEL={hot:'🔥 Hot',new:'⚡ New',vip:'👑 VIP',bestseller:'⭐ Bestseller',limited:'⏳ Limited'};
 
 function storeCardHtml(r){
-  const thumb=r.image?`<div class="thumb2" style="background-image:url('${esc(r.image)}')"></div>`:`<div class="thumb2" style="background:linear-gradient(135deg,#1a2236,#0a0f18)"></div>`;
+  const thumb=r.image?`<div class="thumb2" style="background-image:url('${esc(r.image)}')"></div>`:`<div class="thumb2" style="background:linear-gradient(135deg,var(--card1),var(--card2))"></div>`;
   return `<div class="pv-card">
     ${thumb}
     <div class="body2">

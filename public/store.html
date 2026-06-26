@@ -12,12 +12,19 @@
   .nav a{font-family:'Oswald',sans-serif;letter-spacing:.1em;text-transform:uppercase;font-size:11px;
     padding:8px 14px;border-radius:999px;border:1px solid var(--ctrl-border);
     background:var(--ctrl-bg);color:var(--muted);text-decoration:none;transition:.15s}
-  .nav a:hover{border-color:rgba(39,227,255,.3);color:#27e3ff}
-  .nav a.on{border-color:rgba(39,227,255,.3);background:rgba(39,227,255,.1);color:#27e3ff;box-shadow:0 0 14px rgba(39,227,255,.25)}
+  .nav a:hover{border-color:rgba(39,227,255,.3);color:var(--cyan)}
+  .nav a.on{border-color:rgba(39,227,255,.3);background:rgba(39,227,255,.1);color:var(--cyan);box-shadow:0 0 14px rgba(39,227,255,.25)}
   :root{--bg:#070910;--red:#ff2d4b;--cyan:#27e3ff;--gold:#f4c441;--purple:#7B00D4;--purple-glow:#B266FF;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3);
-    --ctrl-bg:rgba(255,255,255,.03);--ctrl-border:rgba(255,255,255,.12)}
+    --ctrl-bg:rgba(255,255,255,.03);--ctrl-border:rgba(255,255,255,.12);
+    --card1:#16202f;--card2:#0a0f18;--card-border:rgba(255,255,255,.08);
+    --card-text:#eef2f8;--card-muted:#8a93a6;--chip-bg:rgba(0,0,0,.25);
+    --modal-bg:#0e1622;--modal-border:rgba(255,255,255,.12)}
   @media (prefers-color-scheme: light){
-    :root{--bg:#f4f6fb;--muted:#5b6576;--text:#1a2230;--ctrl-bg:rgba(10,20,40,.04);--ctrl-border:rgba(10,20,40,.14)}
+    :root{--bg:#eef1f7;--muted:#5d6478;--text:#161c2c;--red:#c81f3d;--cyan:#0a91a8;--gold:#9a6b00;
+      --line2:rgba(10,145,168,.3);--ctrl-bg:rgba(22,28,44,.04);--ctrl-border:rgba(22,28,44,.14);
+      --card1:#ffffff;--card2:#eef2f9;--card-border:rgba(22,28,44,.09);
+      --card-text:#161c2c;--card-muted:#5d6478;--chip-bg:#e4e9f2;
+      --modal-bg:#ffffff;--modal-border:rgba(22,28,44,.12)}
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:0 0 50px;
@@ -33,23 +40,23 @@
   .upsell b{color:var(--gold)}
 
   .bal{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:8px}
-  .bal .b{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;text-align:center;color:#eef2f8}
+  .bal .b{background:linear-gradient(160deg,var(--card1),var(--card2));border:1px solid var(--card-border);border-radius:14px;padding:16px;text-align:center;color:var(--card-text)}
   .bal .b.main{border-color:var(--line2);box-shadow:0 0 22px rgba(39,227,255,.18)}
-  .bal .v{font-family:'Oswald',sans-serif;font-size:30px;font-weight:700;line-height:1;color:#fff}
+  .bal .v{font-family:'Oswald',sans-serif;font-size:30px;font-weight:700;line-height:1;color:var(--card-text)}
   .bal .b.main .v{color:var(--cyan);text-shadow:0 0 16px rgba(39,227,255,.4)}
-  .bal .l{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#8a93a6;margin-top:6px}
+  .bal .l{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--card-muted);margin-top:6px}
   .hi{font-size:13px;color:var(--muted);margin:14px 2px 18px}
-  .hi b{color:#fff}
+  .hi b{color:var(--text)}
 
   .sect{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--gold);margin:22px 2px 12px}
   .rewards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-  .card{position:relative;background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:0;display:flex;flex-direction:column;overflow:hidden;color:#eef2f8;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+  .card{position:relative;background:linear-gradient(160deg,var(--card1),var(--card2));border:1px solid var(--card-border);border-radius:16px;padding:0;display:flex;flex-direction:column;overflow:hidden;color:var(--card-text);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
   .card:hover{transform:translateY(-3px);border-color:rgba(39,227,255,.35);box-shadow:0 14px 34px rgba(0,0,0,.55),0 0 22px rgba(39,227,255,.15)}
-  .card .thumb{position:relative;width:100%;aspect-ratio:1/1;background:#0a0f18 center/cover no-repeat;border-bottom:1px solid rgba(255,255,255,.06)}
+  .card .thumb{position:relative;width:100%;aspect-ratio:1/1;background:var(--card2) center/cover no-repeat;border-bottom:1px solid var(--card-border)}
   .card .thumb::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(10,15,24,.55) 100%);pointer-events:none}
   .card .body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
   .card h3{font-size:15px;font-weight:700;line-height:1.3}
-  .card p{font-size:12.5px;color:#8a93a6;flex:1;line-height:1.5}
+  .card p{font-size:12.5px;color:var(--card-muted);flex:1;line-height:1.5}
 
   /* Badges */
   .badge{position:absolute;top:10px;left:10px;font-family:'Oswald',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:5px 9px;border-radius:6px;backdrop-filter:blur(4px);z-index:2}
@@ -65,20 +72,20 @@
   /* Cost row with price anchor */
   .cost-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:2px}
   .cost{font-family:'Oswald',sans-serif;font-weight:700;color:var(--gold);font-size:18px;letter-spacing:.04em}
-  .price-anchor{font-size:11px;color:#8a93a6;letter-spacing:.04em}
+  .price-anchor{font-size:11px;color:var(--card-muted);letter-spacing:.04em}
   .price-anchor s{color:rgba(255,255,255,.55)}
   .price-anchor b{color:var(--cyan);font-weight:600}
 
   /* Progress bar — for rewards just out of reach */
   .progress{position:relative;width:100%;height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;margin-top:2px}
   .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--gold));border-radius:99px;transition:width .4s ease}
-  .progress-label{font-size:10.5px;color:#8a93a6;margin-top:4px;display:flex;justify-content:space-between;gap:8px}
+  .progress-label{font-size:10.5px;color:var(--card-muted);margin-top:4px;display:flex;justify-content:space-between;gap:8px}
   .progress-label b{color:var(--gold)}
 
   .btn{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:12px;font-weight:600;
     padding:10px 14px;border-radius:9px;border:1px solid var(--line2);background:rgba(39,227,255,.1);color:var(--cyan);cursor:pointer;transition:.15s;width:100%}
   .btn:hover:not(:disabled){background:rgba(39,227,255,.2);box-shadow:0 0 14px rgba(39,227,255,.3)}
-  .btn:disabled{opacity:.5;cursor:not-allowed;border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:#8a93a6}
+  .btn:disabled{opacity:.5;cursor:not-allowed;border-color:var(--card-border);background:var(--chip-bg);color:var(--card-muted)}
   .btn.primary{background:linear-gradient(135deg,rgba(244,196,65,.18),rgba(39,227,255,.18));border-color:rgba(244,196,65,.5);color:var(--gold)}
   .btn.primary:hover:not(:disabled){background:linear-gradient(135deg,rgba(244,196,65,.3),rgba(39,227,255,.25));box-shadow:0 0 18px rgba(244,196,65,.35)}
   /* Flip card (đã đổi) — gắn hiệu ứng lật bài vào chính ô quà */
@@ -120,8 +127,8 @@
   .err{background:rgba(255,45,75,.12);border:1px solid rgba(255,45,75,.4);border-radius:14px;padding:20px;color:#ffd0d8;font-size:14px;line-height:1.6}
 
   a.lb{display:inline-block;margin-top:6px;font-size:12px;color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(39,227,255,.4)}
-  .powered-badge{position:fixed;bottom:10px;right:12px;z-index:60;font-size:11px;color:var(--muted);
-    background:rgba(10,14,24,.7);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:4px 9px;
+  .powered-badge{position:fixed;bottom:10px;right:12px;z-index:60;font-size:11px;color:var(--card-muted);
+    background:var(--chip-bg);border:1px solid var(--card-border);border-radius:8px;padding:4px 9px;
     display:none;pointer-events:none}
 </style>
 </head>
@@ -282,7 +289,7 @@ function render(){
     const pct=Math.min(100,Math.round((d.available/rw.cost)*100));
     const thumb=rw.image
       ? `<div class="thumb" style="background-image:url('${esc(rw.image)}')"></div>`
-      : `<div class="thumb" style="background:linear-gradient(135deg,#1a2236,#0a0f18)"></div>`;
+      : `<div class="thumb" style="background:linear-gradient(135deg,var(--card1),var(--card2))"></div>`;
     const progress=(!can && !done)
       ? `<div class="progress"><i style="width:${pct}%"></i></div>
          <div class="progress-label"><span>Need <b>${fmt(gap)} more XU</b></span><span>${pct}%</span></div>`

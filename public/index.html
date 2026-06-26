@@ -16,18 +16,32 @@
     --muted:#8a93a6; --text:#eef2f8;
     --line:rgba(255,45,75,.22); --line2:rgba(39,227,255,.3);
     /* Surface "viền/nền mờ" dùng trực tiếp trên nền trang (không phải trong
-       card tối) — đổi riêng theo theme để không bị "trắng trên trắng". */
+       card) — đổi riêng theo theme để không bị "trắng trên trắng". */
     --ctrl-bg:rgba(255,255,255,.02); --ctrl-border:rgba(255,255,255,.12);
     --topbar-bg:rgba(7,9,16,.92); --text2:#fff;
+    /* Nền/viền/chữ của card (podium, row, popup...) — TÁCH RIÊNG khỏi
+       --bg/--text của trang vì card luôn "nổi" lên 1 sắc độ so với nền,
+       không thể dùng chung biến trang. */
+    --card1:#16202f; --card2:#0a0f18; --card-border:rgba(255,255,255,.08);
+    --card-text:#eef2f8; --card-muted:#8a93a6;
+    --chip-bg:rgba(0,0,0,.25);
+    --modal-bg:#0a0f18; --modal-border:rgba(255,255,255,.12);
   }
-  /* Light mode: chỉ đổi nền/chữ trang chính + control nổi trực tiếp trên nền
-     trang. Các card tối (podium, row, code-card...) CHỦ Ý giữ phong cách tối
-     (đã có color cố định riêng) — xem .pcard,.row,.code-card ở dưới. */
+  /* Light mode: đổi ĐỒNG BỘ cả nền trang VÀ nền card/chip/modal/màu nhấn —
+     không chỉ đảo trắng/đen, mà giữ đúng "mood" ánh xanh-than + màu nhấn
+     neon của bản tối, chỉ giảm độ sáng cho đủ tương phản trên nền sáng. */
   @media (prefers-color-scheme: light){
     :root{
-      --bg:#f4f6fb; --text:#1a2230; --muted:#5b6576;
-      --ctrl-bg:rgba(10,20,40,.04); --ctrl-border:rgba(10,20,40,.14);
+      --bg:#eef1f7; --text:#161c2c; --muted:#5d6478;
+      --red:#c81f3d; --redglow:#d94060; --cyan:#0a91a8;
+      --gold:#9a6b00; --silver:#6b7686; --bronze:#9a5a28; --diamond:#0e7a93;
+      --line:rgba(200,31,61,.25); --line2:rgba(10,145,168,.3);
+      --ctrl-bg:rgba(22,28,44,.04); --ctrl-border:rgba(22,28,44,.14);
       --topbar-bg:rgba(255,255,255,.9); --text2:#101826;
+      --card1:#ffffff; --card2:#eef2f9; --card-border:rgba(22,28,44,.09);
+      --card-text:#161c2c; --card-muted:#5d6478;
+      --chip-bg:#e4e9f2;
+      --modal-bg:#ffffff; --modal-border:rgba(22,28,44,.12);
     }
     body::before{display:none}
   }
@@ -86,17 +100,17 @@
   .season-name{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;
     font-size:16px;color:var(--gold);display:flex;align-items:center;gap:8px}
   .countdown{display:flex;gap:7px;align-items:center}
-  .cd-box{font-family:'Oswald',sans-serif;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);
+  .cd-box{font-family:'Oswald',sans-serif;background:var(--chip-bg);border:1px solid var(--card-border);
     border-radius:8px;padding:5px 9px;text-align:center;min-width:46px}
-  .cd-box b{display:block;font-size:18px;font-weight:700;color:#fff;line-height:1}
-  .cd-box span{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .cd-box b{display:block;font-size:18px;font-weight:700;color:var(--card-text);line-height:1}
+  .cd-box span{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--card-muted)}
   .cd-label{font-size:11px;color:var(--muted);letter-spacing:.05em;margin-right:2px}
   .prizes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-  .prize{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:11px 13px}
+  .prize{background:var(--chip-bg);border:1px solid var(--card-border);border-radius:11px;padding:11px 13px}
   .prize .pp{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
   .prize.r1 .pp{color:var(--gold)} .prize.r2 .pp{color:var(--silver)} .prize.r3 .pp{color:var(--bronze)}
   .prize.r4 .pp,.prize.r5 .pp,.prize.r6 .pp{color:var(--diamond)}
-  .prize.r4,.prize.r5,.prize.r6{background:rgba(0,0,0,.15)}
+  .prize.r4,.prize.r5,.prize.r6{background:var(--chip-bg)}
   .prize .pxu{font-family:'Oswald',sans-serif;font-weight:700;font-size:22px;line-height:1}
   .prize.r1 .pxu{color:var(--gold)} .prize.r2 .pxu{color:var(--silver)} .prize.r3 .pxu{color:var(--bronze)}
   .prize.r4 .pxu,.prize.r5 .pxu,.prize.r6 .pxu{color:var(--diamond)}
@@ -129,11 +143,8 @@
 
   /* PODIUM */
   .podium{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:end;margin-bottom:24px}
-  /* Card podium/row CỐ Ý luôn giữ nền tối (không đổi theo theme) — nên gán
-     color cố định #eef2f8, KHÔNG dùng var(--text) (var này đổi theo theme,
-     sẽ ra chữ tối trên nền tối ở light mode nếu không cố định). */
   .pcard{position:relative;border-radius:16px;padding:24px 16px 20px;text-align:center;overflow:hidden;
-    background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);color:#eef2f8;
+    background:linear-gradient(160deg,var(--card1),var(--card2));border:1px solid var(--card-border);color:var(--card-text);
     box-shadow:inset 0 2px 14px rgba(0,0,0,.6);animation:rise .55s cubic-bezier(.2,.8,.2,1) both}
   .pcard .watersuit{position:absolute;right:8px;bottom:-6px;font-size:64px;line-height:1;opacity:.07;z-index:0}
   .pcard>*{position:relative;z-index:1}
@@ -142,12 +153,12 @@
   .pcard.second{border-color:rgba(203,213,225,.25);animation-delay:.16s}
   .pcard.third{border-color:rgba(255,45,75,.3);box-shadow:inset 0 0 22px rgba(255,45,75,.14),0 0 16px rgba(255,45,75,.18);animation-delay:.26s}
   @keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
-  .ptag{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#8a93a6;margin-bottom:8px}
+  .ptag{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--card-muted);margin-bottom:8px}
   .pcard.first .ptag{color:var(--cyan)}
   .ptrophy{font-size:30px;line-height:1;margin-bottom:8px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))}
   .pcard.first .ptrophy{font-size:40px}
   .pavatar{width:80px;height:80px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;
-    overflow:hidden;font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;color:#fff;
+    overflow:hidden;font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;color:var(--card-text);
     border:2px solid rgba(255,255,255,.4);box-shadow:0 8px 22px rgba(0,0,0,.4)}
   .pcard.first .pavatar{width:104px;height:104px;border-color:var(--cyan);box-shadow:0 0 0 4px rgba(39,227,255,.2),0 0 26px rgba(39,227,255,.4)}
   .pavatar img{width:100%;height:100%;object-fit:cover}
@@ -160,13 +171,13 @@
   /* LIST */
   .list{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
   .row{display:flex;align-items:center;gap:13px;padding:11px 15px;border-radius:12px;
-    background:linear-gradient(160deg,#121b27,#0a0f18);border:1px solid rgba(255,255,255,.07);color:#eef2f8;transition:.15s}
+    background:linear-gradient(160deg,var(--card1),var(--card2));border:1px solid var(--card-border);color:var(--card-text);transition:.15s}
   .row:hover{border-color:var(--line2);box-shadow:0 0 16px rgba(39,227,255,.16);transform:translateY(-1px)}
   .rank{flex:0 0 auto;width:34px;height:34px;border-radius:8px;display:grid;place-items:center;
-    font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;color:#fff;background:#0c1320;
-    border:1px solid rgba(255,255,255,.12);font-variant-numeric:tabular-nums}
+    font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;color:var(--card-text);background:var(--chip-bg);
+    border:1px solid var(--card-border);font-variant-numeric:tabular-nums}
   .ravatar{width:40px;height:40px;border-radius:50%;flex:0 0 auto;overflow:hidden;display:flex;align-items:center;justify-content:center;
-    font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;color:#fff;border:2px solid rgba(255,255,255,.28)}
+    font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;color:var(--card-text);border:2px solid rgba(255,255,255,.28)}
   .ravatar img{width:100%;height:100%;object-fit:cover}
   .rinfo{flex:1;min-width:0}
   .rname{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:7px}
@@ -177,9 +188,7 @@
   /* BADGES: tier + free */
   .tier,.free{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;display:inline-flex;
     align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px}
-  /* .free luôn nằm trong .pcard/.row (card luôn tối) — gán cố định, không
-     dùng var(--muted) (đổi theo theme sẽ ra chữ tối trên card tối ở light mode) */
-  .free{color:#8a93a6;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03)}
+  .free{color:var(--card-muted);border:1px solid var(--card-border);background:var(--chip-bg)}
   .tier.dong{color:var(--bronze);border:1px solid rgba(225,149,90,.5);background:rgba(225,149,90,.1)}
   .tier.bac{color:var(--silver);border:1px solid rgba(203,213,225,.5);background:rgba(203,213,225,.1)}
   .tier.vang{color:var(--gold);border:1px solid rgba(244,196,65,.5);background:rgba(244,196,65,.1)}
@@ -221,25 +230,25 @@
   .code-modal{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;
     background:rgba(4,6,12,.7);backdrop-filter:blur(4px);padding:18px}
   .code-modal.show{display:flex}
-  .code-card{width:min(380px,100%);background:#0c1020;border:1px solid var(--line);
-    border-radius:14px;padding:18px;color:#eef2f8;
+  .code-card{width:min(380px,100%);background:var(--modal-bg);border:1px solid var(--line);
+    border-radius:14px;padding:18px;color:var(--card-text);
     box-shadow:0 24px 60px rgba(0,0,0,.6)}
   .code-card h3{font-size:15px;margin-bottom:4px}
-  .code-card p{font-size:12px;color:#8a93a6;margin-bottom:12px}
-  .code-card input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
-    background:#070b16;color:#eef2f8;font:500 14px 'Be Vietnam Pro',sans-serif;outline:none;
+  .code-card p{font-size:12px;color:var(--card-muted);margin-bottom:12px}
+  .code-card input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--card-border);
+    background:var(--chip-bg);color:var(--card-text);font:500 14px 'Be Vietnam Pro',sans-serif;outline:none;
     letter-spacing:.5px}
   .code-card input:focus{border-color:var(--gold)}
   .code-actions{display:flex;gap:8px;margin-top:12px}
-  .code-actions button{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
-    background:#11172a;color:#eef2f8;font:600 13px 'Be Vietnam Pro',sans-serif;cursor:pointer}
+  .code-actions button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--card-border);
+    background:var(--card1);color:var(--card-text);font:600 13px 'Be Vietnam Pro',sans-serif;cursor:pointer}
   .code-actions .primary{background:linear-gradient(180deg,#f4c441,#d39a11);color:#1a1200;border-color:transparent}
   .code-actions .primary:disabled{opacity:.6;cursor:not-allowed}
   .code-msg{margin-top:10px;font-size:12.5px;min-height:1.2em}
   .code-msg.ok{color:#7ee787}
   .code-msg.err{color:#ff8896}
-  .powered-badge{position:fixed;bottom:10px;right:12px;z-index:60;font-size:11px;color:var(--muted);
-    background:rgba(10,14,24,.7);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:4px 9px;
+  .powered-badge{position:fixed;bottom:10px;right:12px;z-index:60;font-size:11px;color:var(--card-muted);
+    background:var(--chip-bg);border:1px solid var(--card-border);border-radius:8px;padding:4px 9px;
     display:none;pointer-events:none}
 </style>
 </head>
@@ -448,7 +457,7 @@ function render(){
       const initialsTxt=name.slice(0,2).toUpperCase();
       const avEl=a.avatar
         ?`<div class="${cls[i]==='first'?'pavatar':'pavatar'}"><img src="${esc(a.avatar)}" alt="" onerror="this.parentElement.textContent=${esc(JSON.stringify(initialsTxt))}"/></div>`
-        :`<div class="pavatar" style="background:#16202f;color:#27e3ff">${esc(initialsTxt)}</div>`;
+        :`<div class="pavatar" style="background:var(--card1);color:var(--cyan)">${esc(initialsTxt)}</div>`;
       return `<div class="pcard ${cls[i]}"><span class="watersuit">${suits[i]}</span>
         <div class="ptag">${tags[i]}</div><div class="ptrophy">${tro}</div>
         ${avEl}<div class="pname">${esc(name)}</div>
@@ -459,7 +468,7 @@ function render(){
       const initialsTxt=name.slice(0,2).toUpperCase();
       const avEl=a.avatar
         ?`<div class="ravatar"><img src="${esc(a.avatar)}" alt="" onerror="this.parentElement.textContent=${esc(JSON.stringify(initialsTxt))}"/></div>`
-        :`<div class="ravatar" style="background:#16202f;color:#27e3ff">${esc(initialsTxt)}</div>`;
+        :`<div class="ravatar" style="background:var(--card1);color:var(--cyan)">${esc(initialsTxt)}</div>`;
       return `<div class="row"><div class="rank">${i+4}</div>${avEl}
         <div class="rinfo"><div class="rname">${esc(name)}</div></div>
         <div class="ramount">${a.referrals} referrals${a.commission>0?' · $'+Number(a.commission).toFixed(2):''}</div></div>`;
