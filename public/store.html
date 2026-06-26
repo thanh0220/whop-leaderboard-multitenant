@@ -20,8 +20,8 @@
     --card-text:#eef2f8;--card-muted:#8a93a6;--chip-bg:rgba(0,0,0,.25);
     --modal-bg:#0e1622;--modal-border:rgba(255,255,255,.12)}
   @media (prefers-color-scheme: light){
-    :root{--bg:#eef1f7;--muted:#5d6478;--text:#161c2c;--red:#c81f3d;--cyan:#0a91a8;--gold:#9a6b00;
-      --line2:rgba(10,145,168,.3);--ctrl-bg:rgba(22,28,44,.04);--ctrl-border:rgba(22,28,44,.14);
+    :root{--bg:#eef1f7;--muted:#5d6478;--text:#161c2c;--red:#e0123a;--cyan:#0098bb;--gold:#c9860a;
+      --line2:rgba(0,152,187,.32);--ctrl-bg:rgba(22,28,44,.04);--ctrl-border:rgba(22,28,44,.14);
       --card1:#ffffff;--card2:#eef2f9;--card-border:rgba(22,28,44,.09);
       --card-text:#161c2c;--card-muted:#5d6478;--chip-bg:#e4e9f2;
       --modal-bg:#ffffff;--modal-border:rgba(22,28,44,.12)}
@@ -130,6 +130,17 @@
   .powered-badge{position:fixed;bottom:10px;right:12px;z-index:60;font-size:11px;color:var(--card-muted);
     background:var(--chip-bg);border:1px solid var(--card-border);border-radius:8px;padding:4px 9px;
     display:none;pointer-events:none}
+
+  .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
+    background:var(--modal-bg);border:1px solid var(--line2);border-radius:12px;padding:14px 22px;color:var(--cyan);
+    font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:.05em;box-shadow:0 0 30px rgba(39,227,255,.35);transition:.3s;z-index:80}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+
+  @media (prefers-color-scheme: light){
+    body{background:radial-gradient(120% 70% at 50% -10%,rgba(224,18,58,.10),#f4f1fb 45%,#eef1f7 100%);background-attachment:fixed}
+    .b{box-shadow:0 4px 14px rgba(22,28,44,.07)}
+    .card{box-shadow:0 4px 14px rgba(22,28,44,.07)}
+  }
 </style>
 </head>
 <body>
@@ -149,12 +160,15 @@
   <div id="content"><div class="state"><div class="spinner"></div>Loading your XU...</div></div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 
 <script>
 let DATA=null;
 const $=id=>document.getElementById(id);
 function fmt(n){return Number(n||0).toLocaleString('en-US');}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2400);}
 
 /* Mọi request gửi kèm experienceId/companyId Whop truyền vào URL khi nhúng
    app trong iframe — backend dùng để biết đang phục vụ business nào. */
@@ -394,7 +408,7 @@ async function redeem(rewardId,btn){
       }
     });
   }catch(e){
-    alert('Redeem failed: '+e.message);
+    toast('⚠ Redeem failed: '+e.message);
     btn.disabled=false;btn.textContent='🎁 Redeem now';
   }
 }

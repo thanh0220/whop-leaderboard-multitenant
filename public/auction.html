@@ -75,6 +75,45 @@
     background:#150e26;border:1px solid var(--violet);border-radius:12px;padding:14px 22px;color:#e9d5ff;
     font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:.05em;box-shadow:0 0 30px rgba(168,85,247,.4);transition:.3s;z-index:80}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+
+  /* Light mode: giữ tinh thần "sân khấu đấu giá" nhưng đổi nền đen-tím sang
+     trắng-tím nhạt + thêm viền gradient vàng-tím quanh stage để sản phẩm
+     đấu giá nổi bật, không bị "chìm" trên nền trắng — trang này có theme
+     riêng, không dùng hệ biến chung. */
+  @media (prefers-color-scheme: light){
+    body{color:#2a1840;
+      background:radial-gradient(60% 50% at 50% 0%,rgba(168,85,247,.14),transparent 60%),#f8f6fc;
+      background-attachment:fixed}
+    .nav a{border-color:rgba(168,85,247,.2);background:rgba(255,255,255,.6);color:#5a2a8c}
+    .nav a.on{border-color:#a855f7;background:rgba(255,255,255,.85);color:#3a1b5c;box-shadow:0 0 12px rgba(168,85,247,.3)}
+    .stage{border:2px solid transparent;
+      background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#ffd966,#a855f7) border-box;
+      box-shadow:0 14px 40px rgba(168,85,247,.18),0 4px 14px rgba(201,134,10,.12)}
+    .stage::before{background:radial-gradient(circle,rgba(255,217,102,.3),transparent 60%)}
+    .item-spot{background:radial-gradient(circle,rgba(255,217,102,.4),transparent 72%)}
+    .item-spot .ic{filter:drop-shadow(0 0 18px rgba(201,134,10,.5))}
+    .item-name{color:#2a1840}
+    .item-desc{color:#8a6ab0}
+    .countdown{color:#5a2a8c}
+    .countdown b{color:#c9860a}
+    .bid-now{color:#8a6ab0}
+    .bid-amt{background:linear-gradient(135deg,#c9860a,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
+    .bid-by{color:#8a6ab0}
+    .badge.mine{background:rgba(34,197,94,.12);color:#15803d;border-color:rgba(34,197,94,.4)}
+    .badge.win{background:rgba(201,134,10,.14);color:#9a6500;border-color:rgba(201,134,10,.4)}
+    .quick-btn{border-color:rgba(168,85,247,.3);background:rgba(168,85,247,.08);color:#5a2a8c}
+    .quick-btn:hover{background:rgba(168,85,247,.18)}
+    .custom-row input{background:#fff;border-color:rgba(168,85,247,.2);color:#2a1840}
+    .history-title{color:#8a6ab0}
+    .bid-row{background:rgba(168,85,247,.05);border-color:rgba(168,85,247,.12)}
+    .bid-row .nm{color:#3a1b5c}
+    .bid-row .amt{color:#c9860a}
+    .empty{background:rgba(255,255,255,.6);color:#8a6ab0}
+    .state{color:#8a6ab0}
+    .spinner{border-color:rgba(168,85,247,.2);border-top-color:#a855f7}
+    .err{background:rgba(255,255,255,.7);border-color:rgba(255,45,75,.3);color:#9a2030}
+    .toast{background:#fff;border-color:#a855f7;color:#5a2a8c;box-shadow:0 0 24px rgba(168,85,247,.25)}
+  }
 </style>
 </head>
 <body>

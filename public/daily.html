@@ -14,8 +14,8 @@
     --card-text:#eef2f8;--card-muted:#8a93a6;--chip-bg:rgba(0,0,0,.25);
     --modal-bg:#0e1622;--modal-border:rgba(255,255,255,.12)}
   @media (prefers-color-scheme: light){
-    :root{--bg:#eef1f7;--muted:#5d6478;--text:#161c2c;--red:#c81f3d;--cyan:#0a91a8;--gold:#9a6b00;
-      --line2:rgba(10,145,168,.3);--ctrl-bg:rgba(22,28,44,.04);--ctrl-border:rgba(22,28,44,.14);
+    :root{--bg:#eef1f7;--muted:#5d6478;--text:#161c2c;--red:#e0123a;--cyan:#0098bb;--gold:#c9860a;
+      --line2:rgba(0,152,187,.32);--ctrl-bg:rgba(22,28,44,.04);--ctrl-border:rgba(22,28,44,.14);
       --card1:#ffffff;--card2:#eef2f9;--card-border:rgba(22,28,44,.09);
       --card-text:#161c2c;--card-muted:#5d6478;--chip-bg:#e4e9f2;
       --modal-bg:#ffffff;--modal-border:rgba(22,28,44,.12)}
@@ -84,6 +84,13 @@
   .powered-badge{position:fixed;bottom:10px;right:12px;z-index:60;font-size:11px;color:var(--card-muted);
     background:var(--chip-bg);border:1px solid var(--card-border);border-radius:8px;padding:4px 9px;
     display:none;pointer-events:none}
+
+  @media (prefers-color-scheme: light){
+    body{background:radial-gradient(120% 70% at 50% -10%,rgba(224,18,58,.10),#f4f1fb 45%,#eef1f7 100%);background-attachment:fixed}
+    .b{box-shadow:0 4px 14px rgba(22,28,44,.07)}
+    .panel{box-shadow:0 4px 14px rgba(22,28,44,.07)}
+    .day{box-shadow:0 2px 8px rgba(22,28,44,.05)}
+  }
 </style>
 </head>
 <body>

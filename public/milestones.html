@@ -87,6 +87,34 @@
     .panel .reward-preview{margin:0 auto}
     .cta-btn{width:100%}
   }
+
+  /* Light mode: giữ tinh thần "bản đồ kho báu" nhưng đổi nền nâu-tối sang
+     vàng kem sáng + chữ nâu đậm để đọc được — không dùng hệ biến chung vì
+     trang này có theme riêng (xem milestones.html không có :root light gốc). */
+  @media (prefers-color-scheme: light){
+    body{color:#4a3414;
+      background:
+        repeating-radial-gradient(circle at 20% 15%, rgba(201,134,10,.07) 0 2px, transparent 2px 38px),
+        repeating-radial-gradient(circle at 80% 60%, rgba(201,134,10,.06) 0 2px, transparent 2px 44px),
+        radial-gradient(120% 90% at 50% -10%, #fff6e0, #ffe9b0 45%, #f3cf7a 80%, #e3b454 100%);
+      background-attachment:fixed}
+    .nav a{border-color:rgba(0,0,0,.15);background:rgba(255,255,255,.5);color:#7a4a0a}
+    .nav a.on{border-color:#c9860a;background:rgba(255,255,255,.8);color:#5a3408;box-shadow:0 0 12px rgba(201,134,10,.3)}
+    .hero .cta{color:#8a5a10;text-shadow:none}
+    .hero h1{color:#5a3408;text-shadow:0 1px 2px rgba(255,255,255,.5)}
+    .hero .dates{color:#9a7320}
+    .hero .countdown{color:#5a3408}
+    .hero .countdown b{color:#c9860a}
+    .node:hover{background:rgba(0,0,0,.05)}
+    .node.selected{background:rgba(0,0,0,.07)}
+    .bar-row{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.15)}
+    .empty{background:rgba(255,255,255,.55);color:#7a4a0a}
+    .state{color:#7a4a0a}
+    .spinner{border-color:rgba(0,0,0,.15);border-top-color:#c9860a}
+    .err{background:rgba(255,255,255,.6);border-color:rgba(201,134,10,.35);color:#9a2030}
+    .toast{background:#fffaf0;border-color:#c9860a;color:#7a4a0a;box-shadow:0 0 24px rgba(201,134,10,.25)}
+    .powered-badge{color:#7a4a0a;background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.12)}
+  }
 </style>
 </head>
 <body>

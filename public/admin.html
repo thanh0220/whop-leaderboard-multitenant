@@ -17,9 +17,9 @@
      giữ đúng "mood" ánh xanh-than + màu nhấn neon của bản tối, chỉ giảm độ
      sáng cho đủ tương phản trên nền sáng (xem index.html cho giải thích đầy đủ). */
   @media (prefers-color-scheme: light){
-    :root{--bg:#eef1f7;--muted:#5d6478;--text:#161c2c;--red:#c81f3d;--cyan:#0a91a8;--gold:#9a6b00;
-      --silver:#6b7686;--bronze:#9a5a28;--diamond:#0e7a93;
-      --line2:rgba(10,145,168,.3);--ctrl-bg:rgba(22,28,44,.04);--ctrl-border:rgba(22,28,44,.14);
+    :root{--bg:#eef1f7;--muted:#5d6478;--text:#161c2c;--red:#e0123a;--cyan:#0098bb;--gold:#c9860a;
+      --silver:#5d6b80;--bronze:#a85a1f;--diamond:#0090b0;
+      --line2:rgba(0,152,187,.32);--ctrl-bg:rgba(22,28,44,.04);--ctrl-border:rgba(22,28,44,.14);
       --card1:#ffffff;--card2:#eef2f9;--card-border:rgba(22,28,44,.09);
       --card-text:#161c2c;--card-muted:#5d6478;--chip-bg:#e4e9f2;
       --modal-bg:#ffffff;--modal-border:rgba(22,28,44,.12)}
@@ -244,6 +244,11 @@
   .usage-locked b{color:#ffb0bd}
   .usage-check-btn{margin-top:4px}
   .usage-member-result{font-size:12px;color:var(--cyan);margin-top:6px}
+
+  @media (prefers-color-scheme: light){
+    .panel{box-shadow:0 4px 14px rgba(22,28,44,.07)}
+    .item{box-shadow:0 2px 8px rgba(22,28,44,.05)}
+  }
 </style>
 </head>
 <body>

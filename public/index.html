@@ -33,9 +33,9 @@
   @media (prefers-color-scheme: light){
     :root{
       --bg:#eef1f7; --text:#161c2c; --muted:#5d6478;
-      --red:#c81f3d; --redglow:#d94060; --cyan:#0a91a8;
-      --gold:#9a6b00; --silver:#6b7686; --bronze:#9a5a28; --diamond:#0e7a93;
-      --line:rgba(200,31,61,.25); --line2:rgba(10,145,168,.3);
+      --red:#e0123a; --redglow:#ef3a5c; --cyan:#0098bb;
+      --gold:#c9860a; --silver:#5d6b80; --bronze:#a85a1f; --diamond:#0090b0;
+      --line:rgba(224,18,58,.28); --line2:rgba(0,152,187,.32);
       --ctrl-bg:rgba(22,28,44,.04); --ctrl-border:rgba(22,28,44,.14);
       --topbar-bg:rgba(255,255,255,.9); --text2:#101826;
       --card1:#ffffff; --card2:#eef2f9; --card-border:rgba(22,28,44,.09);
@@ -43,7 +43,21 @@
       --chip-bg:#e4e9f2;
       --modal-bg:#ffffff; --modal-border:rgba(22,28,44,.12);
     }
-    body::before{display:none}
+    body{background:radial-gradient(120% 70% at 50% -10%,rgba(224,18,58,.10),#f4f1fb 45%,#eef1f7 100%);background-attachment:fixed}
+    body::before{opacity:.3;background-image:
+      radial-gradient(1.4px 1.4px at 14% 10%,var(--red),transparent),
+      radial-gradient(1px 1px at 66% 16%,var(--cyan),transparent),
+      radial-gradient(1.4px 1.4px at 38% 34%,var(--gold),transparent),
+      radial-gradient(1px 1px at 84% 46%,var(--red),transparent),
+      radial-gradient(1.4px 1.4px at 22% 70%,var(--cyan),transparent),
+      radial-gradient(1px 1px at 70% 86%,var(--gold),transparent)}
+    .pcard{box-shadow:0 4px 14px rgba(22,28,44,.07),inset 0 2px 14px rgba(0,0,0,.05)}
+    .pcard.first{box-shadow:0 4px 14px rgba(22,28,44,.07),inset 0 0 22px rgba(0,152,187,.12),0 0 18px rgba(0,152,187,.18)}
+    .pcard.third{box-shadow:0 4px 14px rgba(22,28,44,.07),inset 0 0 16px rgba(224,18,58,.10),0 0 12px rgba(224,18,58,.14)}
+    .row{box-shadow:0 3px 10px rgba(22,28,44,.06)}
+    .prize{box-shadow:0 3px 10px rgba(22,28,44,.06)}
+    .cd-box{box-shadow:0 2px 8px rgba(22,28,44,.05)}
+    .code-card{box-shadow:0 14px 34px rgba(22,28,44,.14)}
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-text-size-adjust:100%}
