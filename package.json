@@ -1,0 +1,10 @@
+{
+  "name": "whop-leaderboard-multitenant",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "@whop/api": "^0.0.23"
+  }
+}
