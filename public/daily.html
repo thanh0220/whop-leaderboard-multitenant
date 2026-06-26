@@ -226,11 +226,17 @@ function render(d){
     $('claim-ck').disabled=true;
     try{
       const r=await tenantFetch('/.netlify/functions/checkin',{method:'POST'});
-      const j=await r.json();
-      if(!r.ok) throw new Error(j.error||'Error');
-      toast(j.message||`+${j.reward} XU`);
+      let j=null;
+      try{ j=await r.json(); }catch(_){ j=null; }
+      if(!r.ok) throw new Error((j&&j.error)||'Could not check in, please try again.');
+      toast((j&&j.message)||(j&&j.reward?`🎉 +${j.reward} XU received!`:'🎉 Checked in successfully!'));
       setTimeout(load,400);
-    }catch(e){toast('⚠ '+e.message);$('claim-ck').disabled=false;}
+    }catch(e){
+      const friendly = /unexpected token|json|fetch|network/i.test(e.message||'')
+        ? 'Could not check in, please try again.' : e.message;
+      toast('⚠ '+friendly);
+      $('claim-ck').disabled=false;
+    }
   };
 
   // countdown
