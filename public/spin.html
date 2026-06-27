@@ -19,13 +19,22 @@
     background:rgba(0,0,0,.18);color:#e9d9ff;text-decoration:none;transition:.15s}
   .nav a.on{border-color:#fff;background:rgba(255,255,255,.22);color:#fff;box-shadow:0 0 14px rgba(255,255,255,.3)}
 
-  .hero h1{font-family:'Oswald',sans-serif;font-weight:700;font-size:28px;letter-spacing:.04em;text-transform:uppercase;
-    text-shadow:0 2px 8px rgba(0,0,0,.5)}
+  .hero h1{font-family:'Oswald',sans-serif;font-weight:700;font-size:31px;letter-spacing:.05em;text-transform:uppercase;
+    text-shadow:0 2px 8px rgba(0,0,0,.5),0 0 22px rgba(247,37,133,.35)}
   .hero .sub{font-size:12.5px;color:var(--muted);margin-top:4px}
 
   .ticket-row{display:flex;align-items:center;justify-content:center;gap:14px;margin:16px 0}
-  .ticket-pill{font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;background:rgba(255,255,255,.1);
-    border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:8px 16px}
+  /* Thiết kế vé quay giống vé giấy thật: 2 vết khuyết tròn ở mép trái/phải +
+     đường đứt nét ngăn icon 🎟 với số vé — thay cho khung pill phẳng cũ. */
+  .ticket-pill{position:relative;display:inline-flex;align-items:center;gap:10px;
+    font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;color:#3a2400;
+    background:linear-gradient(135deg,#ffe9a8,#ffd166);padding:9px 20px;
+    clip-path:polygon(0% 0%,100% 0%,100% 42%,94% 50%,100% 58%,100% 100%,0% 100%,0% 58%,6% 50%,0% 42%);
+    box-shadow:0 3px 10px rgba(0,0,0,.25)}
+  .ticket-pill::after{content:"";position:absolute;left:50%;top:18%;bottom:18%;width:0;
+    border-left:2px dashed rgba(58,36,0,.35);transform:translateX(-50%)}
+  .ticket-pill .t-icon{padding-right:8px}
+  .ticket-pill .t-count{padding-left:8px}
   .buy-btn{font-family:'Oswald',sans-serif;letter-spacing:.05em;text-transform:uppercase;font-size:12px;font-weight:700;
     padding:9px 16px;border-radius:999px;border:1px solid var(--gold);background:rgba(244,196,65,.15);color:var(--gold);
     cursor:pointer;transition:.15s}
@@ -33,21 +42,52 @@
   .buy-btn:disabled{opacity:.5;cursor:not-allowed}
 
   .wheel-wrap{position:relative;width:280px;height:280px;margin:18px auto 22px}
-  .pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);font-size:30px;z-index:5;
-    filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
-  .wheel{width:100%;height:100%;border-radius:50%;border:6px solid #ffd966;box-shadow:0 0 30px rgba(255,217,102,.4),inset 0 0 20px rgba(0,0,0,.3);
-    position:relative;transition:transform 3.2s cubic-bezier(.12,.67,.1,1)}
-  .slice-label{position:absolute;top:50%;left:50%;transform-origin:0 0;font-family:'Oswald',sans-serif;font-weight:700;
-    font-size:10.5px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);white-space:nowrap}
+  /* Con trỏ vẽ thuần CSS (tam giác border-trick) thay cho emoji 🔻 phẳng —
+     có đổ bóng để trông như kim loại thật, đúng kiểu pointer của wheel
+     chuyên nghiệp. */
+  .pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);z-index:6;
+    width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;
+    border-top:22px solid #ffd966;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45))}
+  /* Bánh xe giờ vẽ bằng Canvas (gradient/viền/icon đều do JS drawWheel() vẽ
+     trực tiếp, không còn DOM div theo từng slice) — tránh hẳn lỗi chữ đè/
+     cắt chữ vì canvas đặt chữ chính xác tới từng pixel. Dùng filter:drop-
+     shadow (theo hình alpha thật) thay cho box-shadow (theo khung vuông) vì
+     4 góc canvas trong suốt — box-shadow sẽ lộ viền vuông xấu. */
+  .wheel{display:block;width:280px;height:280px;position:relative;
+    filter:drop-shadow(0 0 22px rgba(255,217,102,.45));
+    transition:transform 3.2s cubic-bezier(.12,.67,.1,1)}
+  /* Lớp bóng gương (glossy sheen) — 1 div riêng phủ lên trên canvas (không
+     dùng ::after trên canvas vì nhiều engine không vẽ generated content lên
+     replaced element đúng thứ tự lớp). */
+  .wheel-sheen{position:absolute;inset:6px;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.4),rgba(255,255,255,0) 55%);
+    mix-blend-mode:screen;z-index:2}
+  /* Vòng "đèn carnival" chạy quanh viền bánh xe — dựng bằng JS (buildLights),
+     mỗi đèn nhấp nháy lệch pha để giống đèn led thật chạy quanh wheel. */
+  .wheel-lights{position:absolute;inset:0;pointer-events:none;z-index:3}
+  .wheel-light{position:absolute;width:8px;height:8px;border-radius:50%;transform:translate(-50%,-50%);
+    background:radial-gradient(circle,#fff9d6,#ffd166 60%,rgba(255,209,102,0) 100%);
+    box-shadow:0 0 6px 2px rgba(255,217,102,.7);animation:lightTwinkle 1.4s ease-in-out infinite}
+  @keyframes lightTwinkle{0%,100%{opacity:.4;transform:translate(-50%,-50%) scale(.8)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}}
   .hub{position:absolute;top:50%;left:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;
     background:radial-gradient(circle,#fff,#ffd966);box-shadow:0 0 14px rgba(255,217,102,.7);z-index:4;
     display:flex;align-items:center;justify-content:center;font-size:20px}
 
-  .spin-btn{font-family:'Oswald',sans-serif;letter-spacing:.06em;text-transform:uppercase;font-size:15px;font-weight:700;
-    padding:14px 30px;border-radius:14px;border:none;cursor:pointer;
+  /* Nút SPIN là điểm nhấn thị giác chính của trang — to hơn, tách rõ label
+     chính/phụ, có nhịp "thở" (pulse glow) mời người chơi bấm khi đang chờ;
+     tự tắt animation khi disabled (hết vé) hoặc đang quay (JS set disabled). */
+  .spin-btn{position:relative;font-family:'Oswald',sans-serif;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+    padding:16px 36px;border-radius:16px;border:none;cursor:pointer;
     background:linear-gradient(135deg,#f72585,#9d4edd);color:#fff;box-shadow:0 4px 0 #6b1a8f,0 8px 18px rgba(0,0,0,.35);transition:.15s}
+  .spin-btn .main{display:block;font-size:19px}
+  .spin-btn .sub{display:block;font-size:10.5px;opacity:.85;letter-spacing:.14em;margin-top:3px}
   .spin-btn:disabled{opacity:.5;cursor:not-allowed}
   .spin-btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #6b1a8f}
+  .spin-btn:not(:disabled){animation:spinPulse 1.8s ease-in-out infinite}
+  @keyframes spinPulse{
+    0%,100%{box-shadow:0 4px 0 #6b1a8f,0 8px 18px rgba(0,0,0,.35),0 0 0 rgba(247,37,133,.5)}
+    50%{box-shadow:0 4px 0 #6b1a8f,0 8px 26px rgba(0,0,0,.4),0 0 26px 8px rgba(247,37,133,.55)}
+  }
 
   .empty{text-align:center;font-size:13px;padding:50px 20px;background:rgba(0,0,0,.25);border-radius:16px;color:#e9d9ff}
   .state{text-align:center;padding:60px 20px;color:#e9d9ff}
@@ -59,6 +99,72 @@
     background:#2c0a52;border:1px solid var(--gold);border-radius:12px;padding:14px 22px;color:var(--gold);
     font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:.05em;box-shadow:0 0 30px rgba(244,196,65,.35);transition:.3s;z-index:80}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+
+  /* Hiệu ứng mở "Rương thần bí" khi quay trúng slice mysteryPool — tái dùng
+     đúng 3D chest model (chest3d.module.js) + animation lắc/bật nắp/hạt sáng
+     đã có sẵn ở trang Mailbox, chỉ render trong 1 modal full-screen thay vì
+     trong 1 thẻ chest nhỏ. */
+  .chest-modal{position:fixed;inset:0;background:rgba(10,4,30,.82);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:18px;z-index:90;opacity:0;pointer-events:none;transition:.3s}
+  .chest-modal.show{opacity:1;pointer-events:auto}
+  .chest3d{position:relative;width:140px;height:140px;perspective:300px}
+  .chest3d .chest-visual{position:relative;display:block;width:100%;height:100%;
+    transform-style:preserve-3d;transform-origin:50% 80%;transition:transform .15s}
+  .chest3d canvas.chest-visual{font-size:0}
+  .chest3d::before{content:"";position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:50%;
+    transform:translate(-50%,-50%) scale(0);opacity:0;pointer-events:none;
+    background:radial-gradient(circle,rgba(244,196,65,.95),rgba(244,196,65,0) 70%);z-index:2}
+  .chest3d.opening::before{animation:chestBurst .7s cubic-bezier(.2,.8,.2,1) forwards}
+  @keyframes chestBurst{0%{transform:translate(-50%,-50%) scale(0);opacity:1}60%{transform:translate(-50%,-50%) scale(7);opacity:.5}100%{transform:translate(-50%,-50%) scale(9);opacity:0}}
+  .chest3d.opening .chest-visual{animation:chestShake .7s cubic-bezier(.2,.8,.2,1)}
+  @keyframes chestShake{
+    0%{transform:rotate(0) translateY(0)}
+    15%{transform:rotate(-8deg) translateY(0)}
+    30%{transform:rotate(7deg) translateY(0)}
+    45%{transform:rotate(-5deg) translateY(-2px)}
+    60%{transform:rotateX(-55deg) translateY(-3px) scale(1.15)}
+    80%{transform:rotateX(-25deg) translateY(-1px) scale(1.1)}
+    100%{transform:rotateX(0) translateY(0) scale(1)}
+  }
+  .chest-modal .spark{position:absolute;left:50%;top:50%;font-size:16px;opacity:0;pointer-events:none;z-index:2}
+  .chest3d.opening .spark{animation:sparkFly .8s cubic-bezier(.15,.7,.3,1) forwards}
+  @keyframes sparkFly{
+    0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}
+    15%{opacity:1}
+    100%{opacity:0;transform:translate(calc(-50% + var(--sx,0px)),calc(-50% + var(--sy,-34px))) scale(1) rotate(var(--sr,30deg))}
+  }
+  .chest-modal-label{font-family:'Oswald',sans-serif;font-weight:700;font-size:18px;color:var(--gold);
+    text-shadow:0 2px 8px rgba(0,0,0,.6);text-align:center;padding:0 24px;min-height:24px;max-width:480px}
+
+  /* "Win Modal" ăn mừng — DÙNG CHUNG cho mọi loại giải (XU thẳng / sản phẩm
+     Shop / vật phẩm độc quyền / kết quả bên trong rương) thay vì chỉ có toast
+     nhỏ ở đáy màn hình. Quay trúng nên có 1 màn ăn mừng rõ ràng + cách nhận
+     thưởng ngay (copy mã) — đúng khuyến nghị từ các trang spin-to-win. */
+  .win-modal{position:fixed;inset:0;background:rgba(10,4,30,.85);display:flex;align-items:center;justify-content:center;
+    z-index:95;opacity:0;pointer-events:none;transition:.3s;padding:20px}
+  .win-modal.show{opacity:1;pointer-events:auto}
+  .win-card{position:relative;max-width:360px;width:100%;background:linear-gradient(160deg,#2c0a52,#170433);
+    border:1px solid rgba(244,196,65,.5);border-radius:20px;padding:30px 24px 26px;text-align:center;
+    box-shadow:0 0 50px rgba(244,196,65,.25);transform:scale(.85);transition:transform .35s cubic-bezier(.2,.8,.2,1.2);overflow:hidden}
+  .win-modal.show .win-card{transform:scale(1)}
+  .win-card .win-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:22px;letter-spacing:.05em;
+    color:var(--gold);text-shadow:0 0 16px rgba(244,196,65,.5);text-transform:uppercase;position:relative;z-index:2}
+  .win-card .win-icon{font-size:52px;margin:14px 0;position:relative;z-index:2}
+  .win-card .win-name{font-family:'Oswald',sans-serif;font-weight:700;font-size:17px;color:#fff;margin-bottom:10px;position:relative;z-index:2}
+  .win-card .win-body{position:relative;z-index:2;font-size:14px;color:var(--muted)}
+  .win-card .win-code-box{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.3);
+    border:1px dashed rgba(255,255,255,.35);border-radius:10px;padding:10px 14px;margin-bottom:8px;
+    font-family:'Oswald',sans-serif;letter-spacing:.04em;color:#fff;word-break:break-all;text-align:left}
+  .win-card .win-copy-btn{font-family:'Oswald',sans-serif;font-weight:700;font-size:11px;letter-spacing:.06em;
+    text-transform:uppercase;padding:7px 12px;border-radius:8px;border:1px solid var(--gold);
+    background:rgba(244,196,65,.18);color:var(--gold);cursor:pointer;flex-shrink:0;transition:.15s}
+  .win-card .win-copy-btn:hover{background:rgba(244,196,65,.3)}
+  .win-card .win-close{margin-top:18px;font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;font-size:13px;padding:11px 28px;border-radius:12px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#f72585,#9d4edd);color:#fff;box-shadow:0 4px 0 #6b1a8f;position:relative;z-index:2}
+  .confetti-layer{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:20px;z-index:1}
+  .confetti-piece{position:absolute;top:-12px;width:8px;height:14px;opacity:.95;animation:confettiFall 1.6s linear forwards}
+  @keyframes confettiFall{to{transform:translateY(380px) rotate(560deg);opacity:0}}
   .powered-badge{position:fixed;bottom:10px;right:12px;z-index:60;font-size:11px;color:#e9d9ff;
     background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:4px 9px;
     display:none;pointer-events:none}
@@ -74,7 +180,6 @@
     .nav a.on{border-color:#9d4edd;background:rgba(255,255,255,.85);color:#3a1b5c;box-shadow:0 0 12px rgba(157,78,221,.3)}
     .hero h1{color:#3a1b5c;text-shadow:none}
     .hero .sub{color:#8a6ab0}
-    .ticket-pill{background:rgba(255,255,255,.6);border-color:rgba(90,42,140,.2);color:#3a1b5c}
     .buy-btn{border-color:#c9860a;background:rgba(201,134,10,.12);color:#9a6500}
     .buy-btn:hover:not(:disabled){background:rgba(201,134,10,.22)}
     .wheel{border-color:#e3b454;box-shadow:0 0 24px rgba(227,180,84,.4),inset 0 0 16px rgba(0,0,0,.08)}
@@ -105,6 +210,29 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="chest-modal" id="chestModal">
+  <div class="chest3d" id="chestModalChest">
+    <canvas class="chest-visual" id="chestModalCanvas" width="140" height="140"></canvas>
+    <span class="spark" style="--sx:-34px;--sy:-16px;--sr:-24deg">🪙</span>
+    <span class="spark" style="--sx:32px;--sy:-12px;--sr:18deg">🪙</span>
+    <span class="spark" style="--sx:-14px;--sy:-46px;--sr:-14deg">🪙</span>
+    <span class="spark" style="--sx:16px;--sy:-42px;--sr:26deg">🪙</span>
+  </div>
+  <div class="chest-modal-label" id="chestModalLabel">🎁 Mystery Chest opening...</div>
+</div>
+
+<div class="win-modal" id="winModal">
+  <div class="win-card" id="winCard">
+    <div class="confetti-layer" id="confettiLayer"></div>
+    <div class="win-title">🎉 You Won!</div>
+    <div class="win-icon" id="winIcon">🎁</div>
+    <div class="win-name" id="winName"></div>
+    <div class="win-body" id="winBody"></div>
+    <button class="win-close" onclick="closeWinModal()">Awesome!</button>
+  </div>
+</div>
+
+<script type="module" src="/chest3d.module.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -146,7 +274,22 @@ function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
   }catch(_){}
 })();
 
-const SLICE_COLORS = ['#f72585','#9d4edd','#4cc9f0','#06d6a0','#ffd166','#ff6b6b','#4895ef','#7209b7'];
+// Mỗi tier 1 cặp gradient (2 màu, sáng→đậm) — dùng cho fill từng slice trên
+// canvas (createLinearGradient từ gần tâm ra viền). 2 biến thể/tier để các
+// slice cùng tier vẫn có chút khác biệt, không bị lì 1 màu.
+const TIER_GRADIENTS = {
+  common:   [['#1bc4d6','#0d6fa3'], ['#3f8cf2','#1c4fb0']],
+  mid:      [['#b06bf0','#7c2fd1'], ['#e066c2','#a82f8f']],
+  rare:     [['#ffe27a','#d99a06'], ['#ffc94a','#c97f00']],
+  treasure: [['#ffb347','#ff7a1a'], ['#ffe27a','#e0a106']],
+};
+function prizeTier(p, pct){
+  if (p.mystery) return 'treasure';
+  if (p.exclusive) return 'rare';
+  if (pct < 0.08) return 'rare';
+  if (pct < 0.18) return 'mid';
+  return 'common';
+}
 let DATA = null;
 let currentRotation = 0;
 let slices = [];
@@ -154,23 +297,83 @@ let slices = [];
 function computeSlices(prizes){
   const total = prizes.reduce((s,p)=>s+(Number(p.weight)||1),0) || 1;
   let acc = 0;
-  return prizes.map((p,i)=>{
-    const deg = (Number(p.weight)||1) / total * 360;
+  const tierCount = {};
+  return prizes.map((p)=>{
+    const w = Number(p.weight)||1;
+    const deg = w / total * 360;
     const startDeg = acc, midDeg = acc + deg/2;
     acc += deg;
-    return { ...p, startDeg, deg, midDeg, color: SLICE_COLORS[i % SLICE_COLORS.length] };
+    const tier = prizeTier(p, w/total);
+    const grads = TIER_GRADIENTS[tier];
+    const idx = tierCount[tier] || 0;
+    tierCount[tier] = idx + 1;
+    const [colorA, colorB] = grads[idx % grads.length];
+    return { ...p, startDeg, deg, midDeg, tier, colorA, colorB };
   });
 }
 
-function wheelGradient(sl){
-  const total = sl.reduce((s,p)=>s+p.deg,0) || 360;
-  let acc = 0;
-  const stops = sl.map(p=>{
-    const from = acc/total*100, to = (acc+p.deg)/total*100;
-    acc += p.deg;
-    return `${p.color} ${from}% ${to}%`;
+// Vẽ toàn bộ bánh xe trực tiếp lên canvas — gradient/viền/icon đều chính xác
+// tới từng pixel, không còn lỗi chữ đè/cắt như cách dựng bằng DOM div trước
+// đây. Quy đổi góc: hệ deg cũ (0deg = 12 giờ, tăng theo chiều kim đồng hồ,
+// khớp CSS rotate/conic-gradient) sang radian canvas (0 = 3 giờ) bằng
+// (deg - 90) * PI/180 — vẫn cùng chiều quay nên không phải đổi logic random/
+// logic dừng đúng giải ở doSpin().
+function drawWheel(){
+  const canvas = $('wheel');
+  if (!canvas || !canvas.getContext || !slices.length) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, cx = W/2, cy = W/2, R = cx - 6;
+  ctx.clearRect(0, 0, W, W);
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, R + 4, 0, 2*Math.PI);
+  const ringGrad = ctx.createRadialGradient(cx, cy, R - 2, cx, cy, R + 4);
+  ringGrad.addColorStop(0, 'rgba(255,217,102,0)');
+  ringGrad.addColorStop(1, 'rgba(255,217,102,.55)');
+  ctx.fillStyle = ringGrad;
+  ctx.fill();
+
+  slices.forEach(s => {
+    const a0 = (s.startDeg - 90) * Math.PI/180;
+    const a1 = (s.startDeg + s.deg - 90) * Math.PI/180;
+    const am = (s.midDeg - 90) * Math.PI/180;
+    const isSpecial = s.tier === 'rare' || s.tier === 'treasure';
+
+    const gx0 = cx + R*.15*Math.cos(am), gy0 = cy + R*.15*Math.sin(am);
+    const gx1 = cx + R*Math.cos(am),     gy1 = cy + R*Math.sin(am);
+    const grad = ctx.createLinearGradient(gx0, gy0, gx1, gy1);
+    grad.addColorStop(0, s.colorA);
+    grad.addColorStop(1, s.colorB);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, R, a0, a1);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = isSpecial ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.35)';
+    ctx.lineWidth = isSpecial ? 2.5 : 1.5;
+    ctx.stroke();
+
+    const tr = R*.64;
+    const tx = cx + tr*Math.cos(am), ty = cy + tr*Math.sin(am);
+    ctx.save();
+    ctx.translate(tx, ty);
+    ctx.rotate(am + Math.PI/2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,.65)';
+    ctx.shadowBlur = 3;
+    const icon = s.mystery ? '🎁' : (s.exclusive ? '🌟' : (s.xu ? '🪙' : '🛍'));
+    ctx.font = '22px "Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(icon, 0, s.xu ? -7 : 0);
+    if (s.xu) {
+      ctx.font = "700 10px 'Oswald',sans-serif";
+      ctx.fillText('+' + fmtMoney(s.xu) + 'XU', 0, 12);
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
   });
-  return `conic-gradient(${stops.join(',')})`;
 }
 
 async function load(){
@@ -197,11 +400,18 @@ function render(j){
     return;
   }
 
+  // render() luôn dựng lại <canvas> MỚI (qua innerHTML) nên nó luôn bắt đầu ở
+  // góc quay 0 — phải reset currentRotation theo, nếu không lần spin tiếp
+  // theo sẽ tính lệch góc dựa trên giá trị cũ trong khi canvas thật đã về 0,
+  // làm bánh xe dừng sai giải sau lần load lại đầu tiên (bug có sẵn từ trước
+  // khi còn dùng DOM div, không phải do lần đổi sang canvas này gây ra).
+  currentRotation = 0;
   slices = computeSlices(j.prizes);
-  const labels = slices.map(s => `
-    <div class="slice-label" style="transform:rotate(${s.midDeg}deg) translate(0,-104px) rotate(${-s.midDeg}deg)">
-      ${esc(s.label)}${s.xu ? ' +'+fmtMoney(s.xu)+'XU' : ''}
-    </div>`).join('');
+
+  // Tên đầy đủ từng giải không còn hiện trực tiếp trên canvas (chỉ icon +
+  // giá trị ngắn) — giữ lại trong title của wheel-wrap để xem khi cần, còn
+  // tên thật LUÔN hiện rõ trong Win Modal lúc trúng giải.
+  const namesTitle = slices.map(s => `${s.label}${s.xu ? ' +'+fmtMoney(s.xu)+'XU' : ''}`).join(' • ');
 
   $('content').innerHTML = `
     <div class="hero">
@@ -209,18 +419,43 @@ function render(j){
       <div class="sub">Deposit for free tickets, or trade XU for a shot at the jackpot!</div>
     </div>
     <div class="ticket-row">
-      <div class="ticket-pill">🎟 ${j.tickets} ticket${j.tickets===1?'':'s'}</div>
+      <div class="ticket-pill"><span class="t-icon">🎟</span><span class="t-count">${j.tickets} ticket${j.tickets===1?'':'s'}</span></div>
       <button class="buy-btn" id="buy-btn" ${j.xuAvailable < j.xuCostPerTicket ? 'disabled' : ''} onclick="buyTicket(this)">
         Buy 1 (-${fmtMoney(j.xuCostPerTicket)} XU)
       </button>
     </div>
-    <div class="wheel-wrap">
-      <div class="pointer">🔻</div>
-      <div class="wheel" id="wheel" style="background:${wheelGradient(slices)}">${labels}</div>
+    <div class="wheel-wrap" title="${esc(namesTitle)}">
+      <div class="pointer"></div>
+      <canvas class="wheel" id="wheel" width="280" height="280"></canvas>
+      <div class="wheel-sheen"></div>
+      <div class="wheel-lights" id="wheelLights"></div>
       <div class="hub">🎰</div>
     </div>
-    <button class="spin-btn" id="spin-btn" ${j.tickets<=0?'disabled':''} onclick="doSpin(this)">SPIN (-1 🎟)</button>
+    <button class="spin-btn" id="spin-btn" ${j.tickets<=0?'disabled':''} onclick="doSpin(this)">
+      <span class="main">🎰 SPIN</span><span class="sub">-1 🎟 per spin</span>
+    </button>
   `;
+  drawWheel();
+  buildLights($('wheelLights'), 14);
+}
+
+// Vòng đèn carnival quanh viền bánh xe — tính toạ độ bằng lượng giác (đơn
+// giản hơn nhiều so với cố làm bằng CSS rotate/translate cho 1 vòng tròn đều).
+function buildLights(container, count){
+  if (!container) return;
+  container.innerHTML = '';
+  const cx = 140, cy = 140, R = 146;
+  for (let i = 0; i < count; i++){
+    const angle = (360 / count) * i - 90;
+    const rad = angle * Math.PI / 180;
+    const x = cx + R * Math.cos(rad), y = cy + R * Math.sin(rad);
+    const el = document.createElement('div');
+    el.className = 'wheel-light';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.style.animationDelay = (i % 2 === 0 ? '0s' : '0.45s');
+    container.appendChild(el);
+  }
 }
 
 async function buyTicket(btn){
@@ -235,6 +470,76 @@ async function buyTicket(btn){
     toast('⚠ '+e.message);
     btn.disabled = false;
   }
+}
+
+// Khi quay trúng slice "Rương thần bí" (j.chestOpened), chạy 1 đoạn mở rương
+// 3D làm "màn úp mở" trước (tái dùng đúng chest3d.module.js của trang
+// Mailbox) — kết quả thật bên trong rương luôn được hiện sau đó qua đúng
+// Win Modal chung (openWinModal), không lộ trước trong lúc rương đang mở.
+let chestModalInstance = null;
+function playChestReveal(){
+  return new Promise((resolve) => {
+    const modal = $('chestModal'), chest3d = $('chestModalChest');
+    chest3d.classList.remove('opening');
+    modal.classList.add('show');
+    if (window.ChestVoxel) {
+      if (chestModalInstance) { try { chestModalInstance.dispose(); } catch (_) {} }
+      chestModalInstance = window.ChestVoxel.create($('chestModalCanvas'), 'gold');
+    }
+    requestAnimationFrame(() => {
+      chest3d.classList.add('opening');
+      chestModalInstance && chestModalInstance.open();
+    });
+    setTimeout(() => { modal.classList.remove('show'); resolve(); }, 1500);
+  });
+}
+
+// "Win Modal" ăn mừng dùng chung cho MỌI loại giải — luôn hiện rõ tên giải +
+// cách nhận thưởng ngay (XU thì báo đã cộng vào ví, có mã thì cho copy ngay
+// tại đây) kèm hiệu ứng confetti, thay vì chỉ có toast nhỏ ở đáy màn hình.
+function spawnConfetti(container, count){
+  const colors = ['#f72585','#9d4edd','#ffd166','#4cc9f0','#06d6a0'];
+  container.innerHTML = '';
+  for (let i=0;i<count;i++){
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random()*100+'%';
+    el.style.background = colors[i % colors.length];
+    el.style.animationDelay = (Math.random()*0.3)+'s';
+    el.style.transform = `rotate(${Math.floor(Math.random()*360)}deg)`;
+    container.appendChild(el);
+  }
+}
+let winModalResolve = null;
+function closeWinModal(){
+  $('winModal').classList.remove('show');
+  if (winModalResolve) { const r = winModalResolve; winModalResolve = null; r(); }
+}
+function openWinModal(j){
+  return new Promise((resolve) => {
+    winModalResolve = resolve;
+    const wonSlice = slices.find(s => s.id === j.prizeId);
+    const isBig = (j.xu && j.xu >= 200) || (wonSlice && (wonSlice.tier === 'rare' || wonSlice.tier === 'treasure'));
+    $('winIcon').textContent = j.code ? '🏆' : (j.xu ? '🪙' : '🎁');
+    $('winName').textContent = j.label || '';
+    const body = $('winBody');
+    if (j.code) {
+      body.innerHTML = `
+        <div class="win-code-box"><span style="flex:1">${esc(j.code)}</span>
+          <button class="win-copy-btn" id="winCopyBtn">📋 Copy code</button></div>
+        <div style="font-size:11.5px">Also saved in your reward history.</div>`;
+      const btn = $('winCopyBtn');
+      if (btn) btn.onclick = () => {
+        if (navigator.clipboard) navigator.clipboard.writeText(j.code).catch(()=>{});
+        btn.textContent = '✅ Copied!';
+        setTimeout(()=>{ btn.textContent = '📋 Copy code'; }, 1800);
+      };
+    } else {
+      body.innerHTML = `<div>+${fmtMoney(j.xu||0)} XU added to your balance 🪙</div>`;
+    }
+    spawnConfetti($('confettiLayer'), isBig ? 40 : 22);
+    $('winModal').classList.add('show');
+  });
 }
 
 async function doSpin(btn){
@@ -252,9 +557,10 @@ async function doSpin(btn){
     const wheel = $('wheel');
     wheel.style.transform = `rotate(${currentRotation}deg)`;
 
-    setTimeout(() => {
-      toast(j.xu ? `🎉 You won +${j.xu} XU!` : (j.code ? `🎉 You won: ${won.label}!` : '🎉 You won a prize!'));
-      setTimeout(load, 1200);
+    setTimeout(async () => {
+      if (j.chestOpened) await playChestReveal();
+      await openWinModal(j);
+      setTimeout(load, 300);
     }, 3300);
   }catch(e){
     toast('⚠ '+e.message);
