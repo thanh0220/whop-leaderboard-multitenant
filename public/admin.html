@@ -213,6 +213,31 @@
   .chip.quest{background:rgba(39,227,255,.1);border:1px solid rgba(39,227,255,.4);color:var(--cyan)}
   .chip.code{background:rgba(255,45,75,.1);border:1px solid rgba(255,45,75,.4);color:#ffb0bd}
 
+  /* ===== Lucky Spin — bánh xe preview + popup kéo-thả gán phần thưởng ===== */
+  .spin-admin-wheel-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:8px}
+  #spin-admin-canvas{cursor:pointer;border-radius:50%;filter:drop-shadow(0 0 16px rgba(244,196,65,.35));transition:transform .15s}
+  #spin-admin-canvas:hover{transform:scale(1.03)}
+  .spin-chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .spin-chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:9px 14px;
+    border-radius:10px;background:var(--chip-bg);border:1px solid var(--card-border);color:var(--card-text);
+    cursor:grab;user-select:none}
+  .spin-chip:active{cursor:grabbing}
+  .spin-slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .spin-slot{background:var(--chip-bg);border:1px solid var(--card-border);border-radius:12px;padding:10px;position:relative}
+  .spin-slot-head{display:flex;align-items:center;gap:6px;font-family:'Oswald',sans-serif;font-size:11px;
+    letter-spacing:.05em;text-transform:uppercase;color:var(--card-muted);margin-bottom:6px}
+  .spin-slot-pct{color:var(--cyan);font-weight:700}
+  .spin-slot-x{margin-left:auto;cursor:pointer;opacity:.6;font-size:13px}
+  .spin-slot-x:hover{opacity:1;color:var(--red)}
+  .spin-slot-empty{text-align:center;padding:14px 4px;border:1px dashed var(--card-border);border-radius:8px;
+    font-size:20px;color:var(--card-muted)}
+  .spin-slot-icon{font-size:20px;text-align:center;margin-bottom:4px}
+  .spin-slot input,.spin-slot select{font-size:12px;padding:6px 8px;margin-top:2px}
+  .spin-slot label{font-size:10.5px}
+  .spin-mystery-box{background:rgba(0,0,0,.15);border:1px dashed rgba(244,196,65,.4);border-radius:8px;padding:8px;margin-top:4px}
+  .spin-mini-grid{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+  .spin-mini-grid .spin-slot{padding:8px}
+
   /* ===== Khối giới thiệu/hướng dẫn đầu mỗi tab + cảnh báo reward rỗng + mini preview ===== */
   .intro-card{background:rgba(39,227,255,.06);border:1px solid rgba(39,227,255,.25);border-radius:12px;padding:13px 15px;margin-bottom:14px}
   .intro-what{font-size:13px;color:var(--card-text);line-height:1.6;margin-bottom:8px}
@@ -455,6 +480,7 @@ function renderAll(){
   applyNavActive();
   if (activeTab === 'chests') initChestPreviews();
   if (activeTab === 'auction') refreshAuctionStatus();
+  if (activeTab === 'spin') drawAdminSpinWheel();
 }
 
 // Rương 3D dùng làm preview tĩnh (không animate) cho mỗi tier — dispose canvas cũ
@@ -667,6 +693,29 @@ function payloadFields(p, i){
     <input value="${esc(p.code||'')}" oninput="setPath(STATE,'rewards.${i}.payload.code',this.value);refreshStorePreview(${i})"/>`;
 }
 
+// Giống payloadFields() ở trên nhưng nhận thẳng "đường dẫn STATE" (basePath)
+// thay vì giả định luôn là rewards.${i} — dùng lại cho vật phẩm độc quyền
+// Spin-only (spinRules.prizes.${i}.exclusive.payload) và giải con trong
+// Rương thần bí (spinRules.prizes.${i}.mysteryPool.${j}.exclusive.payload).
+function genericPayloadFields(p, basePath){
+  const kind = p.kind || 'code';
+  if (kind === 'link') return `
+    <label>Link to open on redeem</label>
+    <input value="${esc(p.url||'')}" oninput="setPath(STATE,'${basePath}.url',this.value)"/>
+    <label>Button label</label>
+    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'${basePath}.label',this.value)"/>`;
+  if (kind === 'ea') return `
+    <label>File link (e.g. EA bot / downloadable product)</label>
+    <input value="${esc(p.ea||'')}" oninput="setPath(STATE,'${basePath}.ea',this.value)"/>
+    <label>Setup guide link</label>
+    <input value="${esc(p.setup||'')}" oninput="setPath(STATE,'${basePath}.setup',this.value)"/>
+    <label>Button label</label>
+    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'${basePath}.label',this.value)"/>`;
+  return `
+    <label>Code received</label>
+    <input value="${esc(p.code||'')}" oninput="setPath(STATE,'${basePath}.code',this.value)"/>`;
+}
+
 function refreshStorePreview(i){
   const r = STATE.rewards[i];
   const el = $('prev-store-'+i);
@@ -859,53 +908,355 @@ function renderMilestones(){
 }
 
 // ===== #spin — Lucky Spin (vé tự động khi nạp tiền thật, hoặc đổi bằng xu) =====
-function spinTotalWeight(){
-  return (STATE.spinRules.prizes||[]).reduce((s,p)=>s+(Number(p.weight)||0),0) || 1;
+// Giao diện cấu hình giờ là 1 bánh xe preview (canvas, giống public/spin.html)
+// + 2 popup: chọn số ngăn rồi kéo-thả gán loại thưởng vào từng ngăn — thay
+// HẲN bản list-form cũ (admin không còn tự nhập tay số "weight" nữa, độ hiếm
+// tự suy ra theo loại/giá trị qua autoWeightFor()).
+
+// Bảng màu theo tier — PORT TRỰC TIẾP từ public/spin.html (2 file độc lập,
+// không share module) để wheel preview ở Admin nhìn giống y bánh xe thật.
+const SPIN_ADMIN_TIER_GRADIENTS = {
+  common:   [['#1bc4d6','#0d6fa3'], ['#3f8cf2','#1c4fb0']],
+  mid:      [['#b06bf0','#7c2fd1'], ['#e066c2','#a82f8f']],
+  rare:     [['#ffe27a','#d99a06'], ['#ffc94a','#c97f00']],
+  treasure: [['#ffb347','#ff7a1a'], ['#ffe27a','#e0a106']],
+};
+const SPIN_CHIP_DEFS = [
+  { type:'xu', icon:'🪙', label:'XU' },
+  { type:'reward', icon:'🛍', label:'Sản phẩm Shop' },
+  { type:'exclusive', icon:'🌟', label:'Độc quyền' },
+  { type:'mystery', icon:'🎁', label:'Rương bí ẩn' },
+];
+let dragPrizeType = null;
+
+// Suy "type" của 1 prize/sub-prize ĐÃ CÓ DỮ LIỆU thật (kể cả prize cũ tạo từ
+// UI list-form trước đây) — chỉ gọi với p khác null (slot trống dùng null
+// trực tiếp, không đi qua hàm này).
+function spinSlotType(p){
+  if (p.mysteryPool) return 'mystery';
+  if (p.exclusive) return 'exclusive';
+  if (p.rewardId) return 'reward';
+  return 'xu';
 }
-function updateSpinPct(){
-  const total = spinTotalWeight();
-  (STATE.spinRules.prizes||[]).forEach((p,i)=>{
-    const el = $('spin-pct-'+i);
-    if (el) el.textContent = '≈ ' + Math.round((Number(p.weight)||0)/total*100) + '% chance to win this';
+function autoWeightFor(type, xu){
+  if (type === 'mystery') return 5;
+  if (type === 'exclusive') return 8;
+  if (type === 'reward') return 12;
+  const v = Number(xu)||0;
+  if (v <= 20) return 25;
+  if (v <= 100) return 15;
+  if (v <= 300) return 8;
+  return 4;
+}
+function spinSlotWeight(p){
+  if (!p) return 0;
+  return autoWeightFor(spinSlotType(p), p.xu);
+}
+function spinSlotTier(p){
+  if (!p) return 'common';
+  const type = spinSlotType(p);
+  if (type === 'mystery') return 'treasure';
+  if (type === 'exclusive') return 'rare';
+  if (type === 'reward') return 'mid';
+  const v = Number(p.xu)||0;
+  return v > 100 ? 'rare' : (v > 20 ? 'mid' : 'common');
+}
+
+// Bánh xe preview trong panel Admin — CHỈ để xem trước, không tự quay. Port
+// rút gọn từ computeSlices()/drawWheel() của public/spin.html.
+function drawAdminSpinWheel(){
+  const canvas = $('spin-admin-canvas');
+  if (!canvas || !canvas.getContext) return;
+  const prizes = (STATE.spinRules.prizes||[]);
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, cx = W/2, cy = W/2, R = cx - 4;
+  ctx.clearRect(0,0,W,W);
+  if (!prizes.length){
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,2*Math.PI);
+    ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = '700 14px Oswald,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('Bấm để thiết lập', cx, cy);
+    return;
+  }
+  const total = prizes.reduce((s,p)=>s+(Number(p.weight)||1),0) || 1;
+  let acc = 0;
+  const tierCount = {};
+  prizes.forEach(p=>{
+    const w = Number(p.weight)||1;
+    const deg = w/total*360;
+    const a0 = (acc-90)*Math.PI/180, a1 = (acc+deg-90)*Math.PI/180, am = (acc+deg/2-90)*Math.PI/180;
+    acc += deg;
+    const tier = p.mysteryPool ? 'treasure' : p.exclusive ? 'rare' : (w/total<0.08?'rare':(w/total<0.18?'mid':'common'));
+    const grads = SPIN_ADMIN_TIER_GRADIENTS[tier];
+    const idx = tierCount[tier] || 0; tierCount[tier] = idx+1;
+    const [colorA,colorB] = grads[idx % grads.length];
+    const gx0=cx+R*.15*Math.cos(am), gy0=cy+R*.15*Math.sin(am), gx1=cx+R*Math.cos(am), gy1=cy+R*Math.sin(am);
+    const grad = ctx.createLinearGradient(gx0,gy0,gx1,gy1);
+    grad.addColorStop(0,colorA); grad.addColorStop(1,colorB);
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,a0,a1); ctx.closePath();
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 1.5; ctx.stroke();
+    const tr = R*.62, tx = cx+tr*Math.cos(am), ty = cy+tr*Math.sin(am);
+    ctx.save(); ctx.translate(tx,ty); ctx.rotate(am+Math.PI/2);
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#fff';
+    const icon = p.mysteryPool ? '🎁' : p.exclusive ? '🌟' : p.rewardId ? '🛍' : '🪙';
+    ctx.font = '16px "Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    ctx.fillText(icon, 0, 0);
+    ctx.restore();
   });
+}
+
+// ----- Popup bước 1: chọn số lượng ngăn -----
+function openSpinCountModal(){
+  const current = (STATE.spinRules.prizes||[]).length || 6;
+  window._spinCountVal = current;
+  const wrap = document.createElement('div');
+  wrap.className = 'event-modal-overlay';
+  wrap.id = 'spin-count-overlay';
+  wrap.innerHTML = `
+    <div class="event-modal" style="max-width:340px;text-align:center">
+      <div class="x" onclick="closeSpinCountModal()">✕</div>
+      <div class="step-head" style="border-top:none;padding-top:0;margin-top:0">🎰 Số lượng ngăn trên bánh xe</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin:18px 0">
+        <button class="btn" style="margin-top:0;padding:10px 16px" onclick="adjustSpinCount(-1)">−</button>
+        <div id="spin-count-val" style="font-family:'Oswald',sans-serif;font-size:32px;font-weight:700;min-width:50px">${current}</div>
+        <button class="btn" style="margin-top:0;padding:10px 16px" onclick="adjustSpinCount(1)">+</button>
+      </div>
+      <div class="hint-small" style="margin-bottom:16px">Tối thiểu 3, tối đa 10 ngăn.</div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeSpinCountModal()">Hủy</button>
+        <button class="btn" style="background:rgba(244,196,65,.25);border-color:var(--gold);color:var(--gold)" onclick="confirmSpinCount()">Tiếp tục →</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+function adjustSpinCount(delta){
+  window._spinCountVal = Math.max(3, Math.min(10, (window._spinCountVal||6) + delta));
+  $('spin-count-val').textContent = window._spinCountVal;
+}
+function closeSpinCountModal(){
+  const el = $('spin-count-overlay');
+  if (el) el.remove();
+}
+function confirmSpinCount(){
+  const n = window._spinCountVal || 6;
+  const existing = STATE.spinRules.prizes || [];
+  const slots = [];
+  for (let i=0;i<n;i++) slots.push(existing[i] ? JSON.parse(JSON.stringify(existing[i])) : null);
+  STATE._spinDraft = { slots };
+  closeSpinCountModal();
+  openSpinSetupModal();
+}
+
+// ----- Popup bước 2: kéo-thả thiết lập từng ngăn -----
+function spinChipsHtml(){
+  return SPIN_CHIP_DEFS
+    .filter(c => c.type!=='reward' || (STATE.rewards||[]).length>0)
+    .map(c => `<div class="spin-chip" draggable="true" ondragstart="dragPrizeType='${c.type}'">${c.icon} ${c.label}</div>`)
+    .join('');
+}
+function spinSlotCardHtml(i){
+  const p = STATE._spinDraft.slots[i];
+  const type = p ? spinSlotType(p) : null;
+  let inner;
+  if (!type) {
+    inner = `<div class="spin-slot-empty">?<div class="hint-small">Kéo 1 thẻ vào đây</div></div>`;
+  } else if (type === 'xu') {
+    inner = `<div class="spin-slot-icon">🪙</div><label>Số XU</label>
+      <input type="number" min="0" value="${p.xu||0}" oninput="updateSpinSlotXu(${i},this.value)"/>`;
+  } else if (type === 'reward') {
+    const opts = (STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${p.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('');
+    inner = `<div class="spin-slot-icon">🛍</div><label>Sản phẩm</label>
+      <select onchange="updateSpinSlotRewardId(${i},this.value)">${opts || '<option value="">(Chưa có reward)</option>'}</select>`;
+  } else if (type === 'exclusive') {
+    const ex = p.exclusive; const pp = ex.payload || (ex.payload={kind:'code',code:''});
+    inner = `<div class="spin-slot-icon">🌟</div>
+      <label>Tên vật phẩm</label><input value="${esc(ex.label||'')}" oninput="setPath(STATE,'_spinDraft.slots.${i}.exclusive.label',this.value)"/>
+      <label>Ảnh (link, optional)</label><input value="${esc(ex.image||'')}" placeholder="https://..." oninput="setPath(STATE,'_spinDraft.slots.${i}.exclusive.image',this.value)"/>
+      <label>Loại thưởng</label>
+      <select onchange="setPath(STATE,'_spinDraft.slots.${i}.exclusive.payload.kind',this.value);rerenderSpinSlot(${i})">
+        <option value="code" ${pp.kind==='code'?'selected':''}>Code</option>
+        <option value="link" ${pp.kind==='link'?'selected':''}>Link</option>
+        <option value="ea" ${pp.kind==='ea'?'selected':''}>File + setup guide</option>
+      </select>
+      ${genericPayloadFields(pp, `_spinDraft.slots.${i}.exclusive.payload`)}`;
+  } else if (type === 'mystery') {
+    inner = `<div class="spin-slot-icon">🎁</div>` + spinMysteryHtml(i);
+  }
+  return `
+    <div class="spin-slot" data-i="${i}" ondragover="event.preventDefault()" ondrop="onSpinSlotDrop(event,${i})">
+      <div class="spin-slot-head">Ngăn ${i+1} <span class="spin-slot-pct" id="spin-slot-pct-${i}"></span>
+        ${type?`<span class="spin-slot-x" onclick="clearSpinSlot(${i})">✕</span>`:''}
+      </div>
+      ${inner}
+    </div>`;
+}
+function spinMysteryHtml(i){
+  const pool = STATE._spinDraft.slots[i].mysteryPool || (STATE._spinDraft.slots[i].mysteryPool = []);
+  const rows = pool.map((m,j)=>{
+    const mtype = spinSlotType(m);
+    let inner;
+    if (mtype === 'xu') {
+      inner = `<label>XU</label><input type="number" min="0" value="${m.xu||0}" oninput="updateSpinMysteryXu(${i},${j},this.value)"/>`;
+    } else if (mtype === 'reward') {
+      const opts = (STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${m.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('');
+      inner = `<label>Sản phẩm</label><select onchange="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.rewardId',this.value)">${opts}</select>`;
+    } else {
+      const ex = m.exclusive; const pp = ex.payload || (ex.payload={kind:'code',code:''});
+      inner = `
+        <label>Tên</label><input value="${esc(ex.label||'')}" oninput="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.exclusive.label',this.value)"/>
+        <label>Ảnh</label><input value="${esc(ex.image||'')}" oninput="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.exclusive.image',this.value)"/>
+        <select onchange="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.exclusive.payload.kind',this.value);rerenderSpinSlot(${i})">
+          <option value="code" ${pp.kind==='code'?'selected':''}>Code</option>
+          <option value="link" ${pp.kind==='link'?'selected':''}>Link</option>
+          <option value="ea" ${pp.kind==='ea'?'selected':''}>File + guide</option>
+        </select>
+        ${genericPayloadFields(pp, `_spinDraft.slots.${i}.mysteryPool.${j}.exclusive.payload`)}`;
+    }
+    return `
+    <div class="spin-slot">
+      <div class="spin-slot-head">Khả năng ${j+1} <span class="spin-slot-pct" id="spin-sub-pct-${i}-${j}"></span>
+        <span class="spin-slot-x" onclick="clearSpinMysterySlot(${i},${j})">✕</span>
+      </div>
+      ${inner}
+    </div>`;
+  }).join('');
+  return `
+    <div class="spin-mystery-box" ondragover="event.preventDefault()" ondrop="onSpinMysteryDrop(event,${i})">
+      <div class="hint-small">Kéo thẻ vào đây để thêm khả năng bên trong rương:</div>
+      <div class="spin-mini-grid">${rows || '<p class="hint-small">Chưa có khả năng nào.</p>'}</div>
+    </div>`;
+}
+function rerenderSpinSlot(i){
+  const el = document.querySelector('.spin-slot[data-i="'+i+'"]');
+  if (el) el.outerHTML = spinSlotCardHtml(i);
+  refreshAllSpinPercents();
+}
+function onSpinSlotDrop(e, i){
+  e.preventDefault();
+  if (!dragPrizeType) return;
+  const type = dragPrizeType; dragPrizeType = null;
+  let slot;
+  if (type === 'xu') slot = { label:'XU Prize', xu:0 };
+  else if (type === 'reward') slot = { label:'Shop reward', rewardId: ((STATE.rewards||[])[0]||{}).id || null };
+  else if (type === 'exclusive') slot = { label:'Exclusive item', exclusive:{label:'',image:'',payload:{kind:'code',code:''}} };
+  else slot = { label:'Mystery Chest', mysteryPool:[] };
+  STATE._spinDraft.slots[i] = slot;
+  rerenderSpinSlot(i);
+}
+function clearSpinSlot(i){
+  STATE._spinDraft.slots[i] = null;
+  rerenderSpinSlot(i);
+}
+function onSpinMysteryDrop(e, i){
+  e.preventDefault();
+  if (!dragPrizeType || dragPrizeType === 'mystery') { dragPrizeType = null; return; }
+  const type = dragPrizeType; dragPrizeType = null;
+  let sub;
+  if (type === 'xu') sub = { xu:0 };
+  else if (type === 'reward') sub = { rewardId: ((STATE.rewards||[])[0]||{}).id || null };
+  else sub = { exclusive:{label:'',image:'',payload:{kind:'code',code:''}} };
+  STATE._spinDraft.slots[i].mysteryPool.push(sub);
+  rerenderSpinSlot(i);
+}
+function clearSpinMysterySlot(i, j){
+  STATE._spinDraft.slots[i].mysteryPool.splice(j,1);
+  rerenderSpinSlot(i);
+}
+function updateSpinSlotXu(i, val){
+  STATE._spinDraft.slots[i].xu = Number(val)||0;
+  refreshAllSpinPercents();
+}
+function updateSpinSlotRewardId(i, val){
+  STATE._spinDraft.slots[i].rewardId = val || null;
+}
+function updateSpinMysteryXu(i, j, val){
+  STATE._spinDraft.slots[i].mysteryPool[j].xu = Number(val)||0;
+  refreshAllSpinPercents();
+}
+// Cập nhật text "≈X%" của mọi ngăn + mọi khả năng trong rương — KHÔNG re-render
+// DOM ngăn nào cả (chỉ đổi nội dung text node) để không mất focus ô đang gõ.
+function refreshAllSpinPercents(){
+  const slots = STATE._spinDraft.slots;
+  const total = slots.reduce((s,p)=>s+spinSlotWeight(p),0) || 1;
+  slots.forEach((p,i)=>{
+    const el = $('spin-slot-pct-'+i);
+    if (el) el.textContent = p ? '≈'+Math.round(spinSlotWeight(p)/total*100)+'%' : '';
+    if (p && p.mysteryPool && p.mysteryPool.length) {
+      const subTotal = p.mysteryPool.reduce((s,m)=>s+spinSlotWeight(m),0) || 1;
+      p.mysteryPool.forEach((m,j)=>{
+        const subEl = $('spin-sub-pct-'+i+'-'+j);
+        if (subEl) subEl.textContent = '≈'+Math.round(spinSlotWeight(m)/subTotal*100)+'%';
+      });
+    }
+  });
+}
+function spinSetupModalHtml(){
+  const n = STATE._spinDraft.slots.length;
+  const slotsHtml = STATE._spinDraft.slots.map((_,i)=>spinSlotCardHtml(i)).join('');
+  return `
+    <div class="event-modal" style="max-width:680px;max-height:88vh;overflow-y:auto">
+      <div class="x" onclick="closeSpinSetupModal()">✕</div>
+      <div class="step-head" style="border-top:none;padding-top:0;margin-top:0">🎰 Thiết lập phần thưởng (${n} ngăn)</div>
+      <div class="hint-small" style="margin-bottom:10px">Kéo 1 thẻ bên dưới rồi thả vào ô ngăn bạn muốn gán. Loại hiếm hơn tự động có tỷ lệ trúng nhỏ hơn — không cần tự nhập số.</div>
+      <div class="spin-chip-row">${spinChipsHtml()}</div>
+      <div class="spin-slot-grid">${slotsHtml}</div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeSpinSetupModal()">Hủy</button>
+        <button class="btn" style="background:rgba(244,196,65,.25);border-color:var(--gold);color:var(--gold)" onclick="saveSpinSetup()">💾 Lưu cấu hình</button>
+      </div>
+    </div>`;
+}
+function openSpinSetupModal(){
+  const wrap = document.createElement('div');
+  wrap.className = 'event-modal-overlay';
+  wrap.id = 'spin-setup-overlay';
+  wrap.innerHTML = spinSetupModalHtml();
+  document.body.appendChild(wrap);
+  refreshAllSpinPercents();
+}
+function closeSpinSetupModal(){
+  const el = $('spin-setup-overlay');
+  if (el) el.remove();
+  delete STATE._spinDraft;
+}
+function saveSpinSetup(){
+  const slots = STATE._spinDraft.slots;
+  if (slots.some(p => !p) && !confirm('Còn ngăn trống chưa gán phần thưởng — vẫn lưu? (ngăn trống sẽ bị bỏ qua khi quay)')) return;
+  STATE.spinRules.prizes = slots.filter(Boolean).map(p => {
+    const type = spinSlotType(p);
+    const prize = { id: p.id || ('prize_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)), label: p.label||'', weight: spinSlotWeight(p) };
+    if (type === 'mystery') {
+      prize.mysteryPool = (p.mysteryPool||[]).filter(Boolean).map(m => {
+        const mtype = spinSlotType(m);
+        const sub = { id: m.id || ('sub_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)), weight: spinSlotWeight(m) };
+        if (mtype === 'reward') sub.rewardId = m.rewardId;
+        else if (mtype === 'exclusive') sub.exclusive = m.exclusive;
+        else sub.xu = Number(m.xu)||0;
+        return sub;
+      });
+    } else if (type === 'exclusive') {
+      prize.exclusive = p.exclusive;
+    } else if (type === 'reward') {
+      prize.rewardId = p.rewardId;
+    } else {
+      prize.xu = Number(p.xu)||0;
+    }
+    return prize;
+  });
+  closeSpinSetupModal();
+  renderAll();
 }
 function renderSpin(){
   const rules = STATE.spinRules || {enabled:false,ticketsPerPayment:5,xuCostPerTicket:500,prizes:[]};
-  const rewardOptions = (p) => `
-    <option value="">— Reward XU directly —</option>
-    ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${p.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
-  const total = spinTotalWeight();
-  const rows = (rules.prizes||[]).map((p,i)=>{
-    const reward = p.rewardId ? (STATE.rewards||[]).find(rw=>rw.id===p.rewardId) : null;
-    const pct = Math.round((Number(p.weight)||0)/total*100);
-    return `
-    <div class="item">
-      <div class="row2">
-        <div><label>Prize name</label><input value="${esc(p.label||'')}" oninput="setPath(STATE,'spinRules.prizes.${i}.label',this.value)"/></div>
-        <div><label>How common (bigger number = wins more often)</label>
-          <input type="number" min="1" value="${p.weight||1}" oninput="setPath(STATE,'spinRules.prizes.${i}.weight',Number(this.value)||1);updateSpinPct()"/>
-          <div class="spin-pct" id="spin-pct-${i}">≈ ${pct}% chance to win this</div>
-        </div>
-      </div>
-      <div class="row2">
-        <div>
-          <label>Reward</label>
-          <select onchange="setPath(STATE,'spinRules.prizes.${i}.rewardId',this.value||null);renderAll()">${rewardOptions(p)}</select>
-        </div>
-        ${p.rewardId
-          ? '<div><label>&nbsp;</label><div class="hint-small">Members get this Reward Store item for FREE.</div></div>'
-          : `<div><label>XU prize amount</label><input type="number" min="0" value="${p.xu||0}" oninput="setPath(STATE,'spinRules.prizes.${i}.xu',Number(this.value)||0)"/></div>`}
-      </div>
-      ${miniPreview(reward)}
-      <button class="btn del" onclick="STATE.spinRules.prizes.splice(${i},1);renderAll()">🗑 Delete this prize</button>
-    </div>`;
-  }).join('');
   return `
     <div class="sect" id="spin">🎰 Lucky Spin</div>
     <div class="panel">
       ${introBlock(
         "Members spin a wheel to win a random prize. They get free spin tickets automatically when they pay real money, or they can pay XU for extra tickets. Whatever they win is delivered automatically.",
-        ["(Optional) Add a reward in 🎁 Store first if you want a real item as a prize", "Click + Add prize below for each prize on the wheel", "Set how rare each prize is and how many tickets a real payment gives", "Turn on Enabled, then Save all"]
+        ["(Optional) Add a reward in 🎁 Store first if you want a real item as a prize", "Click the wheel below to set up prizes — choose how many slots, then drag a card into each one", "Turn on Enabled, then Save all"]
       )}
       ${(STATE.rewards||[]).length===0 ? rewardEmptyWarning(false) : ''}
       ${toggleRow(rules.enabled, "setPath(STATE,'spinRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Lucky Spin page.', "Disabled — members can't see this program.")}
@@ -914,8 +1265,10 @@ function renderSpin(){
         <div><label>XU price for 1 ticket (if not paying real money)</label><input type="number" min="0" value="${rules.xuCostPerTicket||0}" oninput="setPath(STATE,'spinRules.xuCostPerTicket',Number(this.value)||0)"/></div>
       </div>
       <div class="hint-small" style="margin:6px 0 10px">Tip: keep the XU price high so depositing real money stays the better deal for members.</div>
-      ${rows || '<p class="hint-small">No prizes yet.</p>'}
-      <button class="btn" onclick="STATE.spinRules.prizes.push({id:'prize_'+Date.now().toString(36),label:'New prize',weight:10,rewardId:null,xu:50});renderAll()">+ Add prize</button>
+      <div class="spin-admin-wheel-wrap">
+        <canvas id="spin-admin-canvas" width="200" height="200" onclick="openSpinCountModal()" title="Bấm để thiết lập phần thưởng"></canvas>
+        <button class="btn" style="margin-top:0" onclick="openSpinCountModal()">✏️ Thiết lập phần thưởng (${(rules.prizes||[]).length} ngăn)</button>
+      </div>
     </div>`;
 }
 
