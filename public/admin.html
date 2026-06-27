@@ -944,9 +944,9 @@ const SPIN_ADMIN_TIER_GRADIENTS = {
 };
 const SPIN_CHIP_DEFS = [
   { type:'xu', icon:'🪙', label:'XU' },
-  { type:'reward', icon:'🛍', label:'Sản phẩm Shop' },
-  { type:'exclusive', icon:'🌟', label:'Độc quyền' },
-  { type:'mystery', icon:'🎁', label:'Rương bí ẩn' },
+  { type:'reward', icon:'🛍', label:'Shop product' },
+  { type:'exclusive', icon:'🌟', label:'Exclusive' },
+  { type:'mystery', icon:'🎁', label:'Mystery Chest' },
 ];
 let dragPrizeType = null;
 
@@ -998,7 +998,7 @@ function drawAdminSpinWheel(){
     ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 2; ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = '700 14px Oswald,sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('Bấm để thiết lập', cx, cy);
+    ctx.fillText('Click to set up', cx, cy);
     return;
   }
   const total = prizes.reduce((s,p)=>s+(Number(p.weight)||1),0) || 1;
@@ -1039,16 +1039,16 @@ function openSpinCountModal(){
   wrap.innerHTML = `
     <div class="event-modal" style="max-width:340px;text-align:center">
       <div class="x" onclick="closeSpinCountModal()">✕</div>
-      <div class="step-head" style="border-top:none;padding-top:0;margin-top:0">🎰 Số lượng ngăn trên bánh xe</div>
+      <div class="step-head" style="border-top:none;padding-top:0;margin-top:0">🎰 Number of slots on the wheel</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin:18px 0">
         <button class="btn" style="margin-top:0;padding:10px 16px" onclick="adjustSpinCount(-1)">−</button>
         <div id="spin-count-val" style="font-family:'Oswald',sans-serif;font-size:32px;font-weight:700;min-width:50px">${current}</div>
         <button class="btn" style="margin-top:0;padding:10px 16px" onclick="adjustSpinCount(1)">+</button>
       </div>
-      <div class="hint-small" style="margin-bottom:16px">Tối thiểu 3, tối đa 10 ngăn.</div>
+      <div class="hint-small" style="margin-bottom:16px">Minimum 3, maximum 10 slots.</div>
       <div class="modal-actions">
-        <button class="btn" onclick="closeSpinCountModal()">Hủy</button>
-        <button class="btn" style="background:rgba(244,196,65,.25);border-color:var(--gold);color:var(--gold)" onclick="confirmSpinCount()">Tiếp tục →</button>
+        <button class="btn" onclick="closeSpinCountModal()">Cancel</button>
+        <button class="btn" style="background:rgba(244,196,65,.25);border-color:var(--gold);color:var(--gold)" onclick="confirmSpinCount()">Continue →</button>
       </div>
     </div>`;
   document.body.appendChild(wrap);
@@ -1083,20 +1083,20 @@ function spinSlotCardHtml(i){
   const type = p ? spinSlotType(p) : null;
   let inner;
   if (!type) {
-    inner = `<div class="spin-slot-empty">?<div class="hint-small">Kéo 1 thẻ vào đây</div></div>`;
+    inner = `<div class="spin-slot-empty">?<div class="hint-small">Drag a card here</div></div>`;
   } else if (type === 'xu') {
-    inner = `<div class="spin-slot-icon">🪙</div><label>Số XU</label>
+    inner = `<div class="spin-slot-icon">🪙</div><label>XU amount</label>
       <input type="number" min="0" value="${p.xu||0}" oninput="updateSpinSlotXu(${i},this.value)"/>`;
   } else if (type === 'reward') {
     const opts = (STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${p.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('');
-    inner = `<div class="spin-slot-icon">🛍</div><label>Sản phẩm</label>
-      <select onchange="updateSpinSlotRewardId(${i},this.value)">${opts || '<option value="">(Chưa có reward)</option>'}</select>`;
+    inner = `<div class="spin-slot-icon">🛍</div><label>Product</label>
+      <select onchange="updateSpinSlotRewardId(${i},this.value)">${opts || '<option value="">(No reward yet)</option>'}</select>`;
   } else if (type === 'exclusive') {
     const ex = p.exclusive; const pp = ex.payload || (ex.payload={kind:'code',code:''});
     inner = `<div class="spin-slot-icon">🌟</div>
-      <label>Tên vật phẩm</label><input value="${esc(ex.label||'')}" oninput="setPath(STATE,'_spinDraft.slots.${i}.exclusive.label',this.value)"/>
-      <label>Ảnh (link, optional)</label><input value="${esc(ex.image||'')}" placeholder="https://..." oninput="setPath(STATE,'_spinDraft.slots.${i}.exclusive.image',this.value)"/>
-      <label>Loại thưởng</label>
+      <label>Item name</label><input value="${esc(ex.label||'')}" oninput="setPath(STATE,'_spinDraft.slots.${i}.exclusive.label',this.value)"/>
+      <label>Image (link, optional)</label><input value="${esc(ex.image||'')}" placeholder="https://..." oninput="setPath(STATE,'_spinDraft.slots.${i}.exclusive.image',this.value)"/>
+      <label>Reward type</label>
       <select onchange="setPath(STATE,'_spinDraft.slots.${i}.exclusive.payload.kind',this.value);rerenderSpinSlot(${i})">
         <option value="code" ${pp.kind==='code'?'selected':''}>Code</option>
         <option value="link" ${pp.kind==='link'?'selected':''}>Link</option>
@@ -1108,7 +1108,7 @@ function spinSlotCardHtml(i){
   }
   return `
     <div class="spin-slot" data-i="${i}" ondragover="event.preventDefault()" ondrop="onSpinSlotDrop(event,${i})">
-      <div class="spin-slot-head">Ngăn ${i+1} <span class="spin-slot-pct" id="spin-slot-pct-${i}"></span>
+      <div class="spin-slot-head">Slot ${i+1} <span class="spin-slot-pct" id="spin-slot-pct-${i}"></span>
         ${type?`<span class="spin-slot-x" onclick="clearSpinSlot(${i})">✕</span>`:''}
       </div>
       ${inner}
@@ -1123,12 +1123,12 @@ function spinMysteryHtml(i){
       inner = `<label>XU</label><input type="number" min="0" value="${m.xu||0}" oninput="updateSpinMysteryXu(${i},${j},this.value)"/>`;
     } else if (mtype === 'reward') {
       const opts = (STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${m.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('');
-      inner = `<label>Sản phẩm</label><select onchange="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.rewardId',this.value)">${opts}</select>`;
+      inner = `<label>Product</label><select onchange="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.rewardId',this.value)">${opts}</select>`;
     } else {
       const ex = m.exclusive; const pp = ex.payload || (ex.payload={kind:'code',code:''});
       inner = `
-        <label>Tên</label><input value="${esc(ex.label||'')}" oninput="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.exclusive.label',this.value)"/>
-        <label>Ảnh</label><input value="${esc(ex.image||'')}" oninput="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.exclusive.image',this.value)"/>
+        <label>Name</label><input value="${esc(ex.label||'')}" oninput="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.exclusive.label',this.value)"/>
+        <label>Image</label><input value="${esc(ex.image||'')}" oninput="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.exclusive.image',this.value)"/>
         <select onchange="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.exclusive.payload.kind',this.value);rerenderSpinSlot(${i})">
           <option value="code" ${pp.kind==='code'?'selected':''}>Code</option>
           <option value="link" ${pp.kind==='link'?'selected':''}>Link</option>
@@ -1138,7 +1138,7 @@ function spinMysteryHtml(i){
     }
     return `
     <div class="spin-slot">
-      <div class="spin-slot-head">Khả năng ${j+1} <span class="spin-slot-pct" id="spin-sub-pct-${i}-${j}"></span>
+      <div class="spin-slot-head">Option ${j+1} <span class="spin-slot-pct" id="spin-sub-pct-${i}-${j}"></span>
         <span class="spin-slot-x" onclick="clearSpinMysterySlot(${i},${j})">✕</span>
       </div>
       ${inner}
@@ -1146,8 +1146,8 @@ function spinMysteryHtml(i){
   }).join('');
   return `
     <div class="spin-mystery-box" ondragover="event.preventDefault()" ondrop="onSpinMysteryDrop(event,${i})">
-      <div class="hint-small">Kéo thẻ vào đây để thêm khả năng bên trong rương:</div>
-      <div class="spin-mini-grid">${rows || '<p class="hint-small">Chưa có khả năng nào.</p>'}</div>
+      <div class="hint-small">Drag a card here to add an option inside this chest:</div>
+      <div class="spin-mini-grid">${rows || '<p class="hint-small">No options yet.</p>'}</div>
     </div>`;
 }
 function rerenderSpinSlot(i){
@@ -1220,13 +1220,13 @@ function spinSetupModalHtml(){
   return `
     <div class="event-modal" style="max-width:680px;max-height:88vh;overflow-y:auto">
       <div class="x" onclick="closeSpinSetupModal()">✕</div>
-      <div class="step-head" style="border-top:none;padding-top:0;margin-top:0">🎰 Thiết lập phần thưởng (${n} ngăn)</div>
-      <div class="hint-small" style="margin-bottom:10px">Kéo 1 thẻ bên dưới rồi thả vào ô ngăn bạn muốn gán. Loại hiếm hơn tự động có tỷ lệ trúng nhỏ hơn — không cần tự nhập số.</div>
+      <div class="step-head" style="border-top:none;padding-top:0;margin-top:0">🎰 Set up prizes (${n} slots)</div>
+      <div class="hint-small" style="margin-bottom:10px">Drag a card below and drop it onto the slot you want to fill. Rarer types automatically get a smaller win chance — no need to type a number.</div>
       <div class="spin-chip-row">${spinChipsHtml()}</div>
       <div class="spin-slot-grid">${slotsHtml}</div>
       <div class="modal-actions">
-        <button class="btn" onclick="closeSpinSetupModal()">Hủy</button>
-        <button class="btn" style="background:rgba(244,196,65,.25);border-color:var(--gold);color:var(--gold)" onclick="saveSpinSetup()">💾 Lưu cấu hình</button>
+        <button class="btn" onclick="closeSpinSetupModal()">Cancel</button>
+        <button class="btn" style="background:rgba(244,196,65,.25);border-color:var(--gold);color:var(--gold)" onclick="saveSpinSetup()">💾 Save setup</button>
       </div>
     </div>`;
 }
@@ -1245,7 +1245,7 @@ function closeSpinSetupModal(){
 }
 function saveSpinSetup(){
   const slots = STATE._spinDraft.slots;
-  if (slots.some(p => !p) && !confirm('Còn ngăn trống chưa gán phần thưởng — vẫn lưu? (ngăn trống sẽ bị bỏ qua khi quay)')) return;
+  if (slots.some(p => !p) && !confirm('Some slots are still empty — save anyway? (empty slots will be skipped on the wheel)')) return;
   STATE.spinRules.prizes = slots.filter(Boolean).map(p => {
     const type = spinSlotType(p);
     const prize = { id: p.id || ('prize_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)), label: p.label||'', weight: spinSlotWeight(p) };
@@ -1287,8 +1287,8 @@ function renderSpin(){
       </div>
       <div class="hint-small" style="margin:6px 0 10px">Tip: keep the XU price high so depositing real money stays the better deal for members.</div>
       <div class="spin-admin-wheel-wrap">
-        <canvas id="spin-admin-canvas" width="200" height="200" onclick="openSpinCountModal()" title="Bấm để thiết lập phần thưởng"></canvas>
-        <button class="btn" style="margin-top:0" onclick="openSpinCountModal()">✏️ Thiết lập phần thưởng (${(rules.prizes||[]).length} ngăn)</button>
+        <canvas id="spin-admin-canvas" width="200" height="200" onclick="openSpinCountModal()" title="Click to set up prizes"></canvas>
+        <button class="btn" style="margin-top:0" onclick="openSpinCountModal()">✏️ Set up prizes (${(rules.prizes||[]).length} slots)</button>
       </div>
     </div>`;
 }
@@ -1331,7 +1331,7 @@ function auctionChipsHtml(){
 function auctionStageHtml(reward){
   if (!reward) {
     return `<div class="auction-stage-drop" ondragover="event.preventDefault()" ondrop="onAuctionRewardDrop(event)">
-      <div class="stage-empty">🔨 Kéo 1 sản phẩm từ trên xuống đây để làm vật phẩm đấu giá</div>
+      <div class="stage-empty">🔨 Drag a product from above and drop it here to make it the auction item</div>
     </div>`;
   }
   const visual = reward.image ? `<img class="stage-img" src="${esc(reward.image)}" alt=""/>` : `<div class="stage-ic">🎁</div>`;
