@@ -238,6 +238,27 @@
   .spin-mini-grid{display:flex;flex-direction:column;gap:6px;margin-top:6px}
   .spin-mini-grid .spin-slot{padding:8px}
 
+  /* ===== Auction — chọn sản phẩm bằng kéo-thả vào "sân khấu" ===== */
+  .auction-chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .auction-chip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;padding:8px 12px;
+    border-radius:10px;background:var(--chip-bg);border:1px solid var(--card-border);color:var(--card-text);
+    cursor:grab;user-select:none}
+  .auction-chip:active{cursor:grabbing}
+  .auction-chip img{width:22px;height:22px;border-radius:5px;object-fit:cover}
+  .auction-chip .ic{font-size:16px}
+  .auction-stage-drop{position:relative;border-radius:16px;padding:22px 16px;text-align:center;margin-bottom:14px;
+    border:2px dashed var(--card-border);background:radial-gradient(circle,rgba(168,85,247,.08),transparent 70%);
+    transition:.15s}
+  .auction-stage-drop.has-item{border-style:solid;border-color:rgba(244,196,65,.45);
+    background:radial-gradient(circle,rgba(255,217,102,.1),transparent 70%)}
+  .auction-stage-drop .stage-empty{color:var(--card-muted);font-size:13px}
+  .auction-stage-drop .stage-img{width:90px;height:90px;object-fit:cover;border-radius:12px;margin:0 auto 8px;
+    box-shadow:0 0 24px rgba(255,217,102,.4);display:block}
+  .auction-stage-drop .stage-ic{font-size:48px;filter:drop-shadow(0 0 14px rgba(255,217,102,.5))}
+  .auction-stage-drop .stage-name{font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;color:var(--card-text)}
+  .auction-stage-drop .stage-x{position:absolute;top:8px;right:10px;cursor:pointer;color:var(--card-muted);font-size:15px}
+  .auction-stage-drop .stage-x:hover{color:var(--red)}
+
   /* ===== Khối giới thiệu/hướng dẫn đầu mỗi tab + cảnh báo reward rỗng + mini preview ===== */
   .intro-card{background:rgba(39,227,255,.06);border:1px solid rgba(39,227,255,.25);border-radius:12px;padding:13px 15px;margin-bottom:14px}
   .intro-what{font-size:13px;color:var(--card-text);line-height:1.6;margin-bottom:8px}
@@ -1298,17 +1319,48 @@ async function refreshAuctionStatus(){
   }catch(_){ el.innerHTML = ''; }
 }
 
+// Kéo 1 thẻ sản phẩm thả vào "sân khấu" để chọn làm vật phẩm đấu giá — thay
+// cho dropdown cũ, theo đúng pattern dragChip/dragPrizeType đã có trong file.
+let dragAuctionRewardId = null;
+function auctionChipsHtml(){
+  return (STATE.rewards||[]).map(rw => {
+    const visual = rw.image ? `<img src="${esc(rw.image)}" alt=""/>` : `<span class="ic">🎁</span>`;
+    return `<div class="auction-chip" draggable="true" ondragstart="dragAuctionRewardId='${esc(rw.id)}'">${visual} ${esc(rw.name||rw.id)}</div>`;
+  }).join('');
+}
+function auctionStageHtml(reward){
+  if (!reward) {
+    return `<div class="auction-stage-drop" ondragover="event.preventDefault()" ondrop="onAuctionRewardDrop(event)">
+      <div class="stage-empty">🔨 Kéo 1 sản phẩm từ trên xuống đây để làm vật phẩm đấu giá</div>
+    </div>`;
+  }
+  const visual = reward.image ? `<img class="stage-img" src="${esc(reward.image)}" alt=""/>` : `<div class="stage-ic">🎁</div>`;
+  return `<div class="auction-stage-drop has-item" ondragover="event.preventDefault()" ondrop="onAuctionRewardDrop(event)">
+    <span class="stage-x" onclick="clearAuctionReward()">✕</span>
+    ${visual}
+    <div class="stage-name">${esc(reward.name||'(Unnamed)')}</div>
+    <div class="hint-small">👀 Members will see exactly this item</div>
+  </div>`;
+}
+function onAuctionRewardDrop(e){
+  e.preventDefault();
+  if (!dragAuctionRewardId) return;
+  setPath(STATE, 'auctionRules.rewardId', dragAuctionRewardId);
+  dragAuctionRewardId = null;
+  renderAll();
+}
+function clearAuctionReward(){
+  setPath(STATE, 'auctionRules.rewardId', null);
+  renderAll();
+}
 function renderAuction(){
   const rules = STATE.auctionRules || {enabled:false,rewardId:null,startingBid:5000,minIncrement:100,durationHours:48};
   const reward = rules.rewardId ? (STATE.rewards||[]).find(rw=>rw.id===rules.rewardId) : null;
-  const rewardOptions = `
-    <option value="">— Pick a Reward Store item —</option>
-    ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${rules.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
 
   const body = (STATE.rewards||[]).length===0 ? rewardEmptyWarning(true) : `
     ${stepHeader('1. Pick the item')}
-    <select onchange="setPath(STATE,'auctionRules.rewardId',this.value||null);renderAll()">${rewardOptions}</select>
-    ${miniPreview(reward, true)}
+    <div class="auction-chip-row">${auctionChipsHtml()}</div>
+    ${auctionStageHtml(reward)}
 
     ${stepHeader('2. Set the price')}
     <div class="row2">
