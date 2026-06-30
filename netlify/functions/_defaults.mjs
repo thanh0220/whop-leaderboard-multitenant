@@ -55,36 +55,10 @@ export const DEFAULT_TENANT = {
     { rank: "🏅 Top 5", prize: "250 pts" },
     { rank: "🏅 Top 6", prize: "150 pts" },
   ],
-  // Dữ liệu MẪU để tenant mới thấy app trông như thật ngay từ đầu.
-  // Tên/mô tả dùng ký hiệu [...] để admin biết cần thay gì.
-  // Tenant cũ đã có config lưu trong Blobs sẽ KHÔNG bị ảnh hưởng (deepMerge
-  // ưu tiên giá trị đã lưu — chỉ tenant mới chưa có gì mới nhận defaults này).
-  rewards: [
-    {
-      id: "sample_reward_1",
-      name: "🎁 [Tên phần thưởng 1]",
-      cost: 500,
-      desc: "Mô tả phần thưởng tại đây. Ví dụ: voucher, tài liệu độc quyền, link tải...",
-      image: null,
-      badge: "new",
-      originalPrice: null,
-      stock: null,
-      tier: 1,
-      payload: { kind: "code", code: "SAMPLE-CODE-01" },
-    },
-    {
-      id: "sample_reward_2",
-      name: "⭐ [Tên phần thưởng 2]",
-      cost: 1500,
-      desc: "Phần thưởng cao cấp hơn. Ví dụ: khóa học, tư vấn 1-1, EA trial...",
-      image: null,
-      badge: "hot",
-      originalPrice: "$50",
-      stock: 10,
-      tier: 2,
-      payload: { kind: "code", code: "SAMPLE-CODE-02" },
-    },
-  ],
+  // Rỗng có chủ đích: rewards là sản phẩm của TỪNG business, không ship sẵn
+  // sản phẩm của 1 business cụ thể cho mọi tenant khác. store.html tự hiện
+  // "no rewards yet" khi mảng rỗng — sạch, không gây nhầm lẫn cho member.
+  rewards: [],
   redeemCodes: {
     WELCOME: { xu: 100 },
   },
@@ -98,8 +72,8 @@ export const DEFAULT_TENANT = {
   // 2 ô mặc định (khớp giới hạn Free) — admin tự thêm/xoá ô qua admin.html,
   // tối đa 2 (Free) / 10 (Paid) — xem events.mjs + admin-config.mjs.
   events: [
-    { id: "event_1", name: "🎯 [Tên sự kiện 1 — chỉnh sửa tại Admin]", image: "", date: "2026-08-01", endDate: "2026-08-01", desc: "Mô tả sự kiện tại đây. Ví dụ: livestream, AMA, khuyến mãi đặc biệt." },
-    { id: "event_2", name: "📅 [Tên sự kiện 2 — chỉnh sửa tại Admin]", image: "", date: "2026-08-15", endDate: "2026-08-15", desc: "Thêm sự kiện thứ hai của cộng đồng bạn tại đây." },
+    { id: "event_1", name: "🎰 Lucky Spin — Thứ 2 đến Thứ 5 hằng tuần", image: "", date: "2026-07-06", endDate: "2026-07-09", desc: "Quay vòng may mắn để nhận XU và phần thưởng hấp dẫn! Mỗi tuần từ thứ 2 đến thứ 5." },
+    { id: "event_2", name: "🔨 Auction — Thứ 6 đến Chủ Nhật hằng tuần", image: "", date: "2026-07-10", endDate: "2026-07-12", desc: "Đấu giá vật phẩm độc quyền bằng XU! Mỗi tuần từ thứ 6 đến chủ nhật." },
   ],
   eventsEnabled: true,
   // Rương Liên Minh: khi 1 member mua hàng thật trên Whop (webhook
@@ -145,7 +119,7 @@ export const DEFAULT_TENANT = {
   // (weight) trong `prizes`, giao thưởng tự động (item Reward Store MIỄN PHÍ
   // nếu gắn rewardId, không thì cộng thẳng xu) — không cần admin động tay.
   spinRules: {
-    enabled: false,
+    enabled: true,
     ticketsPerPayment: 5,
     xuCostPerTicket: 500,
     prizes: [
