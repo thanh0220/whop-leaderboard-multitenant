@@ -1462,6 +1462,7 @@ function normalizeEvents(raw, limit){
     date: e.date || e.startDate || '',
     endDate: e.endDate || e.date || e.startDate || '',
     desc: e.desc || '',
+    ...(e.recurringDays?.length ? { recurringDays: e.recurringDays } : {}),
   }));
 }
 function evEndDate(e){ return e.endDate || e.date; }
@@ -1609,13 +1610,29 @@ function renderEvents(){
   }).join('');
 
   const events = STATE.events||[];
-  const scheduledIdx = events.map((e,i)=>i).filter(i=>events[i].date);
-  const unscheduledIdx = events.map((e,i)=>i).filter(i=>!events[i].date);
+  const recurringIdx   = events.map((_,i)=>i).filter(i =>  events[i].recurringDays?.length);
+  const scheduledIdx   = events.map((_,i)=>i).filter(i => !events[i].recurringDays?.length &&  events[i].date);
+  const unscheduledIdx = events.map((_,i)=>i).filter(i => !events[i].recurringDays?.length && !events[i].date);
 
-  const bars = scheduledIdx.map(idx=>{
+  const recurringBars = recurringIdx.map(idx=>{
+    const e = events[idx];
+    const cols = week.map((dk,col)=>({ dow: new Date(dk+'T00:00:00').getDay(), col }))
+                     .filter(({dow})=>e.recurringDays.includes(dow));
+    if(!cols.length) return '';
+    const startCol = cols[0].col, endCol = cols[cols.length-1].col;
+    return `<div class="ev-track">
+      <div class="evt-bar quest" style="grid-column:${startCol+1} / ${endCol+2};opacity:0.9" onclick="openEventModal(${idx})">
+        <span style="font-size:10px;opacity:0.6;margin-right:2px">🔁</span>
+        ${evCardHtml(e, idx)}
+        <span class="ex" onclick="event.stopPropagation();clearRecurring(${idx})" title="Remove recurring schedule">✕</span>
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
+
+  const scheduledBars = scheduledIdx.map(idx=>{
     const e = events[idx];
     const overlap = weekOverlapCols(e, week);
-    if(!overlap) return ''; // ngoài tuần đang xem
+    if(!overlap) return '';
     const { startCol, endCol } = overlap;
     return `<div class="ev-track">
       <div class="evt-bar quest" style="grid-column:${startCol+1} / ${endCol+2}" onclick="openEventModal(${idx})">
@@ -1625,7 +1642,12 @@ function renderEvents(){
         <span class="grip grip-r" onmousedown="event.stopPropagation();startDragResize(event,${idx})" onclick="event.stopPropagation()" title="Drag to change end date">⠿</span>
       </div>
     </div>`;
-  }).filter(Boolean).join('') || (scheduledIdx.length ? '<div class="ev-empty">No events scheduled this week.</div>' : '<div class="ev-empty">Drag a card below onto a day to schedule it.</div>');
+  }).filter(Boolean).join('');
+
+  const bars = recurringBars + (scheduledBars ||
+    (scheduledIdx.length
+      ? '<div class="ev-empty">No events scheduled this week.</div>'
+      : (recurringIdx.length ? '' : '<div class="ev-empty">Drag a card below onto a day to schedule it.</div>')));
 
   const chips = unscheduledIdx.map(idx=>{
     const e = events[idx];
@@ -1664,6 +1686,12 @@ function renderEvents(){
   </div>`;
 }
 function refreshEvents(){ $('events-wrap').outerHTML = renderEvents(); }
+function clearRecurring(idx){
+  delete STATE.events[idx].recurringDays;
+  STATE.events[idx].date = '';
+  STATE.events[idx].endDate = '';
+  refreshEvents();
+}
 
 function startDragMove(e, idx){
   e.preventDefault();

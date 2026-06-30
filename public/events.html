@@ -209,8 +209,24 @@ function closeEventModal(){
   if (el) el.remove();
 }
 
+function expandRecurring(list) {
+  const today = new Date();
+  const sun = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - today.getUTCDay()));
+  const toISO = d => d.toISOString().slice(0,10);
+  return list.map(e => {
+    if (!e.recurringDays?.length) return e;
+    const sorted = [...e.recurringDays].sort((a,b)=>a-b);
+    const days = sorted.map(dow => {
+      const d = new Date(sun);
+      d.setUTCDate(sun.getUTCDate() + dow);
+      return toISO(d);
+    });
+    return { ...e, date: days[0], endDate: days[days.length-1] };
+  });
+}
+
 function render(d){
-  const events = (d.events || []).filter(e=>e.date);
+  const events = expandRecurring(d.events || []).filter(e=>e.date);
   CURRENT_EVENTS = events;
   const today = new Date().toISOString().slice(0,10);
   const week = weekDates(today);
