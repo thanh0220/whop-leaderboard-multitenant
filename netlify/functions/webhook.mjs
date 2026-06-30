@@ -131,8 +131,33 @@ export const handler = async (event) => {
   const upgradeTenantId = data.metadata?.tenantId || payload.metadata?.tenantId || null;
   if (upgradeTenantId) {
     try {
-      await setTenantTier(upgradeTenantId, "paid");
-      return json(200, { ok: true, upgraded: upgradeTenantId });
+      // Map plan_id → tier name; fallback "growth" cho payment cũ không có targetTier
+      const targetTier = data.metadata?.targetTier || payload.metadata?.targetTier || null;
+      const planTierMap = {
+        [process.env.WHOP_GROWTH_PLAN_ID]: "growth",
+        [process.env.WHOP_PRO_PLAN_ID]:    "pro",
+        [process.env.WHOP_AGENCY_PLAN_ID]: "agency",
+      };
+      const planId = data.plan_id || payload.plan_id || null;
+      const tier = targetTier || planTierMap[planId] || "growth";
+      await setTenantTier(upgradeTenantId, tier);
+
+      // Ghi nhận owner referral đã upgrade
+      try {
+        const refFrom = await store.get(tenantKey("owner-ref-from", upgradeTenantId));
+        if (refFrom) {
+          const listKey = tenantKey("owner-ref-list", refFrom);
+          const refList = (await store.get(listKey, { type: "json" }).catch(() => null)) || [];
+          const idx = refList.findIndex((r) => r.tenantId === upgradeTenantId);
+          if (idx >= 0 && !refList[idx].upgradedAt) {
+            refList[idx].upgradedAt = new Date().toISOString();
+            refList[idx].tier = tier;
+            await store.setJSON(listKey, refList);
+          }
+        }
+      } catch (_) {}
+
+      return json(200, { ok: true, upgraded: upgradeTenantId, tier });
     } catch (err) {
       return json(500, { error: err.message });
     }

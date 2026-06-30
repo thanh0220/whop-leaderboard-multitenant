@@ -1,5 +1,5 @@
 import { getAuthContext, lastVerifyError, lastAdminCheckError } from "./_auth.mjs";
-import { getTenantConfig, saveTenantConfig, isPaidTier, linkExperienceToTenant } from "./_tenant.mjs";
+import { getTenantConfig, saveTenantConfig, isPaidTier, getTierLevel, linkExperienceToTenant } from "./_tenant.mjs";
 import { getCompanyAccessToken, getRealCompanyId } from "./_tokens.mjs";
 
 // ĐÃ ĐỔI: không còn admin tự dán Company API key/Company ID nữa (xem
@@ -64,6 +64,9 @@ const ALLOWED_KEYS = [
   "storeEnabled",
   "mailboxEnabled",
   "milestoneRules",
+  "onboardingCompleted",
+  "digestEnabled",
+  "digestEmail",
 ];
 
 // GET: trả toàn bộ config tenant (trừ whopApiKey/setupSecret — không bao giờ
@@ -105,10 +108,14 @@ export const handler = async (event) => {
         // chỉ xảy ra 1 lần (lần đầu) nên chấp nhận load chậm hơn 1 chút.
         await autoLinkExperiences(companyId, await getRealCompanyId(companyId));
       }
+      const tierLevel = await getTierLevel(companyId);
+      const tierNames = ["free", "growth", "pro", "agency"];
       return json(200, {
         configured: true,
         whopCompanyId: await getRealCompanyId(companyId),
-        isPaid: await isPaidTier(companyId),
+        isPaid: tierLevel > 0 || !!cfg.unlockAllFeatures,
+        currentTier: cfg.unlockAllFeatures ? "pro" : (tierNames[tierLevel] || "free"),
+        tierLevel: cfg.unlockAllFeatures ? 2 : tierLevel,
         branding: cfg.branding,
         points: cfg.points,
         fx: cfg.fx,
@@ -125,6 +132,9 @@ export const handler = async (event) => {
         storeEnabled: cfg.storeEnabled !== false,
         mailboxEnabled: cfg.mailboxEnabled !== false,
         milestoneRules: cfg.milestoneRules,
+        onboardingCompleted: !!cfg.onboardingCompleted,
+        digestEnabled: !!cfg.digestEnabled,
+        digestEmail: cfg.digestEmail || "",
       });
     }
 
@@ -154,20 +164,20 @@ export const handler = async (event) => {
     }
 
 
-    // Chặn bypass cap Free/Paid bằng cách gọi API thẳng (UI admin.html đã tự
-    // chặn nhưng không tin client) — Free: 2 events / 2 rewards, Paid: 10 / 10.
-    const paid = await isPaidTier(companyId);
-    const eventsLimit = paid ? 10 : 3;
-    const rewardsLimit = paid ? 10 : 2;
+    // Giới hạn theo tier (server-side, không tin client):
+    // Free: 3 events / 2 rewards | Growth: 10/10 | Pro: 20/20 | Agency: không giới hạn
+    const tierLevel = await getTierLevel(companyId);
+    const eventsLimitArr  = [3, 10, 20, 9999];
+    const rewardsLimitArr = [2, 10, 20, 9999];
+    const eventsLimit  = cfg.unlockAllFeatures ? 9999 : (eventsLimitArr[tierLevel]  ?? 3);
+    const rewardsLimit = cfg.unlockAllFeatures ? 9999 : (rewardsLimitArr[tierLevel] ?? 2);
+    const paid = tierLevel > 0 || !!cfg.unlockAllFeatures;
     if ("events" in partial && partial.events.length > eventsLimit) {
-      return json(400, { error: `Free plan allows up to ${eventsLimit} events. Upgrade to Paid for more.` });
+      return json(400, { error: `Your plan allows up to ${eventsLimit} events. Upgrade for more.` });
     }
     if ("rewards" in partial && partial.rewards.length > rewardsLimit) {
-      return json(400, { error: `Free plan allows up to ${rewardsLimit} rewards. Upgrade to Paid for more.` });
+      return json(400, { error: `Your plan allows up to ${rewardsLimit} rewards. Upgrade for more.` });
     }
-    // branding.logoUrl ẩn badge "Powered by GTVăn" — admin.html disable input
-    // này khi free, nhưng vẫn gửi nguyên branding cũ trong mọi lần Save all, nên
-    // chặn ở đây là chống gọi API thẳng để bypass, KHÔNG phải chặn save thường.
     if ("branding" in partial && !paid) {
       partial.branding = { ...partial.branding, logoUrl: cfg.branding.logoUrl || null };
     }

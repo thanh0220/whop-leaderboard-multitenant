@@ -43,6 +43,14 @@ export async function getTenantConfig(companyId) {
   if (!saved) {
     const fresh = { ...DEFAULT_TENANT, companyId, createdAt: new Date().toISOString() };
     try { await store.setJSON(key, fresh); } catch (_) {}
+    // Thêm vào registry để digest.mjs biết có tenant mới
+    try {
+      const reg = await store.get(tenantKey("tenant-registry", "all"), { type: "json" }).catch(() => null) || [];
+      if (!reg.includes(companyId)) {
+        reg.push(companyId);
+        await store.setJSON(tenantKey("tenant-registry", "all"), reg);
+      }
+    } catch (_) {}
     return fresh;
   }
 
@@ -105,21 +113,56 @@ export async function linkExperienceToTenant(experienceId, tenantId) {
   try { await store.set(tenantKey("tenant-by-experience", experienceId), tenantId); } catch (_) {}
 }
 
+// "paid" (legacy) được treat như "growth" để backward compat với tenant cũ.
+function normalizeTier(raw) {
+  if (raw === "paid") return "growth";
+  if (["free", "growth", "pro", "agency"].includes(raw)) return raw;
+  return "free";
+}
+
+export async function getTierLevel(companyId) {
+  if (!companyId) return 0;
+  const store = pointsStore();
+  try {
+    const raw = await store.get(tenantKey("tenant-tier", companyId));
+    const tier = normalizeTier(raw);
+    return { free: 0, growth: 1, pro: 2, agency: 3 }[tier] ?? 0;
+  } catch (_) {
+    return 0;
+  }
+}
+
 export async function isPaidTier(companyId, tenantCfg) {
   if (!companyId) return false;
   const cfg = tenantCfg || (await getTenantConfig(companyId));
   if (cfg.unlockAllFeatures) return true;
   const store = pointsStore();
   try {
-    const tier = await store.get(tenantKey("tenant-tier", companyId));
-    return tier === "paid";
+    const raw = await store.get(tenantKey("tenant-tier", companyId));
+    return normalizeTier(raw) !== "free";
   } catch (_) {
     return false;
   }
 }
 
+export async function isProTier(companyId, tenantCfg) {
+  if (!companyId) return false;
+  const cfg = tenantCfg || (await getTenantConfig(companyId));
+  if (cfg.unlockAllFeatures) return true;
+  return (await getTierLevel(companyId)) >= 2;
+}
+
+export async function isAgencyTier(companyId, tenantCfg) {
+  if (!companyId) return false;
+  const cfg = tenantCfg || (await getTenantConfig(companyId));
+  if (cfg.unlockAllFeatures) return true;
+  return (await getTierLevel(companyId)) >= 3;
+}
+
 export async function setTenantTier(companyId, tier) {
-  if (!["free", "paid"].includes(tier)) throw new Error('tier phải là "free" hoặc "paid".');
+  if (!["free", "growth", "pro", "agency", "paid"].includes(tier))
+    throw new Error('tier phải là "free", "growth", "pro", hoặc "agency".');
   const store = pointsStore();
-  await store.set(tenantKey("tenant-tier", companyId), tier);
+  // Normalize "paid" → "growth" ngay khi lưu để DB nhất quán
+  await store.set(tenantKey("tenant-tier", companyId), normalizeTier(tier));
 }

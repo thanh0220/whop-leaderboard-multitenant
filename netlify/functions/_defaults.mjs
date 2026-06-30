@@ -76,6 +76,12 @@ export const DEFAULT_TENANT = {
     { id: "event_3", name: "📣 New Event", image: "", date: "", endDate: "", desc: "Edit the name and drag onto the calendar to schedule." },
   ],
   eventsEnabled: true,
+  // Wizard setup đã hoàn thành chưa — false với tenant mới, true sau khi click
+  // "Launch!" hoặc "Skip setup". Admin.html dùng để quyết định có hiện wizard không.
+  onboardingCompleted: false,
+  // Weekly digest email — opt-in thủ công (default tắt, tránh spam).
+  digestEnabled: false,
+  digestEmail: "",
   // Rương Liên Minh: khi 1 member mua hàng thật trên Whop (webhook
   // payment_succeeded — xem webhook.mjs), TOÀN BỘ member khác trong kênh
   // nhận 1 rương. Tier chọn theo số tiền USD của giao dịch (đã đổi qua `fx`).

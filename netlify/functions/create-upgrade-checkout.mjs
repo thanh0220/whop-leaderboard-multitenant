@@ -41,10 +41,24 @@ export const handler = async (event) => {
     return json(403, { error: "Only the community admin can upgrade to Pro." });
   }
 
+  let body = {};
+  try { body = JSON.parse(event.body || "{}"); } catch (_) {}
+
+  const planMap = {
+    growth: process.env.WHOP_GROWTH_PLAN_ID,
+    pro:    process.env.WHOP_PRO_PLAN_ID,
+    agency: process.env.WHOP_AGENCY_PLAN_ID,
+  };
+  // Fallback: nếu chỉ có WHOP_PRO_PLAN_ID (cũ), treat targetTier bất kỳ là pro
+  const targetTier = body.targetTier || "growth";
+  const planId = planMap[targetTier] || planMap.pro || planMap.growth;
+
   const devApiKey = process.env.WHOP_DEV_API_KEY;
-  const planId = process.env.WHOP_PRO_PLAN_ID;
-  if (!devApiKey || !planId) {
-    return json(500, { error: "Missing WHOP_DEV_API_KEY or WHOP_PRO_PLAN_ID environment variable." });
+  if (!devApiKey) {
+    return json(500, { error: "Missing WHOP_DEV_API_KEY environment variable." });
+  }
+  if (!planId) {
+    return json(500, { error: `No plan configured for tier "${targetTier}". Please set WHOP_${targetTier.toUpperCase()}_PLAN_ID in Netlify env vars.` });
   }
 
   try {
@@ -56,7 +70,7 @@ export const handler = async (event) => {
       },
       body: JSON.stringify({
         plan_id: planId,
-        metadata: { tenantId: companyId },
+        metadata: { tenantId: companyId, targetTier },
       }),
     });
     const j = await r.json().catch(() => ({}));
@@ -67,7 +81,7 @@ export const handler = async (event) => {
     if (!j.id) {
       return json(502, { error: "Could not find an id in the Whop response.", raw: j });
     }
-    return json(200, { sessionId: j.id, planId });
+    return json(200, { sessionId: j.id, planId, targetTier });
   } catch (err) {
     return json(500, { error: err.message });
   }
