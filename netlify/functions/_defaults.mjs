@@ -55,10 +55,39 @@ export const DEFAULT_TENANT = {
     { rank: "🏅 Top 5", prize: "250 pts" },
     { rank: "🏅 Top 6", prize: "150 pts" },
   ],
-  // Rỗng có chủ đích: rewards/redeemCodes là sản phẩm của TỪNG business, không
-  // được ship sẵn sản phẩm của 1 business cụ thể cho mọi tenant khác.
-  rewards: [],
-  redeemCodes: {},
+  // Dữ liệu MẪU để tenant mới thấy app trông như thật ngay từ đầu.
+  // Tên/mô tả dùng ký hiệu [...] để admin biết cần thay gì.
+  // Tenant cũ đã có config lưu trong Blobs sẽ KHÔNG bị ảnh hưởng (deepMerge
+  // ưu tiên giá trị đã lưu — chỉ tenant mới chưa có gì mới nhận defaults này).
+  rewards: [
+    {
+      id: "sample_reward_1",
+      name: "🎁 [Tên phần thưởng 1]",
+      cost: 500,
+      desc: "Mô tả phần thưởng tại đây. Ví dụ: voucher, tài liệu độc quyền, link tải...",
+      image: null,
+      badge: "new",
+      originalPrice: null,
+      stock: null,
+      tier: 1,
+      payload: { kind: "code", code: "SAMPLE-CODE-01" },
+    },
+    {
+      id: "sample_reward_2",
+      name: "⭐ [Tên phần thưởng 2]",
+      cost: 1500,
+      desc: "Phần thưởng cao cấp hơn. Ví dụ: khóa học, tư vấn 1-1, EA trial...",
+      image: null,
+      badge: "hot",
+      originalPrice: "$50",
+      stock: 10,
+      tier: 2,
+      payload: { kind: "code", code: "SAMPLE-CODE-02" },
+    },
+  ],
+  redeemCodes: {
+    WELCOME: { xu: 100 },
+  },
   // Công tắc bật/tắt riêng cho Redeem Codes — field RIÊNG (không nhồi vào
   // trong redeemCodes, vì đó là map động code->reward, nhồi "enabled" vào sẽ
   // đụng với 1 code thật tên "enabled"). deepMerge ở _tenant.mjs tự thêm field
@@ -69,8 +98,8 @@ export const DEFAULT_TENANT = {
   // 2 ô mặc định (khớp giới hạn Free) — admin tự thêm/xoá ô qua admin.html,
   // tối đa 2 (Free) / 10 (Paid) — xem events.mjs + admin-config.mjs.
   events: [
-    { id: "event_1", name: "Event 1", image: "", date: "", endDate: "", desc: "" },
-    { id: "event_2", name: "Event 2", image: "", date: "", endDate: "", desc: "" },
+    { id: "event_1", name: "🎯 [Tên sự kiện 1 — chỉnh sửa tại Admin]", image: "", date: "2026-08-01", endDate: "2026-08-01", desc: "Mô tả sự kiện tại đây. Ví dụ: livestream, AMA, khuyến mãi đặc biệt." },
+    { id: "event_2", name: "📅 [Tên sự kiện 2 — chỉnh sửa tại Admin]", image: "", date: "2026-08-15", endDate: "2026-08-15", desc: "Thêm sự kiện thứ hai của cộng đồng bạn tại đây." },
   ],
   eventsEnabled: true,
   // Rương Liên Minh: khi 1 member mua hàng thật trên Whop (webhook
