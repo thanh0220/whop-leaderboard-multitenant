@@ -64,9 +64,6 @@ const ALLOWED_KEYS = [
   "storeEnabled",
   "mailboxEnabled",
   "milestoneRules",
-  "spinRules",
-  "auctionRules",
-  "auctionProducts",
 ];
 
 // GET: trả toàn bộ config tenant (trừ whopApiKey/setupSecret — không bao giờ
@@ -128,9 +125,6 @@ export const handler = async (event) => {
         storeEnabled: cfg.storeEnabled !== false,
         mailboxEnabled: cfg.mailboxEnabled !== false,
         milestoneRules: cfg.milestoneRules,
-        spinRules: cfg.spinRules,
-        auctionRules: cfg.auctionRules,
-        auctionProducts: cfg.auctionProducts || [],
       });
     }
 
@@ -144,7 +138,7 @@ export const handler = async (event) => {
       if (Object.prototype.hasOwnProperty.call(body, k)) partial[k] = body[k];
     }
     // Light shape validation — avoids saving the wrong type and breaking the member-facing pages.
-    for (const k of ["checkinRewards", "seasonTopRewards", "rewards", "events", "auctionProducts"]) {
+    for (const k of ["checkinRewards", "seasonTopRewards", "rewards", "events"]) {
       if (k in partial && !Array.isArray(partial[k])) {
         return json(400, { error: `${k} must be an array.` });
       }
@@ -158,12 +152,7 @@ export const handler = async (event) => {
     if ("milestoneRules" in partial && (typeof partial.milestoneRules !== "object" || partial.milestoneRules === null || Array.isArray(partial.milestoneRules))) {
       return json(400, { error: "milestoneRules must be an object." });
     }
-    if ("spinRules" in partial && (typeof partial.spinRules !== "object" || partial.spinRules === null || Array.isArray(partial.spinRules))) {
-      return json(400, { error: "spinRules must be an object." });
-    }
-    if ("auctionRules" in partial && (typeof partial.auctionRules !== "object" || partial.auctionRules === null || Array.isArray(partial.auctionRules))) {
-      return json(400, { error: "auctionRules must be an object." });
-    }
+
 
     // Chặn bypass cap Free/Paid bằng cách gọi API thẳng (UI admin.html đã tự
     // chặn nhưng không tin client) — Free: 2 events / 2 rewards, Paid: 10 / 10.

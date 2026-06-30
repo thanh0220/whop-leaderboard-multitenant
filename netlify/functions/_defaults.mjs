@@ -62,16 +62,7 @@ export const DEFAULT_TENANT = {
   // sản phẩm của 1 business cụ thể cho mọi tenant khác. store.html tự hiện
   // "no rewards yet" khi mảng rỗng — sạch, không gây nhầm lẫn cho member.
   rewards: [],
-  // Catalog sản phẩm dành riêng cho Auction — KHÔNG liên quan Store.
-  // Chủ whop tự thêm/xoá qua Admin > Auction. Mặc định 1 sản phẩm mẫu đẹp.
-  auctionProducts: [
-    {
-      id: "auction_default_1",
-      name: "🏆 VIP Membership — 1 Month",
-      image: "/auction-default.svg",
-      desc: "1-month VIP membership — exclusive content access, priority support, and more.",
-    },
-  ],
+
   redeemCodes: {
     WELCOME: { xu: 100 },
   },
@@ -80,13 +71,9 @@ export const DEFAULT_TENANT = {
   // đụng với 1 code thật tên "enabled"). deepMerge ở _tenant.mjs tự thêm field
   // này cho tenant cũ (chưa từng lưu) mà không cần migration riêng.
   codesEnabled: true,
-  // Event calendar — 3 default slots (Free plan limit).
-  // event_1/event_2 use recurringDays (auto-show every week, no date needed).
-  // event_3 is unscheduled — admin drags it onto the calendar to set a date.
+  // Event calendar default slots — admin drags unscheduled chips onto the calendar.
   events: [
-    { id: "event_1", name: "🎰 Lucky Spin",  image: "", recurringDays: [1,2,3,4], desc: "Spin the wheel to win XU and prizes! Every Monday to Thursday." },
-    { id: "event_2", name: "🔨 Auction",     image: "", recurringDays: [5,6,0],   desc: "Bid your XU to win exclusive items! Every Friday to Sunday." },
-    { id: "event_3", name: "📣 New Event",   image: "", date: "",  endDate: "",   desc: "Edit the name and drag onto the calendar to schedule." },
+    { id: "event_3", name: "📣 New Event", image: "", date: "", endDate: "", desc: "Edit the name and drag onto the calendar to schedule." },
   ],
   eventsEnabled: true,
   // Rương Liên Minh: khi 1 member mua hàng thật trên Whop (webhook
@@ -125,33 +112,5 @@ export const DEFAULT_TENANT = {
       { thresholdReferrals: 10, rewardId: null, xu: 900,  label: "Gold Reward",    icon: "🎁" },
       { thresholdReferrals: 20, rewardId: null, xu: 2000, label: "Diamond Reward", icon: "🎁" },
     ],
-  },
-  // Lucky Spin: thanh toán THẬT tự động cộng vé quay (ticketsPerPayment, flat
-  // mỗi lần thanh toán) — member cũng có thể đổi vé bằng xu (xuCostPerTicket,
-  // cố ý đặt đắt để ưu tiên đường nạp tiền thật). Quay random có trọng số
-  // (weight) trong `prizes`, giao thưởng tự động (item Reward Store MIỄN PHÍ
-  // nếu gắn rewardId, không thì cộng thẳng xu) — không cần admin động tay.
-  spinRules: {
-    enabled: true,
-    ticketsPerPayment: 5,
-    xuCostPerTicket: 500,
-    prizes: [
-      { id: "p1", label: "Small Win",  weight: 50, rewardId: null, xu: 20 },
-      { id: "p2", label: "Medium Win", weight: 30, rewardId: null, xu: 80 },
-      { id: "p3", label: "Big Win",    weight: 15, rewardId: null, xu: 300 },
-      { id: "p4", label: "Jackpot",    weight: 5,  rewardId: null, xu: 1000 },
-    ],
-  },
-  // Auction House: 1 vật phẩm DUY NHẤT (admin chọn 1 item có sẵn trong
-  // Reward Store qua rewardId) đem ra đấu giá bằng xu. Đây chỉ là CẤU HÌNH —
-  // state phiên đấu giá đang chạy (giá cao nhất, lịch sử bid, hạn chốt) lưu
-  // riêng ở blob "auction-state:<tenantId>", KHÔNG nằm trong config này, vì
-  // mỗi lần admin bấm "Start New Auction" sẽ tạo state mới — xem auction.mjs.
-  auctionRules: {
-    enabled: false,
-    rewardId: "auction_default_1",
-    startingBid: 5000,
-    minIncrement: 100,
-    durationHours: 48,
   },
 };

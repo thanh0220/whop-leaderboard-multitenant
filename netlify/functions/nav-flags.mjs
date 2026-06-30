@@ -20,8 +20,7 @@ export const handler = async (event) => {
     return json(200, {
       eventsEnabled: !!cfg.eventsEnabled,
       milestonesEnabled: !!cfg.milestoneRules?.enabled,
-      spinEnabled: !!cfg.spinRules?.enabled,
-      auctionEnabled: !!cfg.auctionRules?.enabled,
+
       codesEnabled: !!cfg.codesEnabled,
       dailyEnabled: cfg.dailyEnabled !== false,
       storeEnabled: cfg.storeEnabled !== false,

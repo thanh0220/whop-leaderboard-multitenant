@@ -11,6 +11,23 @@ function deepMerge(base, override) {
   return out;
 }
 
+// One-time migrations applied at read time to any tenant config.
+// Safe to run repeatedly — each check is idempotent (only acts when field absent).
+function migrateConfig(cfg) {
+  if (cfg.events?.length) {
+    cfg.events = cfg.events.map(e => {
+      if (e.id === 'event_1' && !e.recurringDays)
+        return { ...e, date: '', endDate: '', recurringDays: [1,2,3,4] };
+      if (e.id === 'event_2' && !e.recurringDays)
+        return { ...e, date: '', endDate: '', recurringDays: [5,6,0] };
+      return e;
+    });
+    // Remove legacy Lucky Spin / Auction recurring events (features removed)
+    cfg.events = cfg.events.filter(e => e.id !== 'event_1' && e.id !== 'event_2');
+  }
+  return cfg;
+}
+
 // Đọc config của 1 tenant; nếu chưa tồn tại thì tạo từ DEFAULT_TENANT (lazy
 // init — không cần bước "cài đặt" riêng để tenant hoạt động được ngay).
 // Nếu đã tồn tại, merge defaults bên dưới config đã lưu — field mới thêm sau
@@ -29,7 +46,7 @@ export async function getTenantConfig(companyId) {
     return fresh;
   }
 
-  return deepMerge({ ...DEFAULT_TENANT, companyId }, saved);
+  return migrateConfig(deepMerge({ ...DEFAULT_TENANT, companyId }, saved));
 }
 
 export async function saveTenantConfig(companyId, partialConfig) {
