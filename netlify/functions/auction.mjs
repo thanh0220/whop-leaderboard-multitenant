@@ -77,7 +77,8 @@ async function settleIfNeeded(store, tenantId, state, cfg) {
   }
 
   if (winner && cfg.auctionRules.rewardId) {
-    const reward = cfg.rewards.find((r) => r.id === cfg.auctionRules.rewardId);
+    const auctionPool = cfg.auctionProducts || cfg.rewards || [];
+    const reward = auctionPool.find((r) => r.id === cfg.auctionRules.rewardId);
     if (reward) {
       const payload = reward.payload || { kind: "code", code: "" };
       let history = [];
@@ -119,7 +120,8 @@ export const handler = async (event) => {
   state = await settleIfNeeded(store, companyId, state, cfg);
 
   function publicView() {
-    const reward = rules.rewardId ? cfg.rewards.find((r) => r.id === rules.rewardId) : null;
+    const auctionPool = cfg.auctionProducts || cfg.rewards || [];
+    const reward = rules.rewardId ? auctionPool.find((r) => r.id === rules.rewardId) : null;
     const nextMin = state ? (state.highestBid > 0 ? state.highestBid + rules.minIncrement : rules.startingBid) : rules.startingBid;
     return {
       enabled: !!rules.enabled,

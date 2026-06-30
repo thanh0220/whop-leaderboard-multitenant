@@ -23,6 +23,9 @@ export const handler = async (event) => {
       spinEnabled: !!cfg.spinRules?.enabled,
       auctionEnabled: !!cfg.auctionRules?.enabled,
       codesEnabled: !!cfg.codesEnabled,
+      dailyEnabled: cfg.dailyEnabled !== false,
+      storeEnabled: cfg.storeEnabled !== false,
+      mailboxEnabled: cfg.mailboxEnabled !== false,
     });
   } catch (e) {
     return json(500, { error: e.message || "Could not load nav flags." });

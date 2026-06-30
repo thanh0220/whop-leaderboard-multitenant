@@ -60,9 +60,13 @@ const ALLOWED_KEYS = [
   "chestRules",
   "events",
   "eventsEnabled",
+  "dailyEnabled",
+  "storeEnabled",
+  "mailboxEnabled",
   "milestoneRules",
   "spinRules",
   "auctionRules",
+  "auctionProducts",
 ];
 
 // GET: trả toàn bộ config tenant (trừ whopApiKey/setupSecret — không bao giờ
@@ -120,9 +124,13 @@ export const handler = async (event) => {
         chestRules: cfg.chestRules,
         events: cfg.events,
         eventsEnabled: cfg.eventsEnabled,
+        dailyEnabled: cfg.dailyEnabled !== false,
+        storeEnabled: cfg.storeEnabled !== false,
+        mailboxEnabled: cfg.mailboxEnabled !== false,
         milestoneRules: cfg.milestoneRules,
         spinRules: cfg.spinRules,
         auctionRules: cfg.auctionRules,
+        auctionProducts: cfg.auctionProducts || [],
       });
     }
 
@@ -136,7 +144,7 @@ export const handler = async (event) => {
       if (Object.prototype.hasOwnProperty.call(body, k)) partial[k] = body[k];
     }
     // Light shape validation — avoids saving the wrong type and breaking the member-facing pages.
-    for (const k of ["checkinRewards", "seasonTopRewards", "rewards", "events"]) {
+    for (const k of ["checkinRewards", "seasonTopRewards", "rewards", "events", "auctionProducts"]) {
       if (k in partial && !Array.isArray(partial[k])) {
         return json(400, { error: `${k} must be an array.` });
       }
@@ -160,12 +168,13 @@ export const handler = async (event) => {
     // Chặn bypass cap Free/Paid bằng cách gọi API thẳng (UI admin.html đã tự
     // chặn nhưng không tin client) — Free: 2 events / 2 rewards, Paid: 10 / 10.
     const paid = await isPaidTier(companyId);
-    const limit = paid ? 10 : 2;
-    if ("events" in partial && partial.events.length > limit) {
-      return json(400, { error: `Free plan allows up to ${limit} events. Upgrade to Paid for more.` });
+    const eventsLimit = paid ? 10 : 3;
+    const rewardsLimit = paid ? 10 : 2;
+    if ("events" in partial && partial.events.length > eventsLimit) {
+      return json(400, { error: `Free plan allows up to ${eventsLimit} events. Upgrade to Paid for more.` });
     }
-    if ("rewards" in partial && partial.rewards.length > limit) {
-      return json(400, { error: `Free plan allows up to ${limit} rewards. Upgrade to Paid for more.` });
+    if ("rewards" in partial && partial.rewards.length > rewardsLimit) {
+      return json(400, { error: `Free plan allows up to ${rewardsLimit} rewards. Upgrade to Paid for more.` });
     }
     // branding.logoUrl ẩn badge "Powered by GTVăn" — admin.html disable input
     // này khi free, nhưng vẫn gửi nguyên branding cũ trong mọi lần Save all, nên

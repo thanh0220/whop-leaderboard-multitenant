@@ -55,10 +55,23 @@ export const DEFAULT_TENANT = {
     { rank: "🏅 Top 5", prize: "250 pts" },
     { rank: "🏅 Top 6", prize: "150 pts" },
   ],
+  dailyEnabled:   true,
+  storeEnabled:   true,
+  mailboxEnabled: true,
   // Rỗng có chủ đích: rewards là sản phẩm của TỪNG business, không ship sẵn
   // sản phẩm của 1 business cụ thể cho mọi tenant khác. store.html tự hiện
   // "no rewards yet" khi mảng rỗng — sạch, không gây nhầm lẫn cho member.
   rewards: [],
+  // Catalog sản phẩm dành riêng cho Auction — KHÔNG liên quan Store.
+  // Chủ whop tự thêm/xoá qua Admin > Auction. Mặc định 1 sản phẩm mẫu đẹp.
+  auctionProducts: [
+    {
+      id: "auction_default_1",
+      name: "🏆 VIP Membership — 1 Tháng",
+      image: "/auction-default.svg",
+      desc: "Gói thành viên VIP 1 tháng — truy cập nội dung độc quyền, hỗ trợ ưu tiên và nhiều đặc quyền khác.",
+    },
+  ],
   redeemCodes: {
     WELCOME: { xu: 100 },
   },
@@ -69,11 +82,12 @@ export const DEFAULT_TENANT = {
   codesEnabled: true,
   // Lịch sự kiện độc lập (live stream, khuyến mãi, AMA, bảo trì...) — KHÔNG
   // gắn với Nhiệm vụ/Code, chỉ để thông báo/hiển thị trên public/events.html.
-  // 2 ô mặc định (khớp giới hạn Free) — admin tự thêm/xoá ô qua admin.html,
-  // tối đa 2 (Free) / 10 (Paid) — xem events.mjs + admin-config.mjs.
+  // 3 ô mặc định (khớp giới hạn Free) — 2 đã kéo vào lịch, 1 còn trong tray
+  // để admin kéo thả — tối đa 3 (Free) / 10 (Paid) — xem admin-config.mjs.
   events: [
     { id: "event_1", name: "🎰 Lucky Spin — Thứ 2 đến Thứ 5 hằng tuần", image: "", date: "2026-07-06", endDate: "2026-07-09", desc: "Quay vòng may mắn để nhận XU và phần thưởng hấp dẫn! Mỗi tuần từ thứ 2 đến thứ 5." },
     { id: "event_2", name: "🔨 Auction — Thứ 6 đến Chủ Nhật hằng tuần", image: "", date: "2026-07-10", endDate: "2026-07-12", desc: "Đấu giá vật phẩm độc quyền bằng XU! Mỗi tuần từ thứ 6 đến chủ nhật." },
+    { id: "event_3", name: "📣 Thông báo sự kiện mới", image: "", date: "", endDate: "", desc: "Chỉnh sửa tên và kéo thả vào lịch để đặt ngày." },
   ],
   eventsEnabled: true,
   // Rương Liên Minh: khi 1 member mua hàng thật trên Whop (webhook
@@ -136,7 +150,7 @@ export const DEFAULT_TENANT = {
   // mỗi lần admin bấm "Start New Auction" sẽ tạo state mới — xem auction.mjs.
   auctionRules: {
     enabled: false,
-    rewardId: null,
+    rewardId: "auction_default_1",
     startingBid: 5000,
     minIncrement: 100,
     durationHours: 48,
