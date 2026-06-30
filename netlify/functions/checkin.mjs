@@ -65,6 +65,7 @@ export const handler = async (event) => {
 
     if (event.httpMethod !== "POST") return json(405, { error: "GET or POST" });
 
+
     // POST: claim — dùng casUpdate (không phải check rồi ghi thường) để chặn
     // nhiều request Check-in song song đều đọc thấy "chưa check-in hôm nay" và
     // đều được cộng thưởng (double-claim trong 1 ngày).

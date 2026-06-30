@@ -1,5 +1,5 @@
 import { getAuthContext } from "./_auth.mjs";
-import { getTenantConfig, isPaidTier } from "./_tenant.mjs";
+import { getTenantConfig, getTierLevel } from "./_tenant.mjs";
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -18,8 +18,9 @@ export const handler = async (event) => {
 
   try {
     const cfg = await getTenantConfig(companyId);
-    const paid = await isPaidTier(companyId);
-    const limit = paid ? 10 : 2;
+    const tierLevel = await getTierLevel(companyId);
+    const limit = [3, 10, 9999, 9999][tierLevel] ?? 3;
+    const paid = tierLevel > 0;
 
     if (cfg.eventsEnabled === false) {
       return json(200, { events: [], branding: cfg.branding, isPaid: paid });

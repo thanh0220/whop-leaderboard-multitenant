@@ -1,6 +1,6 @@
 import { pointsStore, tenantKey, casUpdate } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
-import { getTenantConfig, isPaidTier } from "./_tenant.mjs";
+import { getTenantConfig } from "./_tenant.mjs";
 import { utcDayKey } from "./_season.mjs";
 import { isWithinWindow, ddiff } from "./_repeat.mjs";
 
@@ -16,10 +16,6 @@ export const handler = async (event) => {
   const { userId, companyId } = await getAuthContext(event);
   if (!userId) return json(401, { error: "Could not identify the user." });
   if (!companyId) return json(400, { error: "Could not identify the community (companyId)." });
-
-  if (!(await isPaidTier(companyId))) {
-    return json(402, { error: "Redeeming codes is a paid feature. Upgrade to unlock it." });
-  }
 
   const cfg = await getTenantConfig(companyId);
   if (cfg.codesEnabled === false) {

@@ -1,6 +1,6 @@
 import { getAuthContext } from "./_auth.mjs";
 import { getCompanyAccessToken, getRealCompanyId } from "./_tokens.mjs";
-import { getTenantConfig, isPaidTier } from "./_tenant.mjs";
+import { getTenantConfig, isPaidTier, getTierLevel } from "./_tenant.mjs";
 
 const WHOP_API = "https://api.whop.com/api/v5";
 
@@ -118,7 +118,8 @@ export const handler = async (event) => {
     // dưới) để tenant free thực sự giảm chi phí gọi Whop, không chỉ ẩn ở UI.
     const totalMembersReal = members.length;
     const paid = await isPaidTier(companyId);
-    const memberCap = paid ? 500 : 50;
+    const tierLevel = await getTierLevel(companyId);
+    const memberCap = [50, 500, 9999, 9999][tierLevel] ?? 50;
     members = members
       .slice()
       .sort((a, b) => (membershipCreatedMs(a) || 0) - (membershipCreatedMs(b) || 0))

@@ -167,8 +167,8 @@ export const handler = async (event) => {
     // Giới hạn theo tier (server-side, không tin client):
     // Free: 3 events / 2 rewards | Growth: 10/10 | Pro: 20/20 | Agency: không giới hạn
     const tierLevel = await getTierLevel(companyId);
-    const eventsLimitArr  = [3, 10, 20, 9999];
-    const rewardsLimitArr = [2, 10, 20, 9999];
+    const eventsLimitArr  = [3, 10, 9999, 9999];
+    const rewardsLimitArr = [2, 10, 9999, 9999];
     const eventsLimit  = cfg.unlockAllFeatures ? 9999 : (eventsLimitArr[tierLevel]  ?? 3);
     const rewardsLimit = cfg.unlockAllFeatures ? 9999 : (rewardsLimitArr[tierLevel] ?? 2);
     const paid = tierLevel > 0 || !!cfg.unlockAllFeatures;
