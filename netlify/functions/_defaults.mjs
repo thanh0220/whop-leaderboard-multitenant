@@ -67,9 +67,9 @@ export const DEFAULT_TENANT = {
   auctionProducts: [
     {
       id: "auction_default_1",
-      name: "🏆 VIP Membership — 1 Tháng",
+      name: "🏆 VIP Membership — 1 Month",
       image: "/auction-default.svg",
-      desc: "Gói thành viên VIP 1 tháng — truy cập nội dung độc quyền, hỗ trợ ưu tiên và nhiều đặc quyền khác.",
+      desc: "1-month VIP membership — exclusive content access, priority support, and more.",
     },
   ],
   redeemCodes: {
@@ -80,14 +80,13 @@ export const DEFAULT_TENANT = {
   // đụng với 1 code thật tên "enabled"). deepMerge ở _tenant.mjs tự thêm field
   // này cho tenant cũ (chưa từng lưu) mà không cần migration riêng.
   codesEnabled: true,
-  // Lịch sự kiện độc lập (live stream, khuyến mãi, AMA, bảo trì...) — KHÔNG
-  // gắn với Nhiệm vụ/Code, chỉ để thông báo/hiển thị trên public/events.html.
-  // 3 ô mặc định (khớp giới hạn Free) — 2 đã kéo vào lịch, 1 còn trong tray
-  // để admin kéo thả — tối đa 3 (Free) / 10 (Paid) — xem admin-config.mjs.
+  // Event calendar — 3 default slots (Free plan limit).
+  // event_1/event_2 use recurringDays (auto-show every week, no date needed).
+  // event_3 is unscheduled — admin drags it onto the calendar to set a date.
   events: [
-    { id: "event_1", name: "🎰 Lucky Spin — Thứ 2 đến Thứ 5 hằng tuần", image: "", date: "2026-07-06", endDate: "2026-07-09", desc: "Quay vòng may mắn để nhận XU và phần thưởng hấp dẫn! Mỗi tuần từ thứ 2 đến thứ 5." },
-    { id: "event_2", name: "🔨 Auction — Thứ 6 đến Chủ Nhật hằng tuần", image: "", date: "2026-07-10", endDate: "2026-07-12", desc: "Đấu giá vật phẩm độc quyền bằng XU! Mỗi tuần từ thứ 6 đến chủ nhật." },
-    { id: "event_3", name: "📣 Thông báo sự kiện mới", image: "", date: "", endDate: "", desc: "Chỉnh sửa tên và kéo thả vào lịch để đặt ngày." },
+    { id: "event_1", name: "🎰 Lucky Spin",  image: "", recurringDays: [1,2,3,4], desc: "Spin the wheel to win XU and prizes! Every Monday to Thursday." },
+    { id: "event_2", name: "🔨 Auction",     image: "", recurringDays: [5,6,0],   desc: "Bid your XU to win exclusive items! Every Friday to Sunday." },
+    { id: "event_3", name: "📣 New Event",   image: "", date: "",  endDate: "",   desc: "Edit the name and drag onto the calendar to schedule." },
   ],
   eventsEnabled: true,
   // Rương Liên Minh: khi 1 member mua hàng thật trên Whop (webhook
