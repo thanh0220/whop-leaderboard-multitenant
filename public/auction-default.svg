@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <pattern id="dots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+      <circle cx="15" cy="15" r="1.5" fill="rgba(255,255,255,0.18)"/>
+    </pattern>
+  </defs>
+  <rect width="400" height="400" fill="url(#g)"/>
+  <rect width="400" height="400" fill="url(#dots)"/>
+  <text x="200" y="185" font-size="120" text-anchor="middle" dominant-baseline="middle">🏆</text>
+  <rect x="40" y="305" width="320" height="52" rx="26" fill="rgba(0,0,0,0.4)"/>
+  <text x="200" y="332" font-family="system-ui,sans-serif" font-size="16"
+        fill="rgba(255,255,255,0.95)" text-anchor="middle" dominant-baseline="middle"
+        letter-spacing="0.5">VIP Membership — 1 Tháng</text>
+</svg>

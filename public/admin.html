@@ -415,12 +415,16 @@ async function load(){
         redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>
           typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),
         codesEnabled: j.codesEnabled !== false,
+        dailyEnabled: j.dailyEnabled !== false,
+        storeEnabled: j.storeEnabled !== false,
+        mailboxEnabled: j.mailboxEnabled !== false,
         chestRules: j.chestRules || {enabled:true,thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},
-        events: normalizeEvents(j.events, IS_PAID ? 10 : 2),
+        events: normalizeEvents(j.events, IS_PAID ? 10 : 3),
         eventsEnabled: j.eventsEnabled !== false,
         milestoneRules: j.milestoneRules || {enabled:false,tiers:[]},
         spinRules: j.spinRules || {enabled:false,ticketsPerPayment:5,xuCostPerTicket:500,prizes:[]},
         auctionRules: j.auctionRules || {enabled:false,rewardId:null,startingBid:5000,minIncrement:100,durationHours:48},
+        auctionProducts: j.auctionProducts || [],
         branding: j.branding || {displayName:'',primaryColor:'#7c3aed',logoUrl:''},
       };
       renderAll();
@@ -690,6 +694,7 @@ function renderDaily(){
         "Members get free XU just for opening the app and checking in every day. Day 1 starts the cycle; after Day 30 it loops back to Day 1.",
         ["Type how many XU to give for each day below (bigger numbers on later days encourage members to keep coming back)", "Save all"]
       )}
+      ${toggleRow(STATE.dailyEnabled, 'STATE.dailyEnabled=this.checked;renderAll()', 'Enabled — Daily Check-in is visible in member nav.', 'Disabled — Daily Check-in link is hidden from members.')}
       <div class="calgrid">${cells}</div>
     </div>`;
 }
@@ -800,6 +805,7 @@ function renderStore(){
         "This is where members spend their XU to get real things — a discount code, a download link, a file. Whatever you add here can also be reused as a prize in Milestones, Lucky Spin, and Auction.",
         ["Click + Add new reward below", "Give it a name, a price in XU, and pick what members receive (a code, a link, or a file)", "Save all"]
       )}
+      ${toggleRow(STATE.storeEnabled, 'STATE.storeEnabled=this.checked;renderAll()', 'Enabled — Reward Store is visible in member nav.', 'Disabled — Reward Store link is hidden from members.')}
       ${cards || '<p class="hint-small">No rewards in the store yet.</p>'}
       ${addRewardOrMsg}
     </div>`;
@@ -866,6 +872,7 @@ function renderChests(){
         "Whenever ANY member buys something real on your Whop, EVERY other member gets a free surprise chest of XU in their Mailbox — a fun way to celebrate sales together. The buyer also gets an extra bonus chest just for themselves.",
         ["Set how much XU each chest tier gives (Wood = small purchase, Gold = big purchase)", "Make sure the Webhook setup at the bottom is done once (ask for help if unsure)", "Save all"]
       )}
+      ${toggleRow(STATE.mailboxEnabled, 'STATE.mailboxEnabled=this.checked;renderAll()', 'Enabled — Mailbox is visible in member nav.', 'Disabled — Mailbox link is hidden from members.')}
       ${toggleRow(rules.enabled !== false, "setPath(STATE,'chestRules.enabled',this.checked);renderAll()", 'Enabled — purchases trigger a community chest.', 'Disabled — purchases no longer trigger a chest.')}
       <p class="hint-small" style="margin-bottom:10px">When a member buys something on Whop, everyone else in the channel gets a chest in their 📬 Mailbox. The tier depends on the purchase amount; the coin reward is randomized within the range you set below.</p>
       ${rows || '<p class="hint-small">No tiers configured yet.</p>'}
@@ -1323,8 +1330,8 @@ async function refreshAuctionStatus(){
 // cho dropdown cũ, theo đúng pattern dragChip/dragPrizeType đã có trong file.
 let dragAuctionRewardId = null;
 function auctionChipsHtml(){
-  return (STATE.rewards||[]).map(rw => {
-    const visual = rw.image ? `<img src="${esc(rw.image)}" alt=""/>` : `<span class="ic">🎁</span>`;
+  return (STATE.auctionProducts||[]).map(rw => {
+    const visual = rw.image ? `<img src="${esc(rw.image)}" alt=""/>` : `<span class="ic">🏆</span>`;
     return `<div class="auction-chip" draggable="true" ondragstart="dragAuctionRewardId='${esc(rw.id)}'">${visual} ${esc(rw.name||rw.id)}</div>`;
   }).join('');
 }
@@ -1353,16 +1360,48 @@ function clearAuctionReward(){
   setPath(STATE, 'auctionRules.rewardId', null);
   renderAll();
 }
+function addAuctionProduct(){
+  const id = 'ap_'+Date.now().toString(36);
+  STATE.auctionProducts = [...(STATE.auctionProducts||[]), {id, name:'New Item', image:'', desc:''}];
+  renderAll();
+}
+function deleteAuctionProduct(id){
+  STATE.auctionProducts = (STATE.auctionProducts||[]).filter(p=>p.id!==id);
+  if(STATE.auctionRules.rewardId===id) setPath(STATE,'auctionRules.rewardId',null);
+  renderAll();
+}
 function renderAuction(){
   const rules = STATE.auctionRules || {enabled:false,rewardId:null,startingBid:5000,minIncrement:100,durationHours:48};
-  const reward = rules.rewardId ? (STATE.rewards||[]).find(rw=>rw.id===rules.rewardId) : null;
+  const products = STATE.auctionProducts||[];
+  const reward = rules.rewardId ? products.find(rw=>rw.id===rules.rewardId) : null;
 
-  const body = (STATE.rewards||[]).length===0 ? rewardEmptyWarning(true) : `
-    ${stepHeader('1. Pick the item')}
+  const productRows = products.map((p,i)=>`
+    <details class="item" style="margin-bottom:8px">
+      <summary>${esc(p.name||'(Unnamed)')}</summary>
+      <div style="padding:10px 0">
+        <label>Name</label>
+        <input value="${esc(p.name||'')}" oninput="setPath(STATE,'auctionProducts.${i}.name',this.value);renderAll()"/>
+        <label>Image URL (paste link)</label>
+        <input value="${esc(p.image||'')}" placeholder="https://..." oninput="setPath(STATE,'auctionProducts.${i}.image',this.value)"/>
+        <label>Description</label>
+        <textarea oninput="setPath(STATE,'auctionProducts.${i}.desc',this.value)">${esc(p.desc||'')}</textarea>
+        <button class="btn del" onclick="deleteAuctionProduct('${esc(p.id)}')">🗑 Delete</button>
+      </div>
+    </details>`).join('');
+
+  const body = products.length===0 ? `
+    <p class="hint-small">⚠ Add at least 1 auction item below before enabling the auction.</p>
+    ${productRows}
+    <button class="btn" onclick="addAuctionProduct()">+ Add auction item</button>` : `
+    ${stepHeader('1. Manage auction items')}
+    ${productRows}
+    <button class="btn" onclick="addAuctionProduct()">+ Add auction item</button>
+
+    ${stepHeader('2. Pick the item to auction now')}
     <div class="auction-chip-row">${auctionChipsHtml()}</div>
     ${auctionStageHtml(reward)}
 
-    ${stepHeader('2. Set the price')}
+    ${stepHeader('3. Set the price')}
     <div class="row2">
       <div><label>Starting price — lowest possible bid (XU)</label><input type="number" min="0" value="${rules.startingBid||0}" oninput="setPath(STATE,'auctionRules.startingBid',Number(this.value)||0)"/></div>
       <div><label>Each new bid must beat the last by at least (XU)</label><input type="number" min="1" value="${rules.minIncrement||100}" oninput="setPath(STATE,'auctionRules.minIncrement',Number(this.value)||100)"/></div>
@@ -1371,7 +1410,7 @@ function renderAuction(){
     <label>How long it runs (hours)</label>
     <input type="number" min="1" value="${rules.durationHours||48}" oninput="setPath(STATE,'auctionRules.durationHours',Number(this.value)||48)"/>
 
-    ${stepHeader('3. Make it visible to members')}
+    ${stepHeader('4. Make it visible to members')}
     ${toggleRow(rules.enabled, "setPath(STATE,'auctionRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Auction page.', "Disabled — members can't see this program.")}
 
     <button class="btn" id="start-auction-btn" onclick="startAuction(this)">🔨 Start New Auction</button>
@@ -1410,7 +1449,7 @@ async function startAuction(btn){
 // ===== #events — sự kiện (ảnh + tên + 1 ngày), sửa trực tiếp trên ô, kéo-thả lên lịch =====
 let eventsWeekOffset = 0;
 let dragChip = null; // idx của ô đang kéo (drop lần đầu lên lịch)
-function eventsLimit(){ return IS_PAID ? 10 : 2; }
+function eventsLimit(){ return IS_PAID ? 10 : 3; }
 
 // Migrate dữ liệu cũ (startDate/endDate) về `date` nếu có, cắt về đúng giới
 // hạn tier (free 2 / paid 10) — admin thêm/xoá ô qua nút trong renderEvents().
@@ -1713,12 +1752,16 @@ function buildSavePayload(){
     rewards: STATE.rewards,
     redeemCodes,
     codesEnabled: STATE.codesEnabled,
+    dailyEnabled: STATE.dailyEnabled,
+    storeEnabled: STATE.storeEnabled,
+    mailboxEnabled: STATE.mailboxEnabled,
     chestRules: STATE.chestRules,
     events: STATE.events,
     eventsEnabled: STATE.eventsEnabled,
     milestoneRules: STATE.milestoneRules,
     spinRules: STATE.spinRules,
     auctionRules: STATE.auctionRules,
+    auctionProducts: STATE.auctionProducts||[],
     branding: STATE.branding,
   };
 }

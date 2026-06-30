@@ -163,7 +163,8 @@ function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
     const j = await r.json();
     if(!r.ok) return;
     const map = { '/events.html': j.eventsEnabled, '/milestones.html': j.milestonesEnabled,
-      '/spin.html': j.spinEnabled, '/auction.html': j.auctionEnabled };
+      '/spin.html': j.spinEnabled, '/auction.html': j.auctionEnabled,
+      '/daily.html': j.dailyEnabled, '/store.html': j.storeEnabled, '/mailbox.html': j.mailboxEnabled };
     document.querySelectorAll('.nav a').forEach(a=>{
       const href = a.getAttribute('href').split('?')[0];
       if(href in map && !map[href]) a.remove();
