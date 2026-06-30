@@ -1,1819 +1,1494 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Settings — Whop Community App</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{--bg:#070910;--cyan:#27e3ff;--gold:#f4c441;--silver:#cbd5e1;--bronze:#e1955a;--diamond:#9beaff;--red:#ff2d4b;--muted:#a3acc2;--text:#eef2f8;--line2:rgba(39,227,255,.3);
-    --ctrl-bg:rgba(255,255,255,.03);--ctrl-border:rgba(255,255,255,.12);
-    --card1:#16202f;--card2:#0a0f18;--card-border:rgba(255,255,255,.08);
-    --card-text:#eef2f8;--card-muted:#8a93a6;--chip-bg:rgba(0,0,0,.25);
-    --modal-bg:#0a0f18;--modal-border:rgba(255,255,255,.12)}
-  /* Light mode: đổi đồng bộ nền trang + nền card/panel/input/modal + màu nhấn —
-     giữ đúng "mood" ánh xanh-than + màu nhấn neon của bản tối, chỉ giảm độ
-     sáng cho đủ tương phản trên nền sáng (xem index.html cho giải thích đầy đủ). */
-  @media (prefers-color-scheme: light){
-    :root{--bg:#eef1f7;--muted:#5d6478;--text:#161c2c;--red:#e0123a;--cyan:#0098bb;--gold:#c9860a;
-      --silver:#5d6b80;--bronze:#a85a1f;--diamond:#0090b0;
-      --line2:rgba(0,152,187,.32);--ctrl-bg:rgba(22,28,44,.04);--ctrl-border:rgba(22,28,44,.14);
-      --card1:#ffffff;--card2:#eef2f9;--card-border:rgba(22,28,44,.09);
-      --card-text:#161c2c;--card-muted:#5d6478;--chip-bg:#e4e9f2;
-      --modal-bg:#ffffff;--modal-border:rgba(22,28,44,.12)}
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:30px 18px 100px;
-    background:radial-gradient(120% 70% at 50% -10%,rgba(255,45,75,.13),var(--bg) 55%),var(--bg);background-attachment:fixed}
-  .wrap{max-width:760px;margin:0 auto}
-  h1{font-family:'Oswald',sans-serif;font-size:20px;letter-spacing:.06em;margin-bottom:6px}
-  p.hint{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px}
-  .nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:10}
-  .nav a{font-family:'Oswald',sans-serif;letter-spacing:.06em;text-transform:uppercase;font-size:12px;
-    padding:7px 12px;border-radius:999px;border:1px solid var(--ctrl-border);background:var(--ctrl-bg);
-    color:var(--muted);text-decoration:none}
-  .nav a:hover{border-color:var(--line2);color:var(--cyan)}
-  .nav a.active{border-color:var(--gold);color:var(--gold);background:rgba(244,196,65,.12)}
-  .tab-panel{animation:tabIn .25s ease}
-  @keyframes tabIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
-  .sect{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:16px;color:var(--gold);margin:26px 0 12px;scroll-margin-top:60px}
-  .panel{background:linear-gradient(160deg,var(--card1),var(--card2));border:1px solid var(--card-border);border-radius:16px;padding:18px;margin-bottom:8px;color:var(--card-text)}
-  label{display:block;font-size:11.5px;letter-spacing:.04em;color:var(--gold);margin:10px 0 4px;text-transform:uppercase;font-family:'Oswald',sans-serif}
-  label:first-of-type{margin-top:0}
-  input,select,textarea{width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--card-border);
-    background:var(--chip-bg);color:var(--card-text);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none}
-  textarea{min-height:60px;resize:vertical}
-  input:focus,select:focus,textarea:focus{border-color:var(--cyan)}
-  .hint-small{font-size:12px;color:var(--card-muted);margin-top:3px;line-height:1.5}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .btn{margin-top:10px;padding:9px 14px;border-radius:8px;border:1px solid var(--line2);
-    background:rgba(39,227,255,.12);color:var(--cyan);font:700 13px 'Oswald',sans-serif;letter-spacing:.06em;
-    text-transform:uppercase;cursor:pointer}
-  .btn:hover:not(:disabled){background:rgba(39,227,255,.22)}
-  .btn:disabled{opacity:.5;cursor:not-allowed}
-  .btn.del{border-color:rgba(255,45,75,.4);background:rgba(255,45,75,.1);color:#ffb0bd}
-  .btn.big{width:100%;margin-top:18px;padding:13px;font-size:13px}
-  .item{border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--chip-bg)}
-  .chest-tier-row{display:flex;gap:12px;align-items:flex-start}
-  .chest-tier-row .chest-preview{width:64px;height:64px;flex:none;border-radius:10px;background:radial-gradient(circle,rgba(255,255,255,.06),rgba(255,255,255,0) 70%)}
-  .chest-tier-row .tier-fields{flex:1;min-width:0}
-  .chest-tier-row .tier-fields label:first-of-type{margin-top:0}
-  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-  @media(max-width:560px){.row3{grid-template-columns:1fr}}
-  .item-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
-  .item-head b{font-size:13px}
-  details.item summary{cursor:pointer;font-weight:600;font-size:13px;list-style:none}
-  details.item summary::-webkit-details-marker{display:none}
-  details.item summary::before{content:'▸ ';color:var(--cyan)}
-  details.item[open] summary::before{content:'▾ '}
-  .msg{margin-top:10px;font-size:13px;min-height:1.2em}
-  .msg.ok{color:#7ee787}
-  .msg.err{color:#ff8896}
-  .state{text-align:center;padding:40px 0;color:var(--muted)}
-  .status{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:999px;margin-bottom:10px}
-  .status.on{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.4)}
-  .status.off{background:rgba(255,45,75,.12);color:#ffb0bd;border:1px solid rgba(255,45,75,.4)}
-  .calgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-  .calgrid .cell{text-align:center}
-  .calgrid .cell label{margin:0 0 2px;font-size:9px}
-  .calgrid input{padding:6px;text-align:center;font-size:12px}
-  @media(max-width:560px){.calgrid{grid-template-columns:repeat(5,1fr)}.row2{grid-template-columns:1fr}}
-  .thumb{width:64px;height:64px;border-radius:8px;background:var(--card2);object-fit:cover;display:block;margin-bottom:6px;border:1px solid var(--card-border)}
-  .save-bar{position:fixed;left:0;right:0;bottom:0;padding:12px 18px;background:var(--modal-bg);
-    border-top:1px solid var(--card-border);display:flex;justify-content:center;gap:10px;z-index:20;backdrop-filter:blur(6px)}
-  .save-bar .btn.big{margin:0;max-width:400px}
-
-  .checkout-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
-  .checkout-modal{background:var(--modal-bg);border:1px solid var(--modal-border);border-radius:16px;padding:18px;max-width:460px;width:100%;max-height:90vh;overflow:auto;position:relative;color:var(--card-text)}
-  .checkout-modal .x{position:absolute;top:10px;right:14px;cursor:pointer;color:var(--card-muted);font-size:18px}
-  .checkout-modal .x:hover{color:var(--card-text)}
-
-  .pricing-card{max-width:340px;margin:0 auto;border-radius:16px;padding:22px;text-align:center;position:relative;
-    background:linear-gradient(160deg,rgba(244,196,65,.1),rgba(39,227,255,.06));border:1px solid rgba(244,196,65,.4)}
-  .pricing-card.is-active{border-color:rgba(34,197,94,.5);background:linear-gradient(160deg,rgba(34,197,94,.1),rgba(39,227,255,.06))}
-  .pricing-badge{display:inline-block;font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
-    padding:4px 12px;border-radius:20px;background:var(--gold);color:#1a1200;font-weight:700;margin-bottom:14px}
-  .pricing-card.is-active .pricing-badge{background:#34d37a;color:#06210f}
-  .pricing-name{font-family:'Oswald',sans-serif;font-size:18px;letter-spacing:.04em;color:var(--card-text);margin-bottom:4px}
-  .pricing-price{font-family:'Oswald',sans-serif;font-size:38px;font-weight:700;color:var(--gold);line-height:1}
-  .pricing-price span{font-size:14px;color:var(--card-muted);font-weight:400;font-family:'Be Vietnam Pro',sans-serif}
-  .pricing-features{list-style:none;margin:18px 0;padding:0;text-align:left;display:inline-block}
-  .pricing-features li{font-size:13px;color:var(--card-text);padding:5px 0;display:flex;align-items:center;gap:8px}
-  .pricing-features li::before{content:'✓';color:#34d37a;font-weight:700}
-  .pricing-cta{width:100%;margin-top:6px;padding:13px;border-radius:10px;border:none;cursor:pointer;
-    font:700 13px 'Oswald',sans-serif;letter-spacing:.05em;text-transform:uppercase;
-    background:linear-gradient(135deg,var(--gold),#d39a11);color:#1a1200}
-  .pricing-cta:disabled{opacity:.6;cursor:not-allowed}
-  .pricing-cta.is-active{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.4);cursor:default}
-
-  /* ===== Live preview (mirrors store.html / index.html / daily.html markup+CSS) ===== */
-  .edit-row{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:start;margin-top:10px}
-  @media(max-width:680px){.edit-row{grid-template-columns:1fr}}
-  .prev-col{position:sticky;top:70px}
-  .prev-label{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;text-align:center;font-family:'Oswald',sans-serif}
-
-  .pv-card{position:relative;background:linear-gradient(160deg,var(--card1),var(--card2));border:1px solid var(--card-border);border-radius:16px;padding:0;display:flex;flex-direction:column;overflow:hidden;color:var(--card-text)}
-  .pv-card .thumb2{position:relative;width:100%;aspect-ratio:1/1;background:var(--card2) center/cover no-repeat;border-bottom:1px solid var(--card-border)}
-  .pv-card .body2{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
-  .pv-card h3{font-size:15px;font-weight:700;line-height:1.3}
-  .pv-card p{font-size:12.5px;color:var(--card-muted);flex:1;line-height:1.5}
-  .pv-badge{position:absolute;top:10px;left:10px;font-family:'Oswald',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:5px 9px;border-radius:6px;backdrop-filter:blur(4px);z-index:2}
-  .pv-badge.hot{background:rgba(255,45,75,.18);color:#ffb0bd;border:1px solid rgba(255,45,75,.5)}
-  .pv-badge.new{background:rgba(39,227,255,.18);color:var(--cyan);border:1px solid rgba(39,227,255,.5)}
-  .pv-badge.vip{background:rgba(244,196,65,.18);color:var(--gold);border:1px solid rgba(244,196,65,.5)}
-  .pv-badge.bestseller{background:rgba(178,102,255,.2);color:#d5b8ff;border:1px solid rgba(178,102,255,.5)}
-  .pv-badge.limited{background:rgba(255,45,75,.18);color:#ffb0bd;border:1px solid rgba(255,45,75,.5)}
-  .pv-stock{position:absolute;top:10px;right:10px;font-family:'Oswald',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:5px 9px;border-radius:6px;background:rgba(10,15,24,.7);color:#ffb0bd;border:1px solid rgba(255,45,75,.45);backdrop-filter:blur(4px);z-index:2}
-  .pv-cost-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:2px}
-  .pv-cost{font-family:'Oswald',sans-serif;font-weight:700;color:var(--gold);font-size:18px;letter-spacing:.04em}
-  .pv-price-anchor{font-size:11px;color:var(--card-muted);letter-spacing:.04em}
-  .pv-price-anchor s{color:rgba(255,255,255,.55)}
-  .pv-price-anchor b{color:var(--cyan);font-weight:600}
-  .pv-btn{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:12px;font-weight:600;
-    padding:10px;border-radius:9px;border:1px solid var(--line2);background:rgba(39,227,255,.1);color:var(--cyan);text-align:center;margin-top:4px}
-  .pv-btn.primary{background:linear-gradient(135deg,rgba(244,196,65,.18),rgba(39,227,255,.18));border-color:rgba(244,196,65,.5);color:var(--gold)}
-  .pv-toggle{margin-top:6px;font-size:10px;padding:6px 10px}
-
-  .pv-back{position:relative;display:flex;flex-direction:column;background:linear-gradient(165deg,#0e1622 0%,#1a0a2e 100%);
-    border:1px solid rgba(244,196,65,.55);border-radius:16px;box-shadow:0 0 0 1px rgba(244,196,65,.18) inset;padding:18px 16px;overflow:hidden}
-  .pv-fb-hdr{text-align:center;position:relative;z-index:1}
-  .pv-fb-tag{display:inline-block;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.2em;padding:4px 10px;border-radius:6px;background:rgba(244,196,65,.18);color:var(--gold);border:1px solid rgba(244,196,65,.4)}
-  .pv-fb-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;color:#fff;margin-top:8px;letter-spacing:.04em;line-height:1.25}
-  .pv-fb-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;position:relative;z-index:1;margin:12px 0;width:100%}
-  .pv-fb-code{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;color:#fff;letter-spacing:.14em;background:#0a0f18;border:1.5px dashed var(--gold);border-radius:10px;padding:12px 14px;text-align:center;width:100%;word-break:break-all}
-  .pv-fb-copy{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.12em;text-transform:uppercase;background:transparent;border:1px solid rgba(244,196,65,.5);color:var(--gold);padding:7px 14px;border-radius:8px;width:100%}
-  .pv-fb-link{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;background:linear-gradient(135deg,rgba(178,102,255,.18),rgba(244,196,65,.12));border:1px solid rgba(178,102,255,.5);color:#fff;font-weight:600;font-size:12.5px;width:100%;box-sizing:border-box}
-  .pv-fb-link small{display:block;font-size:10px;font-weight:400;color:rgba(255,255,255,.55);margin-top:2px}
-
-  .pv-prize{background:var(--chip-bg);border:1px solid var(--card-border);border-radius:11px;padding:11px 13px}
-  .pv-prize .pp{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
-  .pv-prize .pxu{font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;line-height:1}
-  .pv-prize.r1 .pp,.pv-prize.r1 .pxu{color:var(--gold)}
-  .pv-prize.r2 .pp,.pv-prize.r2 .pxu{color:var(--silver)}
-  .pv-prize.r3 .pp,.pv-prize.r3 .pxu{color:var(--bronze)}
-  .pv-prize.r4 .pp,.pv-prize.r4 .pxu,.pv-prize.r5 .pp,.pv-prize.r5 .pxu,.pv-prize.r6 .pp,.pv-prize.r6 .pxu{color:var(--diamond)}
-
-  .pv-quest{display:flex;align-items:center;gap:10px;background:var(--chip-bg);border:1px solid var(--card-border);border-radius:12px;padding:11px}
-  .pv-quest .ic{font-size:20px}
-  .pv-quest .info{flex:1;min-width:0}
-  .pv-quest .nm{font-size:13px;font-weight:600;color:var(--card-text);margin-bottom:2px}
-  .pv-quest .rw{font-family:'Oswald',sans-serif;font-size:11px;color:var(--gold);letter-spacing:.05em}
-
-  .pv-day{position:relative;aspect-ratio:1;border-radius:8px;border:1px solid var(--card-border);
-    background:var(--chip-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin-top:4px}
-  .pv-day .n{font-size:8px;color:var(--card-muted);letter-spacing:.04em}
-  .pv-day .r{font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;color:var(--card-text)}
-
-  /* ===== #events — lịch kéo-thả ===== */
-  .events-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
-  .events-nav .lbl{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.06em;color:var(--card-muted);text-transform:uppercase}
-  .ev-calendar{min-height:90px;position:relative}
-  .ev-head-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:10px;user-select:none}
-  .ev-head-cell{text-align:center;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.05em;color:var(--card-muted);text-transform:uppercase;padding:6px 2px;border-radius:6px}
-  .ev-head-cell.today{color:var(--cyan);background:rgba(39,227,255,.08)}
-  .ev-head-cell .dd{font-size:12px;color:var(--card-text);font-weight:700;margin-top:2px}
-  .ev-track{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;min-height:34px}
-  .evt-bar{position:relative;border-radius:8px;padding:7px 22px;font-size:12.5px;font-weight:600;display:flex;align-items:center;
-    overflow:hidden;white-space:nowrap;cursor:pointer;user-select:none}
-  .evt-bar.quest{background:rgba(39,227,255,.18);border:1px solid rgba(39,227,255,.5);color:var(--cyan)}
-  .evt-bar.code{background:rgba(255,45,75,.18);border:1px solid rgba(255,45,75,.5);color:#ffb0bd}
-  .evt-bar .grip{position:absolute;top:0;bottom:0;width:9px;cursor:grab;z-index:2;display:flex;align-items:center;justify-content:center;
-    font-size:10px;color:rgba(255,255,255,.35);background:rgba(255,255,255,.04)}
-  .evt-bar .grip:hover{background:rgba(255,255,255,.12);color:rgba(255,255,255,.75)}
-  .evt-bar .grip:active{cursor:grabbing}
-  .evt-bar .grip-l{left:0} .evt-bar .grip-r{right:0}
-  .evt-name-inline{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .evt-bar .ex{font-size:10px;line-height:1;opacity:.6;cursor:pointer;padding:2px;flex-shrink:0;margin-left:4px}
-  .evt-bar .ex:hover{opacity:1}
-  .event-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
-  .event-modal{background:var(--modal-bg);border:1px solid var(--modal-border);border-radius:16px;padding:18px;max-width:460px;width:100%;position:relative;color:var(--card-text)}
-  .event-modal .x{position:absolute;top:10px;right:14px;cursor:pointer;color:var(--card-muted);font-size:18px}
-  .event-modal .x:hover{color:var(--card-text)}
-  .event-modal .modal-actions{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
-  .event-modal .modal-actions .btn{margin-top:0;flex:1}
-  .event-modal .name-input{font-size:17px;font-weight:700;font-family:'Oswald',sans-serif;text-align:center;letter-spacing:.02em}
-  .event-modal .img-box{position:relative;width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:var(--chip-bg);
-    border:1px dashed var(--card-border);display:flex;align-items:center;justify-content:center;margin-bottom:8px}
-  .event-modal .img-box img{width:100%;height:100%;object-fit:cover}
-  .event-modal .img-box .ph{color:var(--card-muted);font-size:12px;text-align:center;padding:10px;font-style:italic}
-  .event-modal .img-toggle{display:flex;gap:6px;margin-bottom:8px}
-  .event-modal .img-toggle .btn{flex:1;margin-top:0;padding:7px 8px;font-size:11px}
-  .event-modal .img-toggle .btn.locked{opacity:.55}
-  .event-modal .img-toggle .btn.on{background:rgba(39,227,255,.3);border-color:var(--cyan)}
-  .ev-empty{text-align:center;color:var(--card-muted);font-size:12px;padding:10px 0}
-  .unscheduled-tray{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
-  .chip{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:999px;
-    margin:0 6px 6px 0;cursor:grab;user-select:none;width:160px}
-  .chip .evt-name-inline{width:auto}
-  .chip .ex{opacity:.7;cursor:pointer}
-  .flash{animation:flash-pulse 1.5s ease-out;border-radius:12px}
-  @keyframes flash-pulse{0%,30%{box-shadow:0 0 0 2px var(--cyan)}100%{box-shadow:0 0 0 0 transparent}}
-  .chip.quest{background:rgba(39,227,255,.1);border:1px solid rgba(39,227,255,.4);color:var(--cyan)}
-  .chip.code{background:rgba(255,45,75,.1);border:1px solid rgba(255,45,75,.4);color:#ffb0bd}
-
-  /* ===== Lucky Spin — bánh xe preview + popup kéo-thả gán phần thưởng ===== */
-  .spin-admin-wheel-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:8px}
-  #spin-admin-canvas{cursor:pointer;border-radius:50%;filter:drop-shadow(0 0 16px rgba(244,196,65,.35));transition:transform .15s}
-  #spin-admin-canvas:hover{transform:scale(1.03)}
-  .spin-chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-  .spin-chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:9px 14px;
-    border-radius:10px;background:var(--chip-bg);border:1px solid var(--card-border);color:var(--card-text);
-    cursor:grab;user-select:none}
-  .spin-chip:active{cursor:grabbing}
-  .spin-slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-  .spin-slot{background:var(--chip-bg);border:1px solid var(--card-border);border-radius:12px;padding:10px;position:relative}
-  .spin-slot-head{display:flex;align-items:center;gap:6px;font-family:'Oswald',sans-serif;font-size:11px;
-    letter-spacing:.05em;text-transform:uppercase;color:var(--card-muted);margin-bottom:6px}
-  .spin-slot-pct{color:var(--cyan);font-weight:700}
-  .spin-slot-x{margin-left:auto;cursor:pointer;opacity:.6;font-size:13px}
-  .spin-slot-x:hover{opacity:1;color:var(--red)}
-  .spin-slot-empty{text-align:center;padding:14px 4px;border:1px dashed var(--card-border);border-radius:8px;
-    font-size:20px;color:var(--card-muted)}
-  .spin-slot-icon{font-size:20px;text-align:center;margin-bottom:4px}
-  .spin-slot input,.spin-slot select{font-size:12px;padding:6px 8px;margin-top:2px}
-  .spin-slot label{font-size:10.5px}
-  .spin-mystery-box{background:rgba(0,0,0,.15);border:1px dashed rgba(244,196,65,.4);border-radius:8px;padding:8px;margin-top:4px}
-  .spin-mini-grid{display:flex;flex-direction:column;gap:6px;margin-top:6px}
-  .spin-mini-grid .spin-slot{padding:8px}
-
-  /* ===== Auction — chọn sản phẩm bằng kéo-thả vào "sân khấu" ===== */
-  .auction-chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-  .auction-chip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;padding:8px 12px;
-    border-radius:10px;background:var(--chip-bg);border:1px solid var(--card-border);color:var(--card-text);
-    cursor:grab;user-select:none}
-  .auction-chip:active{cursor:grabbing}
-  .auction-chip img{width:22px;height:22px;border-radius:5px;object-fit:cover}
-  .auction-chip .ic{font-size:16px}
-  .auction-stage-drop{position:relative;border-radius:16px;padding:22px 16px;text-align:center;margin-bottom:14px;
-    border:2px dashed var(--card-border);background:radial-gradient(circle,rgba(168,85,247,.08),transparent 70%);
-    transition:.15s}
-  .auction-stage-drop.has-item{border-style:solid;border-color:rgba(244,196,65,.45);
-    background:radial-gradient(circle,rgba(255,217,102,.1),transparent 70%)}
-  .auction-stage-drop .stage-empty{color:var(--card-muted);font-size:13px}
-  .auction-stage-drop .stage-img{width:90px;height:90px;object-fit:cover;border-radius:12px;margin:0 auto 8px;
-    box-shadow:0 0 24px rgba(255,217,102,.4);display:block}
-  .auction-stage-drop .stage-ic{font-size:48px;filter:drop-shadow(0 0 14px rgba(255,217,102,.5))}
-  .auction-stage-drop .stage-name{font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;color:var(--card-text)}
-  .auction-stage-drop .stage-x{position:absolute;top:8px;right:10px;cursor:pointer;color:var(--card-muted);font-size:15px}
-  .auction-stage-drop .stage-x:hover{color:var(--red)}
-
-  /* ===== Khối giới thiệu/hướng dẫn đầu mỗi tab + cảnh báo reward rỗng + mini preview ===== */
-  .intro-card{background:rgba(39,227,255,.06);border:1px solid rgba(39,227,255,.25);border-radius:12px;padding:13px 15px;margin-bottom:14px}
-  .intro-what{font-size:13px;color:var(--card-text);line-height:1.6;margin-bottom:8px}
-  .intro-steps{margin:0;padding-left:20px;font-size:12.5px;color:var(--card-muted);line-height:1.8}
-  .intro-steps li{margin-bottom:2px}
-  .reward-empty{background:rgba(255,45,75,.08);border:1px solid rgba(255,45,75,.3);border-radius:12px;padding:14px;text-align:center;margin-bottom:12px}
-  .reward-empty p{font-size:13px;color:#ffd0d8;margin-bottom:8px;line-height:1.5}
-  .step-head{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;
-    text-transform:uppercase;color:var(--gold);margin:18px 0 8px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px}
-  .spin-pct{font-size:11px;color:var(--cyan);margin-top:4px;font-family:'Oswald',sans-serif;letter-spacing:.04em}
-  .mini-preview{display:flex;align-items:center;gap:10px;background:var(--chip-bg);border:1px solid var(--card-border);border-radius:10px;padding:10px;margin:8px 0}
-  .mini-preview img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--card2)}
-  .mini-preview .ic{width:44px;height:44px;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-  .mini-preview .nm{font-size:13px;font-weight:600}
-  .mini-preview .sub{font-size:10.5px;color:var(--card-muted);margin-top:1px}
-  .mini-preview.big img,.mini-preview.big .ic{width:64px;height:64px;font-size:30px}
-
-  /* ===== Khối "Mức dùng hiện tại" (giới hạn bản Free) — tab Billing ===== */
-  .usage-card{background:rgba(255,45,75,.06);border:1px solid rgba(255,45,75,.25);border-radius:14px;padding:14px 16px;margin-bottom:16px}
-  .usage-card h4{font-family:'Oswald',sans-serif;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:#ffb0bd;margin-bottom:10px}
-  .usage-row{margin-bottom:10px}
-  .usage-row .lbl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--card-text);margin-bottom:4px}
-  .usage-row .lbl b{color:var(--gold)}
-  .usage-bar{height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
-  .usage-bar .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--gold))}
-  .usage-locked{list-style:none;margin:10px 0 4px;padding:0}
-  .usage-locked li{font-size:12.5px;color:var(--card-muted);padding:5px 0;border-top:1px solid rgba(255,255,255,.06)}
-  .usage-locked li:first-child{border-top:none}
-  .usage-locked b{color:#ffb0bd}
-  .usage-check-btn{margin-top:4px}
-  .usage-member-result{font-size:12px;color:var(--cyan);margin-top:6px}
-
-  @media (prefers-color-scheme: light){
-    .panel{box-shadow:0 4px 14px rgba(22,28,44,.07)}
-    .item{box-shadow:0 2px 8px rgba(22,28,44,.05)}
-    .err,.btn.del,.status.off,.pv-badge.hot,.pv-badge.limited,.evt-bar.code,.chip.code,.reward-empty p,.usage-card h4,.usage-locked b{color:#9a2030}
-  }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <h1>⚙️ Settings — Community Admin</h1>
-  <p class="hint">Only admins should open this page — don't share this link with members.</p>
-  <div class="nav">
-    <a href="#conn" onclick="switchTab('conn');return false">🔌 Connect</a>
-    <a href="#billing" onclick="switchTab('billing');return false">💎 Billing</a>
-    <a href="#season" onclick="switchTab('season');return false">🏆 Season</a>
-    <a href="#daily" onclick="switchTab('daily');return false">📅 Check-in</a>
-    <a href="#store" onclick="switchTab('store');return false">🎁 Store</a>
-    <a href="#codes" onclick="switchTab('codes');return false">🔑 Codes</a>
-    <a href="#events" onclick="switchTab('events');return false">🗓 Events</a>
-    <a href="#chests" onclick="switchTab('chests');return false">📬 Community Chest</a>
-    <a href="#milestones" onclick="switchTab('milestones');return false">🎯 Referral Milestones</a>
-    <a href="#spin" onclick="switchTab('spin');return false">🎰 Lucky Spin</a>
-    <a href="#auction" onclick="switchTab('auction');return false">🔨 Auction</a>
-  </div>
-  <div id="content"><div class="state">Loading...</div></div>
-</div>
-
-<script async defer src="https://js.whop.com/static/checkout/loader.js"></script>
-<script type="module" src="/chest3d.module.js"></script>
-<script>
-const $=id=>document.getElementById(id);
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function fmt(n){return Number(n||0).toLocaleString('en-US');}
-
-// ===== Preview render (pure, no DOM access) — mirrors the exact markup of store.html/index.html/daily.html =====
-const BADGE_LABEL={hot:'🔥 Hot',new:'⚡ New',vip:'👑 VIP',bestseller:'⭐ Bestseller',limited:'⏳ Limited'};
-
-function storeCardHtml(r){
-  const thumb=r.image?`<div class="thumb2" style="background-image:url('${esc(r.image)}')"></div>`:`<div class="thumb2" style="background:linear-gradient(135deg,var(--card1),var(--card2))"></div>`;
-  return `<div class="pv-card">
-    ${thumb}
-    <div class="body2">
-      <h3>${esc(r.name||'(Unnamed)')}</h3>
-      <p>${esc(r.desc||'')}</p>
-      <div class="pv-cost-row"><span class="pv-cost">${fmt(r.cost)} XU</span></div>
-      <div class="pv-btn ${(r.tier>=4)?'primary':''}">${esc(r.buttonLabel||'GET')}</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings — Whop Community App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #070910;
+        --cyan: #27e3ff;
+        --gold: #f4c441;
+        --silver: #cbd5e1;
+        --bronze: #e1955a;
+        --diamond: #9beaff;
+        --red: #ff2d4b;
+        --muted: #a3acc2;
+        --text: #eef2f8;
+        --line2: rgba(39, 227, 255, 0.3);
+        --ctrl-bg: rgba(255, 255, 255, 0.03);
+        --ctrl-border: rgba(255, 255, 255, 0.12);
+        --card1: #16202f;
+        --card2: #0a0f18;
+        --card-border: rgba(255, 255, 255, 0.08);
+        --card-text: #eef2f8;
+        --card-muted: #8a93a6;
+        --chip-bg: rgba(0, 0, 0, 0.25);
+        --modal-bg: #0a0f18;
+        --modal-border: rgba(255, 255, 255, 0.12);
+      } /* Light mode: đổi đồng bộ nền trang + nền card/panel/input/modal + màu nhấn —     giữ đúng "mood" ánh xanh-than + màu nhấn neon của bản tối, chỉ giảm độ     sáng cho đủ tương phản trên nền sáng (xem index.html cho giải thích đầy đủ). */
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #eef1f7;
+          --muted: #5d6478;
+          --text: #161c2c;
+          --red: #e0123a;
+          --cyan: #0098bb;
+          --gold: #c9860a;
+          --silver: #5d6b80;
+          --bronze: #a85a1f;
+          --diamond: #0090b0;
+          --line2: rgba(0, 152, 187, 0.32);
+          --ctrl-bg: rgba(22, 28, 44, 0.04);
+          --ctrl-border: rgba(22, 28, 44, 0.14);
+          --card1: #ffffff;
+          --card2: #eef2f9;
+          --card-border: rgba(22, 28, 44, 0.09);
+          --card-text: #161c2c;
+          --card-muted: #5d6478;
+          --chip-bg: #e4e9f2;
+          --modal-bg: #ffffff;
+          --modal-border: rgba(22, 28, 44, 0.12);
+        }
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Be Vietnam Pro", sans-serif;
+        color: var(--text);
+        min-height: 100vh;
+        padding: 30px 18px 100px;
+        background:
+          radial-gradient(
+            120% 70% at 50% -10%,
+            rgba(255, 45, 75, 0.13),
+            var(--bg) 55%
+          ),
+          var(--bg);
+        background-attachment: fixed;
+      }
+      .wrap {
+        max-width: 760px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-family: "Oswald", sans-serif;
+        font-size: 20px;
+        letter-spacing: 0.06em;
+        margin-bottom: 6px;
+      }
+      p.hint {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.6;
+        margin-bottom: 18px;
+      }
+      .nav {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 22px;
+        position: sticky;
+        top: 0;
+        background: var(--bg);
+        padding: 10px 0;
+        z-index: 10;
+      }
+      .nav a {
+        font-family: "Oswald", sans-serif;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        font-size: 12px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--ctrl-border);
+        background: var(--ctrl-bg);
+        color: var(--muted);
+        text-decoration: none;
+      }
+      .nav a:hover {
+        border-color: var(--line2);
+        color: var(--cyan);
+      }
+      .nav a.active {
+        border-color: var(--gold);
+        color: var(--gold);
+        background: rgba(244, 196, 65, 0.12);
+      }
+      .tab-panel {
+        animation: tabIn 0.25s ease;
+      }
+      @keyframes tabIn {
+        from {
+          opacity: 0;
+          transform: translateX(14px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      .sect {
+        font-family: "Oswald", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 16px;
+        color: var(--gold);
+        margin: 26px 0 12px;
+        scroll-margin-top: 60px;
+      }
+      .panel {
+        background: linear-gradient(160deg, var(--card1), var(--card2));
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 8px;
+        color: var(--card-text);
+      }
+      label {
+        display: block;
+        font-size: 11.5px;
+        letter-spacing: 0.04em;
+        color: var(--gold);
+        margin: 10px 0 4px;
+        text-transform: uppercase;
+        font-family: "Oswald", sans-serif;
+      }
+      label:first-of-type {
+        margin-top: 0;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 9px 11px;
+        border-radius: 8px;
+        border: 1px solid var(--card-border);
+        background: var(--chip-bg);
+        color: var(--card-text);
+        font:
+          500 13px "Be Vietnam Pro",
+          sans-serif;
+        outline: none;
+      }
+      textarea {
+        min-height: 60px;
+        resize: vertical;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--cyan);
+      }
+      .hint-small {
+        font-size: 12px;
+        color: var(--card-muted);
+        margin-top: 3px;
+        line-height: 1.5;
+      }
+      .row2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .btn {
+        margin-top: 10px;
+        padding: 9px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--line2);
+        background: rgba(39, 227, 255, 0.12);
+        color: var(--cyan);
+        font:
+          700 13px "Oswald",
+          sans-serif;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .btn:hover:not(:disabled) {
+        background: rgba(39, 227, 255, 0.22);
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn.del {
+        border-color: rgba(255, 45, 75, 0.4);
+        background: rgba(255, 45, 75, 0.1);
+        color: #ffb0bd;
+      }
+      .btn.big {
+        width: 100%;
+        margin-top: 18px;
+        padding: 13px;
+        font-size: 13px;
+      }
+      .item {
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 10px;
+        background: var(--chip-bg);
+      }
+      .chest-tier-row {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .chest-tier-row .chest-preview {
+        width: 64px;
+        height: 64px;
+        flex: none;
+        border-radius: 10px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.06),
+          rgba(255, 255, 255, 0) 70%
+        );
+      }
+      .chest-tier-row .tier-fields {
+        flex: 1;
+        min-width: 0;
+      }
+      .chest-tier-row .tier-fields label:first-of-type {
+        margin-top: 0;
+      }
+      .row3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+      }
+      @media (max-width: 560px) {
+        .row3 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .item-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .item-head b {
+        font-size: 13px;
+      }
+      details.item summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        list-style: none;
+      }
+      details.item summary::-webkit-details-marker {
+        display: none;
+      }
+      details.item summary::before {
+        content: "▸ ";
+        color: var(--cyan);
+      }
+      details.item[open] summary::before {
+        content: "▾ ";
+      }
+      .msg {
+        margin-top: 10px;
+        font-size: 13px;
+        min-height: 1.2em;
+      }
+      .msg.ok {
+        color: #7ee787;
+      }
+      .msg.err {
+        color: #ff8896;
+      }
+      .state {
+        text-align: center;
+        padding: 40px 0;
+        color: var(--muted);
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        margin-bottom: 10px;
+      }
+      .status.on {
+        background: rgba(34, 197, 94, 0.15);
+        color: #86efac;
+        border: 1px solid rgba(34, 197, 94, 0.4);
+      }
+      .status.off {
+        background: rgba(255, 45, 75, 0.12);
+        color: #ffb0bd;
+        border: 1px solid rgba(255, 45, 75, 0.4);
+      }
+      .calgrid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 6px;
+      }
+      .calgrid .cell {
+        text-align: center;
+      }
+      .calgrid .cell label {
+        margin: 0 0 2px;
+        font-size: 9px;
+      }
+      .calgrid input {
+        padding: 6px;
+        text-align: center;
+        font-size: 12px;
+      }
+      @media (max-width: 560px) {
+        .calgrid {
+          grid-template-columns: repeat(5, 1fr);
+        }
+        .row2 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .thumb {
+        width: 64px;
+        height: 64px;
+        border-radius: 8px;
+        background: var(--card2);
+        object-fit: cover;
+        display: block;
+        margin-bottom: 6px;
+        border: 1px solid var(--card-border);
+      }
+      .save-bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 12px 18px;
+        background: var(--modal-bg);
+        border-top: 1px solid var(--card-border);
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        z-index: 20;
+        backdrop-filter: blur(6px);
+      }
+      .save-bar .btn.big {
+        margin: 0;
+        max-width: 400px;
+      }
+      .checkout-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .checkout-modal {
+        background: var(--modal-bg);
+        border: 1px solid var(--modal-border);
+        border-radius: 16px;
+        padding: 18px;
+        max-width: 460px;
+        width: 100%;
+        max-height: 90vh;
+        overflow: auto;
+        position: relative;
+        color: var(--card-text);
+      }
+      .checkout-modal .x {
+        position: absolute;
+        top: 10px;
+        right: 14px;
+        cursor: pointer;
+        color: var(--card-muted);
+        font-size: 18px;
+      }
+      .checkout-modal .x:hover {
+        color: var(--card-text);
+      }
+      .pricing-card {
+        max-width: 340px;
+        margin: 0 auto;
+        border-radius: 16px;
+        padding: 22px;
+        text-align: center;
+        position: relative;
+        background: linear-gradient(
+          160deg,
+          rgba(244, 196, 65, 0.1),
+          rgba(39, 227, 255, 0.06)
+        );
+        border: 1px solid rgba(244, 196, 65, 0.4);
+      }
+      .pricing-card.is-active {
+        border-color: rgba(34, 197, 94, 0.5);
+        background: linear-gradient(
+          160deg,
+          rgba(34, 197, 94, 0.1),
+          rgba(39, 227, 255, 0.06)
+        );
+      }
+      .pricing-badge {
+        display: inline-block;
+        font-family: "Oswald", sans-serif;
+        font-size: 10.5px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        padding: 4px 12px;
+        border-radius: 20px;
+        background: var(--gold);
+        color: #1a1200;
+        font-weight: 700;
+        margin-bottom: 14px;
+      }
+      .pricing-card.is-active .pricing-badge {
+        background: #34d37a;
+        color: #06210f;
+      }
+      .pricing-name {
+        font-family: "Oswald", sans-serif;
+        font-size: 18px;
+        letter-spacing: 0.04em;
+        color: var(--card-text);
+        margin-bottom: 4px;
+      }
+      .pricing-price {
+        font-family: "Oswald", sans-serif;
+        font-size: 38px;
+        font-weight: 700;
+        color: var(--gold);
+        line-height: 1;
+      }
+      .pricing-price span {
+        font-size: 14px;
+        color: var(--card-muted);
+        font-weight: 400;
+        font-family: "Be Vietnam Pro", sans-serif;
+      }
+      .pricing-features {
+        list-style: none;
+        margin: 18px 0;
+        padding: 0;
+        text-align: left;
+        display: inline-block;
+      }
+      .pricing-features li {
+        font-size: 13px;
+        color: var(--card-text);
+        padding: 5px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .pricing-features li::before {
+        content: "✓";
+        color: #34d37a;
+        font-weight: 700;
+      }
+      .pricing-cta {
+        width: 100%;
+        margin-top: 6px;
+        padding: 13px;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        font:
+          700 13px "Oswald",
+          sans-serif;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        background: linear-gradient(135deg, var(--gold), #d39a11);
+        color: #1a1200;
+      }
+      .pricing-cta:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .pricing-cta.is-active {
+        background: rgba(34, 197, 94, 0.15);
+        color: #86efac;
+        border: 1px solid rgba(34, 197, 94, 0.4);
+        cursor: default;
+      } /* ===== Live preview (mirrors store.html / index.html / daily.html markup+CSS) ===== */
+      .edit-row {
+        display: grid;
+        grid-template-columns: 1fr 200px;
+        gap: 14px;
+        align-items: start;
+        margin-top: 10px;
+      }
+      @media (max-width: 680px) {
+        .edit-row {
+          grid-template-columns: 1fr;
+        }
+      }
+      .prev-col {
+        position: sticky;
+        top: 70px;
+      }
+      .prev-label {
+        font-size: 9.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 6px;
+        text-align: center;
+        font-family: "Oswald", sans-serif;
+      }
+      .pv-card {
+        position: relative;
+        background: linear-gradient(160deg, var(--card1), var(--card2));
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        color: var(--card-text);
+      }
+      .pv-card .thumb2 {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1/1;
+        background: var(--card2) center/cover no-repeat;
+        border-bottom: 1px solid var(--card-border);
+      }
+      .pv-card .body2 {
+        padding: 14px 16px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex: 1;
+      }
+      .pv-card h3 {
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.3;
+      }
+      .pv-card p {
+        font-size: 12.5px;
+        color: var(--card-muted);
+        flex: 1;
+        line-height: 1.5;
+      }
+      .pv-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-family: "Oswald", sans-serif;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        padding: 5px 9px;
+        border-radius: 6px;
+        backdrop-filter: blur(4px);
+        z-index: 2;
+      }
+      .pv-badge.hot {
+        background: rgba(255, 45, 75, 0.18);
+        color: #ffb0bd;
+        border: 1px solid rgba(255, 45, 75, 0.5);
+      }
+      .pv-badge.new {
+        background: rgba(39, 227, 255, 0.18);
+        color: var(--cyan);
+        border: 1px solid rgba(39, 227, 255, 0.5);
+      }
+      .pv-badge.vip {
+        background: rgba(244, 196, 65, 0.18);
+        color: var(--gold);
+        border: 1px solid rgba(244, 196, 65, 0.5);
+      }
+      .pv-badge.bestseller {
+        background: rgba(178, 102, 255, 0.2);
+        color: #d5b8ff;
+        border: 1px solid rgba(178, 102, 255, 0.5);
+      }
+      .pv-badge.limited {
+        background: rgba(255, 45, 75, 0.18);
+        color: #ffb0bd;
+        border: 1px solid rgba(255, 45, 75, 0.5);
+      }
+      .pv-stock {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: "Oswald", sans-serif;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 5px 9px;
+        border-radius: 6px;
+        background: rgba(10, 15, 24, 0.7);
+        color: #ffb0bd;
+        border: 1px solid rgba(255, 45, 75, 0.45);
+        backdrop-filter: blur(4px);
+        z-index: 2;
+      }
+      .pv-cost-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 2px;
+      }
+      .pv-cost {
+        font-family: "Oswald", sans-serif;
+        font-weight: 700;
+        color: var(--gold);
+        font-size: 18px;
+        letter-spacing: 0.04em;
+      }
+      .pv-price-anchor {
+        font-size: 11px;
+        color: var(--card-muted);
+        letter-spacing: 0.04em;
+      }
+      .pv-price-anchor s {
+        color: rgba(255, 255, 255, 0.55);
+      }
+      .pv-price-anchor b {
+        color: var(--cyan);
+        font-weight: 600;
+      }
+      .pv-btn {
+        font-family: "Oswald", sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 10px;
+        border-radius: 9px;
+        border: 1px solid var(--line2);
+        background: rgba(39, 227, 255, 0.1);
+        color: var(--cyan);
+        text-align: center;
+        margin-top: 4px;
+      }
+      .pv-btn.primary {
+        background: linear-gradient(
+          135deg,
+          rgba(244, 196, 65, 0.18),
+          rgba(39, 227, 255, 0.18)
+        );
+        border-color: rgba(244, 196, 65, 0.5);
+        color: var(--gold);
+      }
+      .pv-toggle {
+        margin-top: 6px;
+        font-size: 10px;
+        padding: 6px 10px;
+      }
+      .pv-back {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        background: linear-gradient(165deg, #0e1622 0%, #1a0a2e 100%);
+        border: 1px solid rgba(244, 196, 65, 0.55);
+        border-radius: 16px;
+        box-shadow: 0 0 0 1px rgba(244, 196, 65, 0.18) inset;
+        padding: 18px 16px;
+        overflow: hidden;
+      }
+      .pv-fb-hdr {
+        text-align: center;
+        position: relative;
+        z-index: 1;
+      }
+      .pv-fb-tag {
+        display: inline-block;
+        font-family: "Oswald", sans-serif;
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: rgba(244, 196, 65, 0.18);
+        color: var(--gold);
+        border: 1px solid rgba(244, 196, 65, 0.4);
+      }
+      .pv-fb-title {
+        font-family: "Oswald", sans-serif;
+        font-weight: 700;
+        font-size: 16px;
+        color: #fff;
+        margin-top: 8px;
+        letter-spacing: 0.04em;
+        line-height: 1.25;
+      }
+      .pv-fb-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        position: relative;
+        z-index: 1;
+        margin: 12px 0;
+        width: 100%;
+      }
+      .pv-fb-code {
+        font-family: "Oswald", sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: 0.14em;
+        background: #0a0f18;
+        border: 1.5px dashed var(--gold);
+        border-radius: 10px;
+        padding: 12px 14px;
+        text-align: center;
+        width: 100%;
+        word-break: break-all;
+      }
+      .pv-fb-copy {
+        font-family: "Oswald", sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        background: transparent;
+        border: 1px solid rgba(244, 196, 65, 0.5);
+        color: var(--gold);
+        padding: 7px 14px;
+        border-radius: 8px;
+        width: 100%;
+      }
+      .pv-fb-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 13px;
+        border-radius: 10px;
+        background: linear-gradient(
+          135deg,
+          rgba(178, 102, 255, 0.18),
+          rgba(244, 196, 65, 0.12)
+        );
+        border: 1px solid rgba(178, 102, 255, 0.5);
+        color: #fff;
+        font-weight: 600;
+        font-size: 12.5px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .pv-fb-link small {
+        display: block;
+        font-size: 10px;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 0.55);
+        margin-top: 2px;
+      }
+      .pv-prize {
+        background: var(--chip-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 11px;
+        padding: 11px 13px;
+      }
+      .pv-prize .pp {
+        font-family: "Oswald", sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 3px;
+      }
+      .pv-prize .pxu {
+        font-family: "Oswald", sans-serif;
+        font-weight: 700;
+        font-size: 20px;
+        line-height: 1;
+      }
+      .pv-prize.r1 .pp,
+      .pv-prize.r1 .pxu {
+        color: var(--gold);
+      }
+      .pv-prize.r2 .pp,
+      .pv-prize.r2 .pxu {
+        color: var(--silver);
+      }
+      .pv-prize.r3 .pp,
+      .pv-prize.r3 .pxu {
+        color: var(--bronze);
+      }
+      .pv-prize.r4 .pp,
+      .pv-prize.r4 .pxu,
+      .pv-prize.r5 .pp,
+      .pv-prize.r5 .pxu,
+      .pv-prize.r6 .pp,
+      .pv-prize.r6 .pxu {
+        color: var(--diamond);
+      }
+      .pv-quest {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--chip-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 11px;
+      }
+      .pv-quest .ic {
+        font-size: 20px;
+      }
+      .pv-quest .info {
+        flex: 1;
+        min-width: 0;
+      }
+      .pv-quest .nm {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--card-text);
+        margin-bottom: 2px;
+      }
+      .pv-quest .rw {
+        font-family: "Oswald", sans-serif;
+        font-size: 11px;
+        color: var(--gold);
+        letter-spacing: 0.05em;
+      }
+      .pv-day {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        border: 1px solid var(--card-border);
+        background: var(--chip-bg);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        margin-top: 4px;
+      }
+      .pv-day .n {
+        font-size: 8px;
+        color: var(--card-muted);
+        letter-spacing: 0.04em;
+      }
+      .pv-day .r {
+        font-family: "Oswald", sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--card-text);
+      } /* ===== #events — lịch kéo-thả ===== */
+      .events-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        gap: 10px;
+      }
+      .events-nav .lbl {
+        font-family: "Oswald", sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        color: var(--card-muted);
+        text-transform: uppercase;
+      }
+      .ev-calendar {
+        min-height: 90px;
+        position: relative;
+      }
+      .ev-head-row {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+        margin-bottom: 10px;
+        user-select: none;
+      }
+      .ev-head-cell {
+        text-align: center;
+        font-family: "Oswald", sans-serif;
+        font-size: 10px;
+        letter-spacing: 0.05em;
+        color: var(--card-muted);
+        text-transform: uppercase;
+        padding: 6px 2px;
+        border-radius: 6px;
+      }
+      .ev-head-cell.today {
+        color: var(--cyan);
+        background: rgba(39, 227, 255, 0.08);
+      }
+      .ev-head-cell .dd {
+        font-size: 12px;
+        color: var(--card-text);
+        font-weight: 700;
+        margin-top: 2px;
+      }
+      .ev-track {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+        margin-bottom: 8px;
+        min-height: 34px;
+      }
+      .evt-bar {
+        position: relative;
+        border-radius: 8px;
+        padding: 7px 22px;
+        font-size: 12.5px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+      }
+      .evt-bar.quest {
+        background: rgba(39, 227, 255, 0.18);
+        border: 1px solid rgba(39, 227, 255, 0.5);
+        color: var(--cyan);
+      }
+      .evt-bar.code {
+        background: rgba(255, 45, 75, 0.18);
+        border: 1px solid rgba(255, 45, 75, 0.5);
+        color: #ffb0bd;
+      }
+      .evt-bar .grip {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 9px;
+        cursor: grab;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.35);
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .evt-bar .grip:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.75);
+      }
+      .evt-bar .grip:active {
+        cursor: grabbing;
+      }
+      .evt-bar .grip-l {
+        left: 0;
+      }
+      .evt-bar .grip-r {
+        right: 0;
+      }
+      .evt-name-inline {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .evt-bar .ex {
+        font-size: 10px;
+        line-height: 1;
+        opacity: 0.6;
+        cursor: pointer;
+        padding: 2px;
+        flex-shrink: 0;
+        margin-left: 4px;
+      }
+      .evt-bar .ex:hover {
+        opacity: 1;
+      }
+      .event-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .event-modal {
+        background: var(--modal-bg);
+        border: 1px solid var(--modal-border);
+        border-radius: 16px;
+        padding: 18px;
+        max-width: 460px;
+        width: 100%;
+        position: relative;
+        color: var(--card-text);
+      }
+      .event-modal .x {
+        position: absolute;
+        top: 10px;
+        right: 14px;
+        cursor: pointer;
+        color: var(--card-muted);
+        font-size: 18px;
+      }
+      .event-modal .x:hover {
+        color: var(--card-text);
+      }
+      .event-modal .modal-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 18px;
+        flex-wrap: wrap;
+      }
+      .event-modal .modal-actions .btn {
+        margin-top: 0;
+        flex: 1;
+      }
+      .event-modal .name-input {
+        font-size: 17px;
+        font-weight: 700;
+        font-family: "Oswald", sans-serif;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .event-modal .img-box {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16/9;
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--chip-bg);
+        border: 1px dashed var(--card-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+      }
+      .event-modal .img-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .event-modal .img-box .ph {
+        color: var(--card-muted);
+        font-size: 12px;
+        text-align: center;
+        padding: 10px;
+        font-style: italic;
+      }
+      .event-modal .img-toggle {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      .event-modal .img-toggle .btn {
+        flex: 1;
+        margin-top: 0;
+        padding: 7px 8px;
+        font-size: 11px;
+      }
+      .event-modal .img-toggle .btn.locked {
+        opacity: 0.55;
+      }
+      .event-modal .img-toggle .btn.on {
+        background: rgba(39, 227, 255, 0.3);
+        border-color: var(--cyan);
+      }
+      .ev-empty {
+        text-align: center;
+        color: var(--card-muted);
+        font-size: 12px;
+        padding: 10px 0;
+      }
+      .unscheduled-tray {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12.5px;
+        font-weight: 600;
+        padding: 6px 11px;
+        border-radius: 999px;
+        margin: 0 6px 6px 0;
+        cursor: grab;
+        user-select: none;
+        width: 160px;
+      }
+      .chip .evt-name-inline {
+        width: auto;
+      }
+      .chip .ex {
+        opacity: 0.7;
+        cursor: pointer;
+      }
+      .flash {
+        animation: flash-pulse 1.5s ease-out;
+        border-radius: 12px;
+      }
+      @keyframes flash-pulse {
+        0%,
+        30% {
+          box-shadow: 0 0 0 2px var(--cyan);
+        }
+        100% {
+          box-shadow: 0 0 0 0 transparent;
+        }
+      }
+      .chip.quest {
+        background: rgba(39, 227, 255, 0.1);
+        border: 1px solid rgba(39, 227, 255, 0.4);
+        color: var(--cyan);
+      }
+      .chip.code {
+        background: rgba(255, 45, 75, 0.1);
+        border: 1px solid rgba(255, 45, 75, 0.4);
+        color: #ffb0bd;
+      }
+      /* ===== Khối giới thiệu/hướng dẫn đầu mỗi tab + cảnh báo reward rỗng + mini preview ===== */
+      .intro-card {
+        background: rgba(39, 227, 255, 0.06);
+        border: 1px solid rgba(39, 227, 255, 0.25);
+        border-radius: 12px;
+        padding: 13px 15px;
+        margin-bottom: 14px;
+      }
+      .intro-what {
+        font-size: 13px;
+        color: var(--card-text);
+        line-height: 1.6;
+        margin-bottom: 8px;
+      }
+      .intro-steps {
+        margin: 0;
+        padding-left: 20px;
+        font-size: 12.5px;
+        color: var(--card-muted);
+        line-height: 1.8;
+      }
+      .intro-steps li {
+        margin-bottom: 2px;
+      }
+      .reward-empty {
+        background: rgba(255, 45, 75, 0.08);
+        border: 1px solid rgba(255, 45, 75, 0.3);
+        border-radius: 12px;
+        padding: 14px;
+        text-align: center;
+        margin-bottom: 12px;
+      }
+      .reward-empty p {
+        font-size: 13px;
+        color: #ffd0d8;
+        margin-bottom: 8px;
+        line-height: 1.5;
+      }
+      .step-head {
+        font-family: "Oswald", sans-serif;
+        font-weight: 700;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin: 18px 0 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 14px;
+      }
+      .spin-pct {
+        font-size: 11px;
+        color: var(--cyan);
+        margin-top: 4px;
+        font-family: "Oswald", sans-serif;
+        letter-spacing: 0.04em;
+      }
+      .mini-preview {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--chip-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 10px;
+        padding: 10px;
+        margin: 8px 0;
+      }
+      .mini-preview img {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: var(--card2);
+      }
+      .mini-preview .ic {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        background: var(--card2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+      }
+      .mini-preview .nm {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .mini-preview .sub {
+        font-size: 10.5px;
+        color: var(--card-muted);
+        margin-top: 1px;
+      }
+      .mini-preview.big img,
+      .mini-preview.big .ic {
+        width: 64px;
+        height: 64px;
+        font-size: 30px;
+      } /* ===== Khối "Mức dùng hiện tại" (giới hạn bản Free) — tab Billing ===== */
+      .usage-card {
+        background: rgba(255, 45, 75, 0.06);
+        border: 1px solid rgba(255, 45, 75, 0.25);
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 16px;
+      }
+      .usage-card h4 {
+        font-family: "Oswald", sans-serif;
+        font-size: 12.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #ffb0bd;
+        margin-bottom: 10px;
+      }
+      .usage-row {
+        margin-bottom: 10px;
+      }
+      .usage-row .lbl {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12.5px;
+        color: var(--card-text);
+        margin-bottom: 4px;
+      }
+      .usage-row .lbl b {
+        color: var(--gold);
+      }
+      .usage-bar {
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+      }
+      .usage-bar .fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--cyan), var(--gold));
+      }
+      .usage-locked {
+        list-style: none;
+        margin: 10px 0 4px;
+        padding: 0;
+      }
+      .usage-locked li {
+        font-size: 12.5px;
+        color: var(--card-muted);
+        padding: 5px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .usage-locked li:first-child {
+        border-top: none;
+      }
+      .usage-locked b {
+        color: #ffb0bd;
+      }
+      .usage-check-btn {
+        margin-top: 4px;
+      }
+      .usage-member-result {
+        font-size: 12px;
+        color: var(--cyan);
+        margin-top: 6px;
+      }
+      @media (prefers-color-scheme: light) {
+        .panel {
+          box-shadow: 0 4px 14px rgba(22, 28, 44, 0.07);
+        }
+        .item {
+          box-shadow: 0 2px 8px rgba(22, 28, 44, 0.05);
+        }
+        .err,
+        .btn.del,
+        .status.off,
+        .pv-badge.hot,
+        .pv-badge.limited,
+        .evt-bar.code,
+        .chip.code,
+        .reward-empty p,
+        .usage-card h4,
+        .usage-locked b {
+          color: #9a2030;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>⚙️ Settings — Community Admin</h1>
+      <p class="hint">
+        Only admins should open this page — don't share this link with
+        members.
+      </p>
+      <div class="nav">
+        <a
+          href="#conn"
+          onclick="
+            switchTab('conn');
+            return false;
+          "
+          >🔌 Connect</a
+        >
+        <a
+          href="#billing"
+          onclick="
+            switchTab('billing');
+            return false;
+          "
+          >💎 Billing</a
+        >
+        <a
+          href="#season"
+          onclick="
+            switchTab('season');
+            return false;
+          "
+          >🏆 Season</a
+        >
+        <a
+          href="#daily"
+          onclick="
+            switchTab('daily');
+            return false;
+          "
+          >📅 Check-in</a
+        >
+        <a
+          href="#store"
+          onclick="
+            switchTab('store');
+            return false;
+          "
+          >🎁 Store</a
+        >
+        <a
+          href="#codes"
+          onclick="
+            switchTab('codes');
+            return false;
+          "
+          >🔑 Codes</a
+        >
+        <a
+          href="#events"
+          onclick="
+            switchTab('events');
+            return false;
+          "
+          >🗓 Events</a
+        >
+        <a
+          href="#chests"
+          onclick="
+            switchTab('chests');
+            return false;
+          "
+          >📬 Community Chest</a
+        >
+        <a
+          href="#milestones"
+          onclick="
+            switchTab('milestones');
+            return false;
+          "
+          >🎯 Referral Milestones</a
+        >
+      </div>
+      <div id="content"><div class="state">Loading...</div></div>
     </div>
-  </div>`;
-}
-function storeBackHtml(r){
-  const p=r.payload||{kind:'code',code:''};
-  let backBody='';
-  if(p.kind==='ea'){
-    backBody=`<div class="pv-fb-link"><span style="font-size:18px">📥</span><span>Download file<small>${esc(p.label||'')}</small></span></div>
-      <div class="pv-fb-link"><span style="font-size:18px">🛠</span><span>Setup guide<small>Install &amp; activate</small></span></div>`;
-  }else if(p.kind==='link'){
-    backBody=`<div class="pv-fb-link"><span style="font-size:18px">🔗</span><span>Open reward<small>${esc(p.label||'')}</small></span></div>`;
-  }else{
-    backBody=`<div class="pv-fb-code">${esc(p.code||'')}</div><div class="pv-fb-copy">📋 Copy code</div>`;
-  }
-  return `<div class="pv-back">
-    <div class="pv-fb-hdr"><span class="pv-fb-tag">🎉 Redeemed</span><div class="pv-fb-title">${esc(r.name||'')}</div></div>
-    <div class="pv-fb-body">${backBody}</div>
-  </div>`;
-}
-function seasonTileHtml(r,i){
-  return `<div class="pv-prize r${i+1}"><div class="pp">${esc(r.rank||'')}</div><div class="pxu">🪙 ${esc(r.prize||'')}</div></div>`;
-}
-function dayCellHtml(v,i){
-  return `<div class="pv-day"><div class="n">Day ${i+1}</div><div class="r">+${fmt(v)}</div></div>`;
-}
+    <script
+      async
+      defer
+      src="https://js.whop.com/static/checkout/loader.js"
+    ></script>
+    <script type="module" src="/chest3d.module.js"></script>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      function esc(s) {
+        return String(s ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+      function fmt(n) {
+        return Number(n || 0).toLocaleString("en-US");
+      }
 
-function tenantQS(){
-  const u = new URL(location.href);
-  let exp = u.searchParams.get('experienceId') || '';
-  let co  = u.searchParams.get('companyId') || '';
-  if (!exp) { const m = location.pathname.match(/\/experiences\/([^/]+)/); if (m) exp = m[1]; }
-  if (!co)  { const m = location.pathname.match(/\/dashboard\/([^/]+)/);  if (m) co  = m[1]; }
-  const p = new URLSearchParams();
-  if (exp) p.set('experienceId', exp);
-  if (co)  p.set('companyId', co);
-  const s = p.toString();
-  return s ? '?' + s : '';
-}
-function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
-
-// STATE = toàn bộ config tenant đang chỉnh trong bộ nhớ. Input đơn giản
+      }
+// ===== Preview render (pure, no DOM access) — mirrors the exact markup of store.html/index.html/daily.html =====
+const BADGE_LABEL={hot:'🔥 Hot',new:'⚡ New',vip:'👑 VIP',bestseller:'⭐ Bestseller',limited:'⏳ Limited'};function storeCardHtml(r){  const thumb=r.image?`<div class="thumb2" style="background-image:url('${esc(r.image)}')"></div>`:`<div class="thumb2" style="background:linear-gradient(135deg,var(--card1),var(--card2))"></div>`;  return `<div class="pv-card">    ${thumb}    <div class="body2">      <h3>${esc(r.name||'(Unnamed)')}</h3>      <p>${esc(r.desc||'')}</p>      <div class="pv-cost-row"><span class="pv-cost">${fmt(r.cost)} XU</span></div>      <div class="pv-btn ${(r.tier>=4)?'primary':''}">${esc(r.buttonLabel||'GET')}</div>    </div>  </div>`;}function storeBackHtml(r){  const p=r.payload||{kind:'code',code:''};  let backBody='';  if(p.kind==='ea'){    backBody=`<div class="pv-fb-link"><span style="font-size:18px">📥</span><span>Download file<small>${esc(p.label||'')}</small></span></div>      <div class="pv-fb-link"><span style="font-size:18px">🛠</span><span>Setup guide<small>Install &amp; activate</small></span></div>`;  }else if(p.kind==='link'){    backBody=`<div class="pv-fb-link"><span style="font-size:18px">🔗</span><span>Open reward<small>${esc(p.label||'')}</small></span></div>`;  }else{    backBody=`<div class="pv-fb-code">${esc(p.code||'')}</div><div class="pv-fb-copy">📋 Copy code</div>`;  }  return `<div class="pv-back">    <div class="pv-fb-hdr"><span class="pv-fb-tag">🎉 Redeemed</span><div class="pv-fb-title">${esc(r.name||'')}</div></div>    <div class="pv-fb-body">${backBody}</div>  </div>`;}function seasonTileHtml(r,i){  return `<div class="pv-prize r${i+1}"><div class="pp">${esc(r.rank||'')}</div><div class="pxu">🪙 ${esc(r.prize||'')}</div></div>`;}function dayCellHtml(v,i){  return `<div class="pv-day"><div class="n">Day ${i+1}</div><div class="r">+${fmt(v)}</div></div>`;}function tenantQS(){  const u = new URL(location.href);  let exp = u.searchParams.get('experienceId') || '';  let co  = u.searchParams.get('companyId') || '';  if (!exp) { const m = location.pathname.match(/\/experiences\/([^/]+)/); if (m) exp = m[1]; }  if (!co)  { const m = location.pathname.match(/\/dashboard\/([^/]+)/);  if (m) co  = m[1]; }  const p = new URLSearchParams();  if (exp) p.set('experienceId', exp);  if (co)  p.set('companyId', co);  const s = p.toString();  return s ? '?' + s : '';}function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }// STATE = toàn bộ config tenant đang chỉnh trong bộ nhớ. Input đơn giản
 // (text/number/textarea) ghi trực tiếp vào STATE qua setPath() KHÔNG render
 // lại — tránh mất focus/con trỏ khi đang gõ. Hành động cấu trúc (thêm/xoá
 // dòng, đổi loại payload, upload ảnh xong) mới gọi renderAll().
-let STATE = null;
-let CONFIGURED = false;
-let IS_PAID = false;
-let activeTab = (location.hash||'#conn').slice(1);
-
-function setPath(obj, path, value){
-  const parts = path.split('.');
-  let cur = obj;
-  for (let i=0;i<parts.length-1;i++) cur = cur[parts[i]];
-  cur[parts[parts.length-1]] = value;
-}
-
-async function loadOnce(){
-  const r = await tenantFetch('/.netlify/functions/admin-config');
-  const j = await r.json();
-  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
-  return j;
-}
-async function load(){
-  const maxTries = 6;
-  let lastErr = null;
-  for (let i = 0; i < maxTries; i++) {
-    try{
-      const j = await loadOnce();
-      CONFIGURED = j.configured;
-      IS_PAID = !!j.isPaid;
-      STATE = {
-        whopCompanyId: j.whopCompanyId || '',
-        seasonTopRewards: j.seasonTopRewards || [],
-        checkinRewards: j.checkinRewards || [],
-        rewards: j.rewards || [],
-        redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>
-          typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),
-        codesEnabled: j.codesEnabled !== false,
-        dailyEnabled: j.dailyEnabled !== false,
-        storeEnabled: j.storeEnabled !== false,
-        mailboxEnabled: j.mailboxEnabled !== false,
-        chestRules: j.chestRules || {enabled:true,thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},
-        events: normalizeEvents(j.events, IS_PAID ? 10 : 3),
-        eventsEnabled: j.eventsEnabled !== false,
-        milestoneRules: j.milestoneRules || {enabled:false,tiers:[]},
-        spinRules: j.spinRules || {enabled:false,ticketsPerPayment:5,xuCostPerTicket:500,prizes:[]},
-        auctionRules: j.auctionRules || {enabled:false,rewardId:null,startingBid:5000,minIncrement:100,durationHours:48},
-        auctionProducts: j.auctionProducts || [],
-        branding: j.branding || {displayName:'',primaryColor:'#7c3aed',logoUrl:''},
-      };
-      renderAll();
-      return;
-    }catch(e){
-      lastErr = e;
-      $('content').innerHTML = `<div class="state">Waiting for Whop authentication... (${i+1}/${maxTries})</div>`;
-      await new Promise(res=>setTimeout(res,1200));
-    }
-  }
-  $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${lastErr.message}</div></div>`;
-}
-
-const TAB_RENDERERS = {
-  conn: renderConn, billing: renderBilling,
-  season: renderSeason, daily: renderDaily, store: renderStore,
-  codes: renderCodes, events: renderEvents, chests: renderChests,
-  milestones: renderMilestones, spin: renderSpin, auction: renderAuction,
-};
-
-function toggleRow(checked, onchange, labelOn, labelOff){
-  return `<label class="hint-small" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px">
-    <input type="checkbox" style="width:auto" ${checked?'checked':''} onchange="${esc(onchange)}"/>
-    <span>${checked ? '✅ '+labelOn : '⛔ '+labelOff}</span>
-  </label>`;
-}
-
-// Khối "cái này là gì + làm theo mấy bước" — đặt ngay đầu mỗi tab, viết bằng
+let STATE = null;let CONFIGURED = false;let IS_PAID = false;let activeTab = (location.hash||'#conn').slice(1);function setPath(obj, path, value){  const parts = path.split('.');  let cur = obj;  for (let i=0;i<parts.length-1;i++) cur = cur[parts[i]];  cur[parts[parts.length-1]] = value;}async function loadOnce(){  const r = await tenantFetch('/.netlify/functions/admin-config');  const j = await r.json();  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));  return j;}async function load(){  const maxTries = 6;  let lastErr = null;  for (let i = 0; i < maxTries; i++) {    try{      const j = await loadOnce();      CONFIGURED = j.configured;      IS_PAID = !!j.isPaid;      STATE = {        whopCompanyId: j.whopCompanyId || '',        seasonTopRewards: j.seasonTopRewards || [],        checkinRewards: j.checkinRewards || [],        rewards: j.rewards || [],        redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>          typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),        codesEnabled: j.codesEnabled !== false,        dailyEnabled: j.dailyEnabled !== false,        storeEnabled: j.storeEnabled !== false,        mailboxEnabled: j.mailboxEnabled !== false,        chestRules: j.chestRules || {enabled:true,thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},        events: normalizeEvents(j.events, IS_PAID ? 10 : 3),        eventsEnabled: j.eventsEnabled !== false,        milestoneRules: j.milestoneRules || {enabled:false,tiers:[]},        branding: j.branding || {displayName:'',primaryColor:'#7c3aed',logoUrl:''},      };      renderAll();      return;    }catch(e){      lastErr = e;      $('content').innerHTML = `<div class="state">Waiting for Whop authentication... (${i+1}/${maxTries})</div>`;      await new Promise(res=>setTimeout(res,1200));    }  }  $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${lastErr.message}</div></div>`;}const TAB_RENDERERS = {  conn: renderConn, billing: renderBilling,  season: renderSeason, daily: renderDaily, store: renderStore,  codes: renderCodes, events: renderEvents, chests: renderChests,  milestones: renderMilestones,};function toggleRow(checked, onchange, labelOn, labelOff){  return `<label class="hint-small" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px">    <input type="checkbox" style="width:auto" ${checked?'checked':''} onchange="${esc(onchange)}"/>    <span>${checked ? '✅ '+labelOn : '⛔ '+labelOff}</span>  </label>`;}// Khối "cái này là gì + làm theo mấy bước" — đặt ngay đầu mỗi tab, viết bằng
 // câu đơn giản cho người chưa từng dùng app này, không dùng thuật ngữ trần trụi.
-function introBlock(what, steps){
-  return `<div class="intro-card">
-    <p class="intro-what">${what}</p>
-    <ol class="intro-steps">${(steps||[]).map(s=>`<li>${s}</li>`).join('')}</ol>
-  </div>`;
-}
-
-// Cảnh báo khi chưa có reward nào trong Store — Milestones/Spin/Auction đều
+function introBlock(what, steps){  return `<div class="intro-card">    <p class="intro-what">${what}</p>    <ol class="intro-steps">${(steps||[]).map(s=>`<li>${s}</li>`).join('')}</ol>  </div>`;}// Cảnh báo khi chưa có reward nào trong Store — Milestones/Spin/Auction đều
 // có thể cần chọn 1 item Store làm quà; nút nhảy thẳng sang tab Store cho đỡ
 // bối rối "dropdown trống nghĩa là gì".
-function rewardEmptyWarning(required){
-  const msg = required
-    ? "⚠ You MUST have at least 1 reward in the 🎁 Reward Store before using this feature."
-    : "💡 You don't have any rewards in the 🎁 Reward Store yet — this still works with plain XU, but adding a real item makes it more exciting.";
-  return `<div class="reward-empty">
-    <p>${msg}</p>
-    <button class="btn" type="button" onclick="switchTab('store')">🎁 Go to Reward Store</button>
-  </div>`;
-}
-
-// Xem trước nhỏ — "đây là thứ member sẽ thấy" — dùng cho 1 reward cụ thể.
-function miniPreview(reward, big){
-  if (!reward) return '';
-  const visual = reward.image
-    ? `<img src="${esc(reward.image)}" alt=""/>`
-    : `<div class="ic">🎁</div>`;
-  return `<div class="mini-preview${big?' big':''}">${visual}
-    <div><div class="nm">${esc(reward.name||'(Unnamed)')}</div><div class="sub">👀 Members will see exactly this item</div></div>
-  </div>`;
-}
-
-function switchTab(id){
-  activeTab = id;
-  history.replaceState(null, '', '#'+id);
-  renderAll();
-}
-function applyNavActive(){
-  document.querySelectorAll('.nav a').forEach(a=>{
-    a.classList.toggle('active', a.getAttribute('href') === '#'+activeTab);
-  });
-}
-
-function renderAll(){
-  const fn = TAB_RENDERERS[activeTab] || renderConn;
-  $('content').innerHTML =
-    `<div class="tab-panel">${fn()}</div>` +
-    `<div class="save-bar"><button class="btn big" id="save-all">💾 Save all</button></div>`;
-  $('save-all').onclick = saveAll;
-  applyNavActive();
-  if (activeTab === 'chests') initChestPreviews();
-  if (activeTab === 'auction') refreshAuctionStatus();
-  if (activeTab === 'spin') drawAdminSpinWheel();
-}
-
-// Rương 3D dùng làm preview tĩnh (không animate) cho mỗi tier — dispose canvas cũ
+function rewardEmptyWarning(required){  const msg = required    ? "⚠ You MUST have at least 1 reward in the 🎁 Reward Store before using this feature."    : "💡 You don't have any rewards in the 🎁 Reward Store yet — this still works with plain XU, but adding a real item makes it more exciting.";  return `<div class="reward-empty">    <p>${msg}</p>    <button class="btn" type="button" onclick="switchTab('store')">🎁 Go to Reward Store</button>  </div>`;}// Xem trước nhỏ — "đây là thứ member sẽ thấy" — dùng cho 1 reward cụ thể.
+function miniPreview(reward, big){  if (!reward) return '';  const visual = reward.image    ? `<img src="${esc(reward.image)}" alt=""/>`    : `<div class="ic">🎁</div>`;  return `<div class="mini-preview${big?' big':''}">${visual}    <div><div class="nm">${esc(reward.name||'(Unnamed)')}</div><div class="sub">👀 Members will see exactly this item</div></div>  </div>`;}function switchTab(id){  activeTab = id;  history.replaceState(null, '', '#'+id);  renderAll();}function applyNavActive(){  document.querySelectorAll('.nav a').forEach(a=>{    a.classList.toggle('active', a.getAttribute('href') === '#'+activeTab);  });}function renderAll(){  const fn = TAB_RENDERERS[activeTab] || renderConn;  $('content').innerHTML =    `<div class="tab-panel">${fn()}</div>` +    `<div class="save-bar"><button class="btn big" id="save-all">💾 Save all</button></div>`;  $('save-all').onclick = saveAll;  applyNavActive();  if (activeTab === 'chests') initChestPreviews();}// Rương 3D dùng làm preview tĩnh (không animate) cho mỗi tier — dispose canvas cũ
 // trước khi tạo lại vì renderAll() re-render toàn bộ innerHTML mỗi lần đổi field.
-const chestPreviewRegistry = {};
-function initChestPreviews(){
-  Object.values(chestPreviewRegistry).forEach(c => { try{ c.dispose(); }catch(_){} });
-  for (const k in chestPreviewRegistry) delete chestPreviewRegistry[k];
-  document.querySelectorAll('.chest-preview[data-tier]').forEach(canvas => {
-    if (window.ChestVoxel) chestPreviewRegistry[canvas.id] = window.ChestVoxel.create(canvas, canvas.dataset.tier);
-  });
-}
-
-// ===== #conn =====
-function renderConn(){
-  const statusHtml = CONFIGURED
-    ? `<span class="status on">✅ Connected — Company ID: ${esc(STATE.whopCompanyId)}</span>`
-    : `<span class="status off">⚠ Not connected yet — close this and reopen the app inside Whop</span>`;
-  return `
-    <div class="sect" id="conn">🔌 Connect Whop</div>
-    <div class="panel">
-      ${introBlock(
-        "This app automatically connects to YOUR Whop community as soon as you open it from inside Whop — there is nothing for you to set up here.",
-        ["Just make sure you opened this Settings page from inside your own Whop dashboard (not a link someone else sent you)", "The status below should say \"Connected\" — if it doesn't, close and reopen the app"]
-      )}
-      ${statusHtml}
-    </div>`;
-}
-
-// ===== #billing =====
+const chestPreviewRegistry = {};function initChestPreviews(){  Object.values(chestPreviewRegistry).forEach(c => { try{ c.dispose(); }catch(_){} });  for (const k in chestPreviewRegistry) delete chestPreviewRegistry[k];  document.querySelectorAll('.chest-preview[data-tier]').forEach(canvas => {    if (window.ChestVoxel) chestPreviewRegistry[canvas.id] = window.ChestVoxel.create(canvas, canvas.dataset.tier);  });}// ===== #conn =====
+function renderConn(){  const statusHtml = CONFIGURED    ? `<span class="status on">✅ Connected — Company ID: ${esc(STATE.whopCompanyId)}</span>`    : `<span class="status off">⚠ Not connected yet — close this and reopen the app inside Whop</span>`;  return `    <div class="sect" id="conn">🔌 Connect Whop</div>    <div class="panel">      ${introBlock(        "This app automatically connects to YOUR Whop community as soon as you open it from inside Whop — there is nothing for you to set up here.",        ["Just make sure you opened this Settings page from inside your own Whop dashboard (not a link someone else sent you)", "The status below should say \"Connected\" — if it doesn't, close and reopen the app"]      )}      ${statusHtml}    </div>`;}// ===== #billing =====
 // Khối "Mức dùng hiện tại" — chỉ hiện khi đang Free, cho admin thấy rõ đang
 // chạm giới hạn nào. Event/Reward đếm thẳng từ STATE (miễn phí, không gọi
 // API). Member dùng nút bấm riêng — KHÔNG tự gọi whop-data.mjs (function đó
 // tốn 30-70 API call thật tới Whop mỗi lần chạy), chỉ gọi khi admin chủ động
 // bấm kiểm tra.
-function usageBarRow(label, used, limit){
-  const pct = Math.min(100, (used/limit)*100);
-  return `<div class="usage-row">
-    <div class="lbl"><span>${label}</span><b>${used}/${limit}</b></div>
-    <div class="usage-bar"><div class="fill" style="width:${pct}%"></div></div>
-  </div>`;
-}
-function renderUsagePanel(){
-  if (IS_PAID) return '';
-  const eventsUsed = (STATE.events||[]).length;
-  const rewardsUsed = (STATE.rewards||[]).length;
-  return `<div class="usage-card">
-    <h4>⚠ You're on the Free plan — here's what's limited right now</h4>
-    ${usageBarRow('🗓 Event slots', eventsUsed, 2)}
-    ${usageBarRow('🎁 Reward Store items', rewardsUsed, 2)}
-    <div class="usage-row">
-      <div class="lbl"><span>👥 Members shown on leaderboard</span><b>up to 50</b></div>
-      <button class="btn usage-check-btn" type="button" onclick="checkMemberCap(this)">🔄 Check how many of my real members are hidden</button>
-      <div class="usage-member-result" id="usage-member-result"></div>
-    </div>
-    <ul class="usage-locked">
-      <li>🔒 <b>Daily Check-in</b> — members can't claim daily XU at all</li>
-      <li>🔒 <b>Redeem Codes</b> — secret codes you hand out won't work for members</li>
-      <li>🔒 <b>Reward Store redemption</b> — members can see rewards but can't redeem them</li>
-    </ul>
-  </div>`;
-}
-async function checkMemberCap(btn){
-  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Checking...';
-  const out = $('usage-member-result');
-  try{
-    const r = await tenantFetch('/.netlify/functions/whop-data');
-    const j = await r.json();
-    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
-    const real = j.stats?.totalMembersReal ?? 0;
-    const shown = j.stats?.totalMembers ?? 0;
-    const hidden = Math.max(0, real - shown);
-    out.textContent = hidden > 0
-      ? `You have ${real} real members — ${hidden} are currently hidden from the leaderboard.`
-      : `You have ${real} real members — none are hidden yet.`;
-  }catch(e){
-    out.textContent = '⚠ ' + e.message;
-  }finally{
-    btn.disabled = false; btn.textContent = old;
-  }
-}
-
-function renderBilling(){
-  const features = [
-    'Daily check-in rewards',
-    'Redeem codes',
-    'Reward Store (up to 10 items)',
-    'Up to 10 event slots',
-    'Leaderboard up to 500 members',
-  ];
-  const cta = IS_PAID
-    ? `<button class="pricing-cta is-active" disabled>✅ Current plan</button>`
-    : `<button class="pricing-cta" id="upgrade-btn" onclick="startUpgrade()">⭐ Upgrade now</button>`;
-  return `
-    <div class="sect" id="billing">💎 Billing</div>
-    <div class="panel">
-      ${introBlock(
-        "This is YOUR subscription as the community owner — it upgrades what YOU can do in this admin panel (more events, more rewards, custom branding). It has nothing to do with what members pay for.",
-        ["If you want more event slots, more rewards, and custom branding, click Upgrade now below", "Otherwise you can ignore this tab completely — the free plan already works"]
-      )}
-      ${renderUsagePanel()}
-      <div class="pricing-card ${IS_PAID?'is-active':''}">
-        <span class="pricing-badge">${IS_PAID?'Active':'Recommended'}</span>
-        <div class="pricing-name">Leaderboard Pro</div>
-        <div class="pricing-price">$9.99<span>/month</span></div>
-        <ul class="pricing-features">${features.map(f=>`<li>${esc(f)}</li>`).join('')}</ul>
-        ${cta}
-      </div>
-    </div>`;
-}
-
-async function startUpgrade(){
-  const btn = $('upgrade-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Loading...'; }
-  try{
-    const r = await tenantFetch('/.netlify/functions/create-upgrade-checkout', { method:'POST' });
-    const j = await r.json();
-    if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
-    openCheckoutModal(j.sessionId, j.planId);
-  }catch(e){
-    alert('⚠ Could not start checkout: ' + e.message);
-  }finally{
-    if (btn) { btn.disabled = false; btn.textContent = '⭐ Upgrade to Paid'; }
-  }
-}
-
-function openCheckoutModal(sessionId, planId){
-  const wrap = document.createElement('div');
-  wrap.className = 'checkout-overlay';
-  wrap.id = 'checkout-overlay';
-  wrap.innerHTML = `
-    <div class="checkout-modal">
-      <span class="x" onclick="closeCheckoutModal()">✕</span>
-      <div data-whop-checkout-session="${esc(sessionId)}" data-whop-checkout-plan-id="${esc(planId)}" data-whop-checkout-return-url="${esc(location.origin + location.pathname)}"></div>
-    </div>`;
-  wrap.addEventListener('click', (e) => { if (e.target === wrap) closeCheckoutModal(); });
-  document.body.appendChild(wrap);
-}
-function closeCheckoutModal(){
-  const el = $('checkout-overlay');
-  if (el) el.remove();
-  load();
-}
-
-// ===== #season =====
-function renderSeason(){
-  const rows = (STATE.seasonTopRewards||[]).map((r,i)=>`
-    <div class="edit-row">
-      <div>
-        <div class="row2">
-          <div><label>Rank</label><input value="${esc(r.rank)}" oninput="setPath(STATE,'seasonTopRewards.${i}.rank',this.value);$('prev-season-${i}').innerHTML=seasonTileHtml(STATE.seasonTopRewards[${i}],${i})"/></div>
-          <div><label>Prize</label><input value="${esc(r.prize)}" oninput="setPath(STATE,'seasonTopRewards.${i}.prize',this.value);$('prev-season-${i}').innerHTML=seasonTileHtml(STATE.seasonTopRewards[${i}],${i})"/></div>
-        </div>
-        <button class="btn del" onclick="STATE.seasonTopRewards.splice(${i},1);renderAll()">🗑 Delete this rank</button>
-      </div>
-      <div class="prev-col">
-        <div class="prev-label">Preview</div>
-        <div id="prev-season-${i}">${seasonTileHtml(r,i)}</div>
-      </div>
-    </div>
-  `).join('<hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:10px 0">');
-  return `
-    <div class="sect" id="season">🏆 Season</div>
-    <div class="panel">
-      ${introBlock(
-        "This is just a TEXT list shown to members to announce what the top players will win at the end of the season. The app does NOT automatically give out these prizes — you hand them out yourself when the season ends.",
-        ["Type the rank (e.g. 🥇 Top 1) and what they win", "Save all"]
-      )}
-      ${rows || '<p class="hint-small">No ranks yet.</p>'}
-      <button class="btn" onclick="STATE.seasonTopRewards.push({rank:'🏅 New rank',prize:''});renderAll()">+ Add rank</button>
-    </div>`;
-}
-
-// ===== #daily (checkinRewards — 30 fixed slots) =====
-function renderDaily(){
-  const cells = (STATE.checkinRewards||[]).map((v,i)=>`
-    <div class="cell">
-      <label>Day ${i+1}</label>
-      <input type="number" value="${v}" oninput="setPath(STATE,'checkinRewards.${i}',Number(this.value)||0);$('prev-day-${i}').innerHTML=dayCellHtml(STATE.checkinRewards[${i}],${i})"/>
-      <div id="prev-day-${i}">${dayCellHtml(v,i)}</div>
-    </div>`).join('');
-  return `
-    <div class="sect" id="daily">📅 Daily Check-in</div>
-    <div class="panel">
-      ${introBlock(
-        "Members get free XU just for opening the app and checking in every day. Day 1 starts the cycle; after Day 30 it loops back to Day 1.",
-        ["Type how many XU to give for each day below (bigger numbers on later days encourage members to keep coming back)", "Save all"]
-      )}
-      ${toggleRow(STATE.dailyEnabled, 'STATE.dailyEnabled=this.checked;renderAll()', 'Enabled — Daily Check-in is visible in member nav.', 'Disabled — Daily Check-in link is hidden from members.')}
-      <div class="calgrid">${cells}</div>
-    </div>`;
-}
-
-// ===== #store (rewards) =====
-function payloadFields(p, i){
-  const kind = p.kind || 'code';
-  if (kind === 'link') return `
-    <label>Link to open on redeem</label>
-    <input value="${esc(p.url||'')}" oninput="setPath(STATE,'rewards.${i}.payload.url',this.value);refreshStorePreview(${i})"/>
-    <label>Button label</label>
-    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'rewards.${i}.payload.label',this.value);refreshStorePreview(${i})"/>`;
-  if (kind === 'ea') return `
-    <label>File link (e.g. EA bot / downloadable product)</label>
-    <input value="${esc(p.ea||'')}" oninput="setPath(STATE,'rewards.${i}.payload.ea',this.value);refreshStorePreview(${i})"/>
-    <label>Setup guide link</label>
-    <input value="${esc(p.setup||'')}" oninput="setPath(STATE,'rewards.${i}.payload.setup',this.value);refreshStorePreview(${i})"/>
-    <label>Button label</label>
-    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'rewards.${i}.payload.label',this.value);refreshStorePreview(${i})"/>`;
-  return `
-    <label>Code received</label>
-    <input value="${esc(p.code||'')}" oninput="setPath(STATE,'rewards.${i}.payload.code',this.value);refreshStorePreview(${i})"/>`;
-}
-
-// Giống payloadFields() ở trên nhưng nhận thẳng "đường dẫn STATE" (basePath)
+function usageBarRow(label, used, limit){  const pct = Math.min(100, (used/limit)*100);  return `<div class="usage-row">    <div class="lbl"><span>${label}</span><b>${used}/${limit}</b></div>    <div class="usage-bar"><div class="fill" style="width:${pct}%"></div></div>  </div>`;}function renderUsagePanel(){  if (IS_PAID) return '';  const eventsUsed = (STATE.events||[]).length;  const rewardsUsed = (STATE.rewards||[]).length;  return `<div class="usage-card">    <h4>⚠ You're on the Free plan — here's what's limited right now</h4>    ${usageBarRow('🗓 Event slots', eventsUsed, 2)}    ${usageBarRow('🎁 Reward Store items', rewardsUsed, 2)}    <div class="usage-row">      <div class="lbl"><span>👥 Members shown on leaderboard</span><b>up to 50</b></div>      <button class="btn usage-check-btn" type="button" onclick="checkMemberCap(this)">🔄 Check how many of my real members are hidden</button>      <div class="usage-member-result" id="usage-member-result"></div>    </div>    <ul class="usage-locked">      <li>🔒 <b>Daily Check-in</b> — members can't claim daily XU at all</li>      <li>🔒 <b>Redeem Codes</b> — secret codes you hand out won't work for members</li>      <li>🔒 <b>Reward Store redemption</b> — members can see rewards but can't redeem them</li>    </ul>  </div>`;}async function checkMemberCap(btn){  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Checking...';  const out = $('usage-member-result');  try{    const r = await tenantFetch('/.netlify/functions/whop-data');    const j = await r.json();    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));    const real = j.stats?.totalMembersReal ?? 0;    const shown = j.stats?.totalMembers ?? 0;    const hidden = Math.max(0, real - shown);    out.textContent = hidden > 0      ? `You have ${real} real members — ${hidden} are currently hidden from the leaderboard.`      : `You have ${real} real members — none are hidden yet.`;  }catch(e){    out.textContent = '⚠ ' + e.message;  }finally{    btn.disabled = false; btn.textContent = old;  }}function renderBilling(){  const features = [    'Daily check-in rewards',    'Redeem codes',    'Reward Store (up to 10 items)',    'Up to 10 event slots',    'Leaderboard up to 500 members',  ];  const cta = IS_PAID    ? `<button class="pricing-cta is-active" disabled>✅ Current plan</button>`    : `<button class="pricing-cta" id="upgrade-btn" onclick="startUpgrade()">⭐ Upgrade now</button>`;  return `    <div class="sect" id="billing">💎 Billing</div>    <div class="panel">      ${introBlock(        "This is YOUR subscription as the community owner — it upgrades what YOU can do in this admin panel (more events, more rewards, custom branding). It has nothing to do with what members pay for.",        ["If you want more event slots, more rewards, and custom branding, click Upgrade now below", "Otherwise you can ignore this tab completely — the free plan already works"]      )}      ${renderUsagePanel()}      <div class="pricing-card ${IS_PAID?'is-active':''}">        <span class="pricing-badge">${IS_PAID?'Active':'Recommended'}</span>        <div class="pricing-name">Leaderboard Pro</div>        <div class="pricing-price">$9.99<span>/month</span></div>        <ul class="pricing-features">${features.map(f=>`<li>${esc(f)}</li>`).join('')}</ul>        ${cta}      </div>    </div>`;}async function startUpgrade(){  const btn = $('upgrade-btn');  if (btn) { btn.disabled = true; btn.textContent = 'Loading...'; }  try{    const r = await tenantFetch('/.netlify/functions/create-upgrade-checkout', { method:'POST' });    const j = await r.json();    if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));    openCheckoutModal(j.sessionId, j.planId);  }catch(e){    alert('⚠ Could not start checkout: ' + e.message);  }finally{    if (btn) { btn.disabled = false; btn.textContent = '⭐ Upgrade to Paid'; }  }}function openCheckoutModal(sessionId, planId){  const wrap = document.createElement('div');  wrap.className = 'checkout-overlay';  wrap.id = 'checkout-overlay';  wrap.innerHTML = `    <div class="checkout-modal">      <span class="x" onclick="closeCheckoutModal()">✕</span>      <div data-whop-checkout-session="${esc(sessionId)}" data-whop-checkout-plan-id="${esc(planId)}" data-whop-checkout-return-url="${esc(location.origin + location.pathname)}"></div>    </div>`;  wrap.addEventListener('click', (e) => { if (e.target === wrap) closeCheckoutModal(); });  document.body.appendChild(wrap);}function closeCheckoutModal(){  const el = $('checkout-overlay');  if (el) el.remove();  load();}// ===== #season =====
+function renderSeason(){  const rows = (STATE.seasonTopRewards||[]).map((r,i)=>`    <div class="edit-row">      <div>        <div class="row2">          <div><label>Rank</label><input value="${esc(r.rank)}" oninput="setPath(STATE,'seasonTopRewards.${i}.rank',this.value);$('prev-season-${i}').innerHTML=seasonTileHtml(STATE.seasonTopRewards[${i}],${i})"/></div>          <div><label>Prize</label><input value="${esc(r.prize)}" oninput="setPath(STATE,'seasonTopRewards.${i}.prize',this.value);$('prev-season-${i}').innerHTML=seasonTileHtml(STATE.seasonTopRewards[${i}],${i})"/></div>        </div>        <button class="btn del" onclick="STATE.seasonTopRewards.splice(${i},1);renderAll()">🗑 Delete this rank</button>      </div>      <div class="prev-col">        <div class="prev-label">Preview</div>        <div id="prev-season-${i}">${seasonTileHtml(r,i)}</div>      </div>    </div>  `).join('<hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:10px 0">');  return `    <div class="sect" id="season">🏆 Season</div>    <div class="panel">      ${introBlock(        "This is just a TEXT list shown to members to announce what the top players will win at the end of the season. The app does NOT automatically give out these prizes — you hand them out yourself when the season ends.",        ["Type the rank (e.g. 🥇 Top 1) and what they win", "Save all"]      )}      ${rows || '<p class="hint-small">No ranks yet.</p>'}      <button class="btn" onclick="STATE.seasonTopRewards.push({rank:'🏅 New rank',prize:''});renderAll()">+ Add rank</button>    </div>`;}// ===== #daily (checkinRewards — 30 fixed slots) =====
+function renderDaily(){  const cells = (STATE.checkinRewards||[]).map((v,i)=>`    <div class="cell">      <label>Day ${i+1}</label>      <input type="number" value="${v}" oninput="setPath(STATE,'checkinRewards.${i}',Number(this.value)||0);$('prev-day-${i}').innerHTML=dayCellHtml(STATE.checkinRewards[${i}],${i})"/>      <div id="prev-day-${i}">${dayCellHtml(v,i)}</div>    </div>`).join('');  return `    <div class="sect" id="daily">📅 Daily Check-in</div>    <div class="panel">      ${introBlock(        "Members get free XU just for opening the app and checking in every day. Day 1 starts the cycle; after Day 30 it loops back to Day 1.",        ["Type how many XU to give for each day below (bigger numbers on later days encourage members to keep coming back)", "Save all"]      )}      ${toggleRow(STATE.dailyEnabled, 'STATE.dailyEnabled=this.checked;renderAll()', 'Enabled — Daily Check-in is visible in member nav.', 'Disabled — Daily Check-in link is hidden from members.')}      <div class="calgrid">${cells}</div>    </div>`;}// ===== #store (rewards) =====
+function payloadFields(p, i){  const kind = p.kind || 'code';  if (kind === 'link') return `    <label>Link to open on redeem</label>    <input value="${esc(p.url||'')}" oninput="setPath(STATE,'rewards.${i}.payload.url',this.value);refreshStorePreview(${i})"/>    <label>Button label</label>    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'rewards.${i}.payload.label',this.value);refreshStorePreview(${i})"/>`;  if (kind === 'ea') return `    <label>File link (e.g. EA bot / downloadable product)</label>    <input value="${esc(p.ea||'')}" oninput="setPath(STATE,'rewards.${i}.payload.ea',this.value);refreshStorePreview(${i})"/>    <label>Setup guide link</label>    <input value="${esc(p.setup||'')}" oninput="setPath(STATE,'rewards.${i}.payload.setup',this.value);refreshStorePreview(${i})"/>    <label>Button label</label>    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'rewards.${i}.payload.label',this.value);refreshStorePreview(${i})"/>`;  return `    <label>Code received</label>    <input value="${esc(p.code||'')}" oninput="setPath(STATE,'rewards.${i}.payload.code',this.value);refreshStorePreview(${i})"/>`;}// Giống payloadFields() ở trên nhưng nhận thẳng "đường dẫn STATE" (basePath)
 // thay vì giả định luôn là rewards.${i} — dùng lại cho vật phẩm độc quyền
 // Spin-only (spinRules.prizes.${i}.exclusive.payload) và giải con trong
 // Rương thần bí (spinRules.prizes.${i}.mysteryPool.${j}.exclusive.payload).
-function genericPayloadFields(p, basePath){
-  const kind = p.kind || 'code';
-  if (kind === 'link') return `
-    <label>Link to open on redeem</label>
-    <input value="${esc(p.url||'')}" oninput="setPath(STATE,'${basePath}.url',this.value)"/>
-    <label>Button label</label>
-    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'${basePath}.label',this.value)"/>`;
-  if (kind === 'ea') return `
-    <label>File link (e.g. EA bot / downloadable product)</label>
-    <input value="${esc(p.ea||'')}" oninput="setPath(STATE,'${basePath}.ea',this.value)"/>
-    <label>Setup guide link</label>
-    <input value="${esc(p.setup||'')}" oninput="setPath(STATE,'${basePath}.setup',this.value)"/>
-    <label>Button label</label>
-    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'${basePath}.label',this.value)"/>`;
-  return `
-    <label>Code received</label>
-    <input value="${esc(p.code||'')}" oninput="setPath(STATE,'${basePath}.code',this.value)"/>`;
-}
-
-function refreshStorePreview(i){
-  const r = STATE.rewards[i];
-  const el = $('prev-store-'+i);
-  if (el.dataset.face === 'back') el.innerHTML = storeBackHtml(r);
-  else el.innerHTML = storeCardHtml(r);
-}
-function toggleStoreFace(i){
-  const el = $('prev-store-'+i);
-  el.dataset.face = el.dataset.face === 'back' ? 'front' : 'back';
-  refreshStorePreview(i);
-}
-function renderStore(){
-  const cards = (STATE.rewards||[]).map((r,i)=>{
-    const p = r.payload || (r.payload = { kind: 'code', code: '' });
-    return `
-    <details class="item">
-      <summary>${esc(r.name||'(Unnamed)')} — ${r.cost||0} XU</summary>
-      <div class="edit-row">
-        <div>
-          <div class="step-head" style="border-top:none;padding-top:0;margin-top:0">🎴 Front side (shown before redeem)</div>
-          <label>Reward image (paste image link)</label>
-          <img class="thumb" id="thumb-${i}" src="${esc(r.image||'')}" alt="" style="${r.image?'':'display:none'}"/>
-          <input value="${esc(r.image||'')}" placeholder="https://..." oninput="setPath(STATE,'rewards.${i}.image',this.value);const t=$('thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none';refreshStorePreview(${i})"/>
-          <div class="hint-small">Host the image elsewhere (Imgur, free Cloudinary, an existing product link...) then paste the URL here. Recommended: square image, 600×600px or larger.</div>
-          <label>Reward name</label>
-          <input value="${esc(r.name)}" oninput="setPath(STATE,'rewards.${i}.name',this.value);refreshStorePreview(${i})"/>
-          <label>Price (XU)</label>
-          <input type="number" value="${r.cost||0}" oninput="setPath(STATE,'rewards.${i}.cost',Number(this.value)||0);refreshStorePreview(${i})"/>
-          <label>Description</label>
-          <textarea oninput="setPath(STATE,'rewards.${i}.desc',this.value);refreshStorePreview(${i})">${esc(r.desc)}</textarea>
-          <label>Button label</label>
-          <input value="${esc(r.buttonLabel||'GET')}" placeholder="GET" oninput="setPath(STATE,'rewards.${i}.buttonLabel',this.value);refreshStorePreview(${i})"/>
-
-          <div class="step-head">🎁 Back side (shown after a successful redeem)</div>
-          <label>Reward type after redeem</label>
-          <select onchange="setPath(STATE,'rewards.${i}.payload.kind',this.value);renderAll()">
-            <option value="code" ${p.kind==='code'?'selected':''}>Code</option>
-            <option value="link" ${p.kind==='link'?'selected':''}>Link (file/landing page)</option>
-            <option value="ea" ${p.kind==='ea'?'selected':''}>File + dedicated setup guide</option>
-          </select>
-          ${payloadFields(p, i)}
-          <button class="btn del" onclick="STATE.rewards.splice(${i},1);renderAll()">🗑 Delete this reward</button>
-        </div>
-        <div class="prev-col">
-          <div class="prev-label">Preview</div>
-          <div id="prev-store-${i}">${storeCardHtml(r)}</div>
-          <button class="btn pv-toggle" onclick="toggleStoreFace(${i})">🔄 View back side</button>
-        </div>
-      </div>
-    </details>`;
-  }).join('');
-  const rewardLimit = IS_PAID ? 10 : 2;
-  const rewardCount = (STATE.rewards||[]).length;
-  const addRewardOrMsg = rewardCount < rewardLimit
-    ? `<button class="btn" onclick="STATE.rewards.push({id:'reward_'+Date.now().toString(36),name:'',cost:100,desc:'',image:'',buttonLabel:'GET',tier:1,payload:{kind:'code',code:''}});renderAll()">+ Add new reward (${rewardCount}/${rewardLimit})</button>`
-    : `<p class="hint-small">${IS_PAID ? `Limit reached (${rewardLimit} rewards).` : `Free plan limit reached (${rewardLimit} rewards) — ⭐ upgrade to Paid for up to 10.`}</p>`;
-  return `
-    <div class="sect" id="store">🎁 Reward Store</div>
-    <div class="panel">
-      ${introBlock(
-        "This is where members spend their XU to get real things — a discount code, a download link, a file. Whatever you add here can also be reused as a prize in Milestones, Lucky Spin, and Auction.",
-        ["Click + Add new reward below", "Give it a name, a price in XU, and pick what members receive (a code, a link, or a file)", "Save all"]
-      )}
-      ${toggleRow(STATE.storeEnabled, 'STATE.storeEnabled=this.checked;renderAll()', 'Enabled — Reward Store is visible in member nav.', 'Disabled — Reward Store link is hidden from members.')}
-      ${cards || '<p class="hint-small">No rewards in the store yet.</p>'}
-      ${addRewardOrMsg}
-    </div>`;
-}
-
-// ===== #codes =====
-function renderCodes(){
-  const rows = (STATE.redeemCodesList||[]).map((c,i)=>`
-    <div id="code-item-${i}">
-    <div class="row2">
-      <div><label>Code (secret string members enter)</label><input value="${esc(c.code)}" oninput="setPath(STATE,'redeemCodesList.${i}.code',this.value)"/></div>
-      <div><label>Coins awarded</label><input type="number" value="${c.xu}" oninput="setPath(STATE,'redeemCodesList.${i}.xu',Number(this.value)||0)"/></div>
-    </div>
-    <label>Display name (used on 🗓 Event calendar — does NOT show the real code)</label>
-    <input value="${esc(c.title||'')}" placeholder="e.g. Holiday voucher" oninput="setPath(STATE,'redeemCodesList.${i}.title',this.value)"/>
-    <label>Image (paste image link, optional)</label>
-    <img class="thumb" id="code-thumb-${i}" src="${esc(c.image||'')}" alt="" style="${c.image?'':'display:none'}"/>
-    <input value="${esc(c.image||'')}" placeholder="https://..." oninput="setPath(STATE,'redeemCodesList.${i}.image',this.value);const t=$('code-thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none'"/>
-    <div class="row2">
-      <div><label>Start date (leave blank = usable right away)</label><input type="date" value="${esc(c.startDate||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.startDate',this.value)"/></div>
-      <div><label>End date (leave blank = never expires)</label><input type="date" value="${esc(c.endDate||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.endDate',this.value)"/></div>
-    </div>
-    <label>Repeat every (days, leave blank = no repeat)</label>
-    <input type="number" min="1" value="${esc(c.repeatDays||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.repeatDays',this.value?Number(this.value):'')"/>
-    <div class="hint-small">Leave dates blank = code works right away and never expires. Set dates to limit when it can be used; repeat = recurs every N days.</div>
-    <button class="btn del" onclick="STATE.redeemCodesList.splice(${i},1);renderAll()">🗑 Delete code</button>
-    </div>
-  `).join('<hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:10px 0">');
-  return `
-    <div class="sect" id="codes">🔑 Special Codes</div>
-    <div class="panel">
-      ${introBlock(
-        "A secret word you give to specific people (in a livestream, DM, giveaway post) — whoever types it into the app gets free XU. Different from the Reward Store: this is a code YOU hand out, not something members buy.",
-        ["Click + Add code below", "Type a secret word and how much XU it gives", "Share that secret word with whoever you want to reward", "Save all"]
-      )}
-      ${toggleRow(STATE.codesEnabled, 'STATE.codesEnabled=this.checked;renderAll()', 'Enabled — members can redeem codes.', 'Disabled — members cannot redeem codes right now.')}
-      ${rows || '<p class="hint-small">No codes yet.</p>'}
-      <button class="btn" onclick="STATE.redeemCodesList.push({code:'',xu:0});renderAll()">+ Add code</button>
-    </div>`;
-}
-
-// ===== #chests — Rương Liên Minh (phát khi có member mua hàng — xem webhook.mjs) =====
-function renderChests(){
-  const rules = STATE.chestRules || {thresholds:[],rewardRange:{},expiryHours:48};
-  const rows = (rules.thresholds||[]).map((t,i)=>{
-    const range = rules.rewardRange[t.tier] || {min:0,max:0};
-    return `
-    <div class="item chest-tier-row">
-      <canvas class="chest-preview" id="chest-preview-${i}" data-tier="${esc(t.tier)}" width="64" height="64"></canvas>
-      <div class="tier-fields">
-        <label>Display name</label><input value="${esc(t.label)}" oninput="setPath(STATE,'chestRules.thresholds.${i}.label',this.value)"/>
-        <div class="row3">
-          <div><label>Min. purchase (USD)</label><input type="number" min="0" value="${t.minUsd}" oninput="setPath(STATE,'chestRules.thresholds.${i}.minUsd',Number(this.value)||0)"/></div>
-          <div><label>Min coins</label><input type="number" min="0" value="${range.min}" oninput="setPath(STATE,'chestRules.rewardRange.${t.tier}.min',Number(this.value)||0)"/></div>
-          <div><label>Max coins</label><input type="number" min="0" value="${range.max}" oninput="setPath(STATE,'chestRules.rewardRange.${t.tier}.max',Number(this.value)||0)"/></div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-  return `
-    <div class="sect" id="chests">📬 Community Chest</div>
-    <div class="panel">
-      ${introBlock(
-        "Whenever ANY member buys something real on your Whop, EVERY other member gets a free surprise chest of XU in their Mailbox — a fun way to celebrate sales together. The buyer also gets an extra bonus chest just for themselves.",
-        ["Set how much XU each chest tier gives (Wood = small purchase, Gold = big purchase)", "Make sure the Webhook setup at the bottom is done once (ask for help if unsure)", "Save all"]
-      )}
-      ${toggleRow(STATE.mailboxEnabled, 'STATE.mailboxEnabled=this.checked;renderAll()', 'Enabled — Mailbox is visible in member nav.', 'Disabled — Mailbox link is hidden from members.')}
-      ${toggleRow(rules.enabled !== false, "setPath(STATE,'chestRules.enabled',this.checked);renderAll()", 'Enabled — purchases trigger a community chest.', 'Disabled — purchases no longer trigger a chest.')}
-      <p class="hint-small" style="margin-bottom:10px">When a member buys something on Whop, everyone else in the channel gets a chest in their 📬 Mailbox. The tier depends on the purchase amount; the coin reward is randomized within the range you set below.</p>
-      ${rows || '<p class="hint-small">No tiers configured yet.</p>'}
-      <div class="item">
-        <label>🎉 Buyer bonus</label>
-        <p class="hint-small" style="margin-top:-2px;margin-bottom:6px">Sent directly to the person who made the purchase, on top of the community chest above.</p>
-        <div class="row2">
-          <div><label>Min coins</label><input type="number" min="0" value="${(rules.buyerReward||{}).min||0}" oninput="setPath(STATE,'chestRules.buyerReward.min',Number(this.value)||0)"/></div>
-          <div><label>Max coins</label><input type="number" min="0" value="${(rules.buyerReward||{}).max||0}" oninput="setPath(STATE,'chestRules.buyerReward.max',Number(this.value)||0)"/></div>
-        </div>
-      </div>
-      <label>Chest claim deadline (hours)</label>
-      <input type="number" min="1" value="${rules.expiryHours}" oninput="setPath(STATE,'chestRules.expiryHours',Number(this.value)||48)"/>
-      <div class="hint-small">Requires a Webhook on the Whop Dev Dashboard (event <code>payment_succeeded</code>) pointing to <code>/.netlify/functions/webhook</code>, with <code>WHOP_WEBHOOK_SECRET</code> set on Netlify — one-time setup per app.</div>
-    </div>`;
-}
-
-// ===== #milestones — Deposit Milestones (members accumulate real USD spent in a period) =====
-function renderMilestones(){
-  const rules = STATE.milestoneRules || {enabled:false,tiers:[]};
-  const rewardOptions = (r) => `
-    <option value="" ${!r.rewardId?'selected':''}>— Reward XU directly —</option>
-    <option value="__spin__" ${r.rewardId==='__spin__'?'selected':''}>🎰 Give Lucky Spin tickets</option>
-    ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${r.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;
-  const rows = (rules.tiers||[]).map((t,i)=>{
-    const isSpin = t.rewardId === '__spin__';
-    const reward = t.rewardId && !isSpin ? (STATE.rewards||[]).find(rw=>rw.id===t.rewardId) : null;
-    return `
-    <div class="item">
-      <div class="row2">
-        <div><label>Member must refer at least (members)</label><input type="number" min="0" value="${t.thresholdReferrals||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.thresholdReferrals',Number(this.value)||0)"/></div>
-        <div><label>Milestone name</label><input value="${esc(t.label||'')}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.label',this.value)"/></div>
-      </div>
-      <div class="row2">
-        <div>
-          <label>Reward</label>
-          <select onchange="setPath(STATE,'milestoneRules.tiers.${i}.rewardId',this.value||null);renderAll()">${rewardOptions(t)}</select>
-        </div>
-        ${isSpin
-          ? `<div><label>How many spin tickets to give</label><input type="number" min="1" value="${t.spinTickets||1}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.spinTickets',Number(this.value)||1)"/></div>`
-          : t.rewardId
-            ? '<div><label>&nbsp;</label><div class="hint-small">Members get this Reward Store item for FREE.</div></div>'
-            : `<div><label>How much XU to give instead</label><input type="number" min="0" value="${t.xu||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.xu',Number(this.value)||0)"/></div>`}
-      </div>
-      ${miniPreview(reward)}
-      <button class="btn del" onclick="STATE.milestoneRules.tiers.splice(${i},1);renderAll()">🗑 Delete this milestone</button>
-    </div>`;
-  }).join('');
-  return `
-    <div class="sect" id="milestones">🎯 Referral Milestones</div>
-    <div class="panel">
-      ${introBlock(
-        "Members earn a reward each time they cross a referral milestone you set (e.g. refer 5 people) — automatically, you don't have to do anything.",
-        ["(Optional) Add a reward in 🎁 Store first if you want to give an actual item instead of plain XU/spin tickets", "Click + Add milestone below, set how many referrals it takes and the reward", "Turn on Enabled, then Save all"]
-      )}
-      ${(STATE.rewards||[]).length===0 ? rewardEmptyWarning(false) : ''}
-      ${toggleRow(rules.enabled, "setPath(STATE,'milestoneRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Referral Milestones page.', "Disabled — members can't see this program.")}
-      ${rows || '<p class="hint-small">No milestones yet.</p>'}
-      <button class="btn" onclick="STATE.milestoneRules.tiers.push({thresholdReferrals:1,rewardId:null,xu:50,label:'New milestone'});renderAll()">+ Add milestone</button>
-    </div>`;
-}
-
-// ===== #spin — Lucky Spin (vé tự động khi nạp tiền thật, hoặc đổi bằng xu) =====
-// Giao diện cấu hình giờ là 1 bánh xe preview (canvas, giống public/spin.html)
-// + 2 popup: chọn số ngăn rồi kéo-thả gán loại thưởng vào từng ngăn — thay
-// HẲN bản list-form cũ (admin không còn tự nhập tay số "weight" nữa, độ hiếm
-// tự suy ra theo loại/giá trị qua autoWeightFor()).
-
-// Bảng màu theo tier — PORT TRỰC TIẾP từ public/spin.html (2 file độc lập,
-// không share module) để wheel preview ở Admin nhìn giống y bánh xe thật.
-const SPIN_ADMIN_TIER_GRADIENTS = {
-  common:   [['#1bc4d6','#0d6fa3'], ['#3f8cf2','#1c4fb0']],
-  mid:      [['#b06bf0','#7c2fd1'], ['#e066c2','#a82f8f']],
-  rare:     [['#ffe27a','#d99a06'], ['#ffc94a','#c97f00']],
-  treasure: [['#ffb347','#ff7a1a'], ['#ffe27a','#e0a106']],
-};
-const SPIN_CHIP_DEFS = [
-  { type:'xu', icon:'🪙', label:'XU' },
-  { type:'reward', icon:'🛍', label:'Shop product' },
-  { type:'exclusive', icon:'🌟', label:'Exclusive' },
-  { type:'mystery', icon:'🎁', label:'Mystery Chest' },
-];
-let dragPrizeType = null;
-
-// Suy "type" của 1 prize/sub-prize ĐÃ CÓ DỮ LIỆU thật (kể cả prize cũ tạo từ
-// UI list-form trước đây) — chỉ gọi với p khác null (slot trống dùng null
-// trực tiếp, không đi qua hàm này).
-function spinSlotType(p){
-  if (p.mysteryPool) return 'mystery';
-  if (p.exclusive) return 'exclusive';
-  if (p.rewardId) return 'reward';
-  return 'xu';
-}
-function autoWeightFor(type, xu){
-  if (type === 'mystery') return 5;
-  if (type === 'exclusive') return 8;
-  if (type === 'reward') return 12;
-  const v = Number(xu)||0;
-  if (v <= 20) return 25;
-  if (v <= 100) return 15;
-  if (v <= 300) return 8;
-  return 4;
-}
-function spinSlotWeight(p){
-  if (!p) return 0;
-  return autoWeightFor(spinSlotType(p), p.xu);
-}
-function spinSlotTier(p){
-  if (!p) return 'common';
-  const type = spinSlotType(p);
-  if (type === 'mystery') return 'treasure';
-  if (type === 'exclusive') return 'rare';
-  if (type === 'reward') return 'mid';
-  const v = Number(p.xu)||0;
-  return v > 100 ? 'rare' : (v > 20 ? 'mid' : 'common');
-}
-
-// Bánh xe preview trong panel Admin — CHỈ để xem trước, không tự quay. Port
-// rút gọn từ computeSlices()/drawWheel() của public/spin.html.
-function drawAdminSpinWheel(){
-  const canvas = $('spin-admin-canvas');
-  if (!canvas || !canvas.getContext) return;
-  const prizes = (STATE.spinRules.prizes||[]);
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, cx = W/2, cy = W/2, R = cx - 4;
-  ctx.clearRect(0,0,W,W);
-  if (!prizes.length){
-    ctx.beginPath(); ctx.arc(cx,cy,R,0,2*Math.PI);
-    ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = '700 14px Oswald,sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('Click to set up', cx, cy);
-    return;
-  }
-  const total = prizes.reduce((s,p)=>s+(Number(p.weight)||1),0) || 1;
-  let acc = 0;
-  const tierCount = {};
-  prizes.forEach(p=>{
-    const w = Number(p.weight)||1;
-    const deg = w/total*360;
-    const a0 = (acc-90)*Math.PI/180, a1 = (acc+deg-90)*Math.PI/180, am = (acc+deg/2-90)*Math.PI/180;
-    acc += deg;
-    const tier = p.mysteryPool ? 'treasure' : p.exclusive ? 'rare' : (w/total<0.08?'rare':(w/total<0.18?'mid':'common'));
-    const grads = SPIN_ADMIN_TIER_GRADIENTS[tier];
-    const idx = tierCount[tier] || 0; tierCount[tier] = idx+1;
-    const [colorA,colorB] = grads[idx % grads.length];
-    const gx0=cx+R*.15*Math.cos(am), gy0=cy+R*.15*Math.sin(am), gx1=cx+R*Math.cos(am), gy1=cy+R*Math.sin(am);
-    const grad = ctx.createLinearGradient(gx0,gy0,gx1,gy1);
-    grad.addColorStop(0,colorA); grad.addColorStop(1,colorB);
-    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,a0,a1); ctx.closePath();
-    ctx.fillStyle = grad; ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 1.5; ctx.stroke();
-    const tr = R*.62, tx = cx+tr*Math.cos(am), ty = cy+tr*Math.sin(am);
-    ctx.save(); ctx.translate(tx,ty); ctx.rotate(am+Math.PI/2);
-    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#fff';
-    const icon = p.mysteryPool ? '🎁' : p.exclusive ? '🌟' : p.rewardId ? '🛍' : '🪙';
-    ctx.font = '16px "Segoe UI Emoji","Noto Color Emoji",sans-serif';
-    ctx.fillText(icon, 0, 0);
-    ctx.restore();
-  });
-}
-
-// ----- Popup bước 1: chọn số lượng ngăn -----
-function openSpinCountModal(){
-  const current = (STATE.spinRules.prizes||[]).length || 6;
-  window._spinCountVal = current;
-  const wrap = document.createElement('div');
-  wrap.className = 'event-modal-overlay';
-  wrap.id = 'spin-count-overlay';
-  wrap.innerHTML = `
-    <div class="event-modal" style="max-width:340px;text-align:center">
-      <div class="x" onclick="closeSpinCountModal()">✕</div>
-      <div class="step-head" style="border-top:none;padding-top:0;margin-top:0">🎰 Number of slots on the wheel</div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin:18px 0">
-        <button class="btn" style="margin-top:0;padding:10px 16px" onclick="adjustSpinCount(-1)">−</button>
-        <div id="spin-count-val" style="font-family:'Oswald',sans-serif;font-size:32px;font-weight:700;min-width:50px">${current}</div>
-        <button class="btn" style="margin-top:0;padding:10px 16px" onclick="adjustSpinCount(1)">+</button>
-      </div>
-      <div class="hint-small" style="margin-bottom:16px">Minimum 3, maximum 10 slots.</div>
-      <div class="modal-actions">
-        <button class="btn" onclick="closeSpinCountModal()">Cancel</button>
-        <button class="btn" style="background:rgba(244,196,65,.25);border-color:var(--gold);color:var(--gold)" onclick="confirmSpinCount()">Continue →</button>
-      </div>
-    </div>`;
-  document.body.appendChild(wrap);
-}
-function adjustSpinCount(delta){
-  window._spinCountVal = Math.max(3, Math.min(10, (window._spinCountVal||6) + delta));
-  $('spin-count-val').textContent = window._spinCountVal;
-}
-function closeSpinCountModal(){
-  const el = $('spin-count-overlay');
-  if (el) el.remove();
-}
-function confirmSpinCount(){
-  const n = window._spinCountVal || 6;
-  const existing = STATE.spinRules.prizes || [];
-  const slots = [];
-  for (let i=0;i<n;i++) slots.push(existing[i] ? JSON.parse(JSON.stringify(existing[i])) : null);
-  STATE._spinDraft = { slots };
-  closeSpinCountModal();
-  openSpinSetupModal();
-}
-
-// ----- Popup bước 2: kéo-thả thiết lập từng ngăn -----
-function spinChipsHtml(){
-  return SPIN_CHIP_DEFS
-    .filter(c => c.type!=='reward' || (STATE.rewards||[]).length>0)
-    .map(c => `<div class="spin-chip" draggable="true" ondragstart="dragPrizeType='${c.type}'">${c.icon} ${c.label}</div>`)
-    .join('');
-}
-function spinSlotCardHtml(i){
-  const p = STATE._spinDraft.slots[i];
-  const type = p ? spinSlotType(p) : null;
-  let inner;
-  if (!type) {
-    inner = `<div class="spin-slot-empty">?<div class="hint-small">Drag a card here</div></div>`;
-  } else if (type === 'xu') {
-    inner = `<div class="spin-slot-icon">🪙</div><label>XU amount</label>
-      <input type="number" min="0" value="${p.xu||0}" oninput="updateSpinSlotXu(${i},this.value)"/>`;
-  } else if (type === 'reward') {
-    const opts = (STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${p.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('');
-    inner = `<div class="spin-slot-icon">🛍</div><label>Product</label>
-      <select onchange="updateSpinSlotRewardId(${i},this.value)">${opts || '<option value="">(No reward yet)</option>'}</select>`;
-  } else if (type === 'exclusive') {
-    const ex = p.exclusive; const pp = ex.payload || (ex.payload={kind:'code',code:''});
-    inner = `<div class="spin-slot-icon">🌟</div>
-      <label>Item name</label><input value="${esc(ex.label||'')}" oninput="setPath(STATE,'_spinDraft.slots.${i}.exclusive.label',this.value)"/>
-      <label>Image (link, optional)</label><input value="${esc(ex.image||'')}" placeholder="https://..." oninput="setPath(STATE,'_spinDraft.slots.${i}.exclusive.image',this.value)"/>
-      <label>Reward type</label>
-      <select onchange="setPath(STATE,'_spinDraft.slots.${i}.exclusive.payload.kind',this.value);rerenderSpinSlot(${i})">
-        <option value="code" ${pp.kind==='code'?'selected':''}>Code</option>
-        <option value="link" ${pp.kind==='link'?'selected':''}>Link</option>
-        <option value="ea" ${pp.kind==='ea'?'selected':''}>File + setup guide</option>
-      </select>
-      ${genericPayloadFields(pp, `_spinDraft.slots.${i}.exclusive.payload`)}`;
-  } else if (type === 'mystery') {
-    inner = `<div class="spin-slot-icon">🎁</div>` + spinMysteryHtml(i);
-  }
-  return `
-    <div class="spin-slot" data-i="${i}" ondragover="event.preventDefault()" ondrop="onSpinSlotDrop(event,${i})">
-      <div class="spin-slot-head">Slot ${i+1} <span class="spin-slot-pct" id="spin-slot-pct-${i}"></span>
-        ${type?`<span class="spin-slot-x" onclick="clearSpinSlot(${i})">✕</span>`:''}
-      </div>
-      ${inner}
-    </div>`;
-}
-function spinMysteryHtml(i){
-  const pool = STATE._spinDraft.slots[i].mysteryPool || (STATE._spinDraft.slots[i].mysteryPool = []);
-  const rows = pool.map((m,j)=>{
-    const mtype = spinSlotType(m);
-    let inner;
-    if (mtype === 'xu') {
-      inner = `<label>XU</label><input type="number" min="0" value="${m.xu||0}" oninput="updateSpinMysteryXu(${i},${j},this.value)"/>`;
-    } else if (mtype === 'reward') {
-      const opts = (STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${m.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('');
-      inner = `<label>Product</label><select onchange="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.rewardId',this.value)">${opts}</select>`;
-    } else {
-      const ex = m.exclusive; const pp = ex.payload || (ex.payload={kind:'code',code:''});
-      inner = `
-        <label>Name</label><input value="${esc(ex.label||'')}" oninput="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.exclusive.label',this.value)"/>
-        <label>Image</label><input value="${esc(ex.image||'')}" oninput="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.exclusive.image',this.value)"/>
-        <select onchange="setPath(STATE,'_spinDraft.slots.${i}.mysteryPool.${j}.exclusive.payload.kind',this.value);rerenderSpinSlot(${i})">
-          <option value="code" ${pp.kind==='code'?'selected':''}>Code</option>
-          <option value="link" ${pp.kind==='link'?'selected':''}>Link</option>
-          <option value="ea" ${pp.kind==='ea'?'selected':''}>File + guide</option>
-        </select>
-        ${genericPayloadFields(pp, `_spinDraft.slots.${i}.mysteryPool.${j}.exclusive.payload`)}`;
-    }
-    return `
-    <div class="spin-slot">
-      <div class="spin-slot-head">Option ${j+1} <span class="spin-slot-pct" id="spin-sub-pct-${i}-${j}"></span>
-        <span class="spin-slot-x" onclick="clearSpinMysterySlot(${i},${j})">✕</span>
-      </div>
-      ${inner}
-    </div>`;
-  }).join('');
-  return `
-    <div class="spin-mystery-box" ondragover="event.preventDefault()" ondrop="onSpinMysteryDrop(event,${i})">
-      <div class="hint-small">Drag a card here to add an option inside this chest:</div>
-      <div class="spin-mini-grid">${rows || '<p class="hint-small">No options yet.</p>'}</div>
-    </div>`;
-}
-function rerenderSpinSlot(i){
-  const el = document.querySelector('.spin-slot[data-i="'+i+'"]');
-  if (el) el.outerHTML = spinSlotCardHtml(i);
-  refreshAllSpinPercents();
-}
-function onSpinSlotDrop(e, i){
-  e.preventDefault();
-  if (!dragPrizeType) return;
-  const type = dragPrizeType; dragPrizeType = null;
-  let slot;
-  if (type === 'xu') slot = { label:'XU Prize', xu:0 };
-  else if (type === 'reward') slot = { label:'Shop reward', rewardId: ((STATE.rewards||[])[0]||{}).id || null };
-  else if (type === 'exclusive') slot = { label:'Exclusive item', exclusive:{label:'',image:'',payload:{kind:'code',code:''}} };
-  else slot = { label:'Mystery Chest', mysteryPool:[] };
-  STATE._spinDraft.slots[i] = slot;
-  rerenderSpinSlot(i);
-}
-function clearSpinSlot(i){
-  STATE._spinDraft.slots[i] = null;
-  rerenderSpinSlot(i);
-}
-function onSpinMysteryDrop(e, i){
-  e.preventDefault();
-  if (!dragPrizeType || dragPrizeType === 'mystery') { dragPrizeType = null; return; }
-  const type = dragPrizeType; dragPrizeType = null;
-  let sub;
-  if (type === 'xu') sub = { xu:0 };
-  else if (type === 'reward') sub = { rewardId: ((STATE.rewards||[])[0]||{}).id || null };
-  else sub = { exclusive:{label:'',image:'',payload:{kind:'code',code:''}} };
-  STATE._spinDraft.slots[i].mysteryPool.push(sub);
-  rerenderSpinSlot(i);
-}
-function clearSpinMysterySlot(i, j){
-  STATE._spinDraft.slots[i].mysteryPool.splice(j,1);
-  rerenderSpinSlot(i);
-}
-function updateSpinSlotXu(i, val){
-  STATE._spinDraft.slots[i].xu = Number(val)||0;
-  refreshAllSpinPercents();
-}
-function updateSpinSlotRewardId(i, val){
-  STATE._spinDraft.slots[i].rewardId = val || null;
-}
-function updateSpinMysteryXu(i, j, val){
-  STATE._spinDraft.slots[i].mysteryPool[j].xu = Number(val)||0;
-  refreshAllSpinPercents();
-}
-// Cập nhật text "≈X%" của mọi ngăn + mọi khả năng trong rương — KHÔNG re-render
-// DOM ngăn nào cả (chỉ đổi nội dung text node) để không mất focus ô đang gõ.
-function refreshAllSpinPercents(){
-  const slots = STATE._spinDraft.slots;
-  const total = slots.reduce((s,p)=>s+spinSlotWeight(p),0) || 1;
-  slots.forEach((p,i)=>{
-    const el = $('spin-slot-pct-'+i);
-    if (el) el.textContent = p ? '≈'+Math.round(spinSlotWeight(p)/total*100)+'%' : '';
-    if (p && p.mysteryPool && p.mysteryPool.length) {
-      const subTotal = p.mysteryPool.reduce((s,m)=>s+spinSlotWeight(m),0) || 1;
-      p.mysteryPool.forEach((m,j)=>{
-        const subEl = $('spin-sub-pct-'+i+'-'+j);
-        if (subEl) subEl.textContent = '≈'+Math.round(spinSlotWeight(m)/subTotal*100)+'%';
-      });
-    }
-  });
-}
-function spinSetupModalHtml(){
-  const n = STATE._spinDraft.slots.length;
-  const slotsHtml = STATE._spinDraft.slots.map((_,i)=>spinSlotCardHtml(i)).join('');
-  return `
-    <div class="event-modal" style="max-width:680px;max-height:88vh;overflow-y:auto">
-      <div class="x" onclick="closeSpinSetupModal()">✕</div>
-      <div class="step-head" style="border-top:none;padding-top:0;margin-top:0">🎰 Set up prizes (${n} slots)</div>
-      <div class="hint-small" style="margin-bottom:10px">Drag a card below and drop it onto the slot you want to fill. Rarer types automatically get a smaller win chance — no need to type a number.</div>
-      <div class="spin-chip-row">${spinChipsHtml()}</div>
-      <div class="spin-slot-grid">${slotsHtml}</div>
-      <div class="modal-actions">
-        <button class="btn" onclick="closeSpinSetupModal()">Cancel</button>
-        <button class="btn" style="background:rgba(244,196,65,.25);border-color:var(--gold);color:var(--gold)" onclick="saveSpinSetup()">💾 Save setup</button>
-      </div>
-    </div>`;
-}
-function openSpinSetupModal(){
-  const wrap = document.createElement('div');
-  wrap.className = 'event-modal-overlay';
-  wrap.id = 'spin-setup-overlay';
-  wrap.innerHTML = spinSetupModalHtml();
-  document.body.appendChild(wrap);
-  refreshAllSpinPercents();
-}
-function closeSpinSetupModal(){
-  const el = $('spin-setup-overlay');
-  if (el) el.remove();
-  delete STATE._spinDraft;
-}
-function saveSpinSetup(){
-  const slots = STATE._spinDraft.slots;
-  if (slots.some(p => !p) && !confirm('Some slots are still empty — save anyway? (empty slots will be skipped on the wheel)')) return;
-  STATE.spinRules.prizes = slots.filter(Boolean).map(p => {
-    const type = spinSlotType(p);
-    const prize = { id: p.id || ('prize_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)), label: p.label||'', weight: spinSlotWeight(p) };
-    if (type === 'mystery') {
-      prize.mysteryPool = (p.mysteryPool||[]).filter(Boolean).map(m => {
-        const mtype = spinSlotType(m);
-        const sub = { id: m.id || ('sub_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)), weight: spinSlotWeight(m) };
-        if (mtype === 'reward') sub.rewardId = m.rewardId;
-        else if (mtype === 'exclusive') sub.exclusive = m.exclusive;
-        else sub.xu = Number(m.xu)||0;
-        return sub;
-      });
-    } else if (type === 'exclusive') {
-      prize.exclusive = p.exclusive;
-    } else if (type === 'reward') {
-      prize.rewardId = p.rewardId;
-    } else {
-      prize.xu = Number(p.xu)||0;
-    }
-    return prize;
-  });
-  closeSpinSetupModal();
-  renderAll();
-}
-function renderSpin(){
-  const rules = STATE.spinRules || {enabled:false,ticketsPerPayment:5,xuCostPerTicket:500,prizes:[]};
-  return `
-    <div class="sect" id="spin">🎰 Lucky Spin</div>
-    <div class="panel">
-      ${introBlock(
-        "Members spin a wheel to win a random prize. They get free spin tickets automatically when they pay real money, or they can pay XU for extra tickets. Whatever they win is delivered automatically.",
-        ["(Optional) Add a reward in 🎁 Store first if you want a real item as a prize", "Click the wheel below to set up prizes — choose how many slots, then drag a card into each one", "Turn on Enabled, then Save all"]
-      )}
-      ${(STATE.rewards||[]).length===0 ? rewardEmptyWarning(false) : ''}
-      ${toggleRow(rules.enabled, "setPath(STATE,'spinRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Lucky Spin page.', "Disabled — members can't see this program.")}
-      <div class="row2">
-        <div><label>Free tickets per real payment</label><input type="number" min="0" value="${rules.ticketsPerPayment||0}" oninput="setPath(STATE,'spinRules.ticketsPerPayment',Number(this.value)||0)"/></div>
-        <div><label>XU price for 1 ticket (if not paying real money)</label><input type="number" min="0" value="${rules.xuCostPerTicket||0}" oninput="setPath(STATE,'spinRules.xuCostPerTicket',Number(this.value)||0)"/></div>
-      </div>
-      <div class="hint-small" style="margin:6px 0 10px">Tip: keep the XU price high so depositing real money stays the better deal for members.</div>
-      <div class="spin-admin-wheel-wrap">
-        <canvas id="spin-admin-canvas" width="200" height="200" onclick="openSpinCountModal()" title="Click to set up prizes"></canvas>
-        <button class="btn" style="margin-top:0" onclick="openSpinCountModal()">✏️ Set up prizes (${(rules.prizes||[]).length} slots)</button>
-      </div>
-    </div>`;
-}
-
-// ===== #auction — 1 vật phẩm duy nhất đấu giá bằng xu =====
-function stepHeader(text){
-  return `<div class="step-head">${text}</div>`;
-}
-
-let auctionIsActive = false;
-async function refreshAuctionStatus(){
-  const el = $('auction-live-status');
-  if(!el) return;
-  try{
-    const r = await tenantFetch('/.netlify/functions/auction');
-    const j = await r.json();
-    if(!r.ok) throw new Error(j.error||'Error');
-    auctionIsActive = !!j.active;
-    if(j.active){
-      el.innerHTML = `<span class="msg ok">🟢 Live now — ends ${new Date(j.endsAt).toLocaleString()}. Highest bid: ${fmt(j.highestBid||j.startingBid)} XU${j.highestBidderName?' by '+esc(j.highestBidderName):''}.</span>`;
-    } else if(j.settled){
-      el.innerHTML = `<span class="hint-small">🏁 Last auction ended${j.winnerName?' — winner: '+esc(j.winnerName):' — no bids.'}</span>`;
-    } else {
-      el.innerHTML = `<span class="hint-small">⚪ No auction has been started yet.</span>`;
-    }
-    const btn = $('start-auction-btn');
-    if(btn) btn.textContent = auctionIsActive ? '🔄 Restart auction' : '🔨 Start New Auction';
-  }catch(_){ el.innerHTML = ''; }
-}
-
-// Kéo 1 thẻ sản phẩm thả vào "sân khấu" để chọn làm vật phẩm đấu giá — thay
-// cho dropdown cũ, theo đúng pattern dragChip/dragPrizeType đã có trong file.
-let dragAuctionRewardId = null;
-function auctionChipsHtml(){
-  return (STATE.auctionProducts||[]).map(rw => {
-    const visual = rw.image ? `<img src="${esc(rw.image)}" alt=""/>` : `<span class="ic">🏆</span>`;
-    return `<div class="auction-chip" draggable="true" ondragstart="dragAuctionRewardId='${esc(rw.id)}'">${visual} ${esc(rw.name||rw.id)}</div>`;
-  }).join('');
-}
-function auctionStageHtml(reward){
-  if (!reward) {
-    return `<div class="auction-stage-drop" ondragover="event.preventDefault()" ondrop="onAuctionRewardDrop(event)">
-      <div class="stage-empty">🔨 Drag a product from above and drop it here to make it the auction item</div>
-    </div>`;
-  }
-  const visual = reward.image ? `<img class="stage-img" src="${esc(reward.image)}" alt=""/>` : `<div class="stage-ic">🎁</div>`;
-  return `<div class="auction-stage-drop has-item" ondragover="event.preventDefault()" ondrop="onAuctionRewardDrop(event)">
-    <span class="stage-x" onclick="clearAuctionReward()">✕</span>
-    ${visual}
-    <div class="stage-name">${esc(reward.name||'(Unnamed)')}</div>
-    <div class="hint-small">👀 Members will see exactly this item</div>
-  </div>`;
-}
-function onAuctionRewardDrop(e){
-  e.preventDefault();
-  if (!dragAuctionRewardId) return;
-  setPath(STATE, 'auctionRules.rewardId', dragAuctionRewardId);
-  dragAuctionRewardId = null;
-  renderAll();
-}
-function clearAuctionReward(){
-  setPath(STATE, 'auctionRules.rewardId', null);
-  renderAll();
-}
-function addAuctionProduct(){
-  const id = 'ap_'+Date.now().toString(36);
-  STATE.auctionProducts = [...(STATE.auctionProducts||[]), {id, name:'New Item', image:'', desc:''}];
-  renderAll();
-}
-function deleteAuctionProduct(id){
-  STATE.auctionProducts = (STATE.auctionProducts||[]).filter(p=>p.id!==id);
-  if(STATE.auctionRules.rewardId===id) setPath(STATE,'auctionRules.rewardId',null);
-  renderAll();
-}
-function renderAuction(){
-  const rules = STATE.auctionRules || {enabled:false,rewardId:null,startingBid:5000,minIncrement:100,durationHours:48};
-  const products = STATE.auctionProducts||[];
-  const reward = rules.rewardId ? products.find(rw=>rw.id===rules.rewardId) : null;
-
-  const productRows = products.map((p,i)=>`
-    <details class="item" style="margin-bottom:8px">
-      <summary>${esc(p.name||'(Unnamed)')}</summary>
-      <div style="padding:10px 0">
-        <label>Name</label>
-        <input value="${esc(p.name||'')}" oninput="setPath(STATE,'auctionProducts.${i}.name',this.value);renderAll()"/>
-        <label>Image URL (paste link)</label>
-        <input value="${esc(p.image||'')}" placeholder="https://..." oninput="setPath(STATE,'auctionProducts.${i}.image',this.value)"/>
-        <label>Description</label>
-        <textarea oninput="setPath(STATE,'auctionProducts.${i}.desc',this.value)">${esc(p.desc||'')}</textarea>
-        <button class="btn del" onclick="deleteAuctionProduct('${esc(p.id)}')">🗑 Delete</button>
-      </div>
-    </details>`).join('');
-
-  const body = products.length===0 ? `
-    <p class="hint-small">⚠ Add at least 1 auction item below before enabling the auction.</p>
-    ${productRows}
-    <button class="btn" onclick="addAuctionProduct()">+ Add auction item</button>` : `
-    ${stepHeader('1. Manage auction items')}
-    ${productRows}
-    <button class="btn" onclick="addAuctionProduct()">+ Add auction item</button>
-
-    ${stepHeader('2. Pick the item to auction now')}
-    <div class="auction-chip-row">${auctionChipsHtml()}</div>
-    ${auctionStageHtml(reward)}
-
-    ${stepHeader('3. Set the price')}
-    <div class="row2">
-      <div><label>Starting price — lowest possible bid (XU)</label><input type="number" min="0" value="${rules.startingBid||0}" oninput="setPath(STATE,'auctionRules.startingBid',Number(this.value)||0)"/></div>
-      <div><label>Each new bid must beat the last by at least (XU)</label><input type="number" min="1" value="${rules.minIncrement||100}" oninput="setPath(STATE,'auctionRules.minIncrement',Number(this.value)||100)"/></div>
-    </div>
-    <div class="hint-small" style="margin:4px 0 10px">Example: if the current top bid is 5,000 XU and this is set to 100, the next bid must be at least 5,100 XU.</div>
-    <label>How long it runs (hours)</label>
-    <input type="number" min="1" value="${rules.durationHours||48}" oninput="setPath(STATE,'auctionRules.durationHours',Number(this.value)||48)"/>
-
-    ${stepHeader('4. Make it visible to members')}
-    ${toggleRow(rules.enabled, "setPath(STATE,'auctionRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Auction page.', "Disabled — members can't see this program.")}
-
-    <button class="btn" id="start-auction-btn" onclick="startAuction(this)">🔨 Start New Auction</button>
-    <div class="msg" id="auction-status"></div>`;
-
-  return `
-    <div class="sect" id="auction">🔨 Auction</div>
-    <div class="panel">
-      <p class="hint-small">One item, members bid XU to win it — highest bid when time's up wins automatically.</p>
-      <div id="auction-live-status" class="hint-small">⏳ Checking current status…</div>
-      ${body}
-    </div>`;
-}
-
-async function startAuction(btn){
-  if(auctionIsActive && !confirm('An auction is already running — starting a new one will end it early and pick a winner from the current bids. Continue?')) return;
-  btn.disabled = true;
-  const old = btn.textContent;
-  try{
-    btn.textContent = 'Saving settings...';
-    await saveConfig();
-    btn.textContent = '🔨 Starting...';
-    const r = await tenantFetch('/.netlify/functions/auction', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'start'})});
-    const j = await r.json();
-    if(!r.ok) throw new Error(j.error||'Error');
-    $('auction-status').innerHTML = `<span class="msg ok">✅ Auction started — ends ${new Date(j.endsAt).toLocaleString()}.</span>`;
-    refreshAuctionStatus();
-  }catch(e){
-    $('auction-status').innerHTML = `<span class="msg err">⚠ ${e.message}</span>`;
-  }finally{
-    btn.disabled = false;
-    btn.textContent = old;
-  }
-}
-
-// ===== #events — sự kiện (ảnh + tên + 1 ngày), sửa trực tiếp trên ô, kéo-thả lên lịch =====
-let eventsWeekOffset = 0;
-let dragChip = null; // idx của ô đang kéo (drop lần đầu lên lịch)
-function eventsLimit(){ return IS_PAID ? 10 : 3; }
-
-// Migrate dữ liệu cũ (startDate/endDate) về `date` nếu có, cắt về đúng giới
+function genericPayloadFields(p, basePath){  const kind = p.kind || 'code';  if (kind === 'link') return `    <label>Link to open on redeem</label>    <input value="${esc(p.url||'')}" oninput="setPath(STATE,'${basePath}.url',this.value)"/>    <label>Button label</label>    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'${basePath}.label',this.value)"/>`;  if (kind === 'ea') return `    <label>File link (e.g. EA bot / downloadable product)</label>    <input value="${esc(p.ea||'')}" oninput="setPath(STATE,'${basePath}.ea',this.value)"/>    <label>Setup guide link</label>    <input value="${esc(p.setup||'')}" oninput="setPath(STATE,'${basePath}.setup',this.value)"/>    <label>Button label</label>    <input value="${esc(p.label||'')}" oninput="setPath(STATE,'${basePath}.label',this.value)"/>`;  return `    <label>Code received</label>    <input value="${esc(p.code||'')}" oninput="setPath(STATE,'${basePath}.code',this.value)"/>`;}function refreshStorePreview(i){  const r = STATE.rewards[i];  const el = $('prev-store-'+i);  if (el.dataset.face === 'back') el.innerHTML = storeBackHtml(r);  else el.innerHTML = storeCardHtml(r);}function toggleStoreFace(i){  const el = $('prev-store-'+i);  el.dataset.face = el.dataset.face === 'back' ? 'front' : 'back';  refreshStorePreview(i);}function renderStore(){  const cards = (STATE.rewards||[]).map((r,i)=>{    const p = r.payload || (r.payload = { kind: 'code', code: '' });    return `    <details class="item">      <summary>${esc(r.name||'(Unnamed)')} — ${r.cost||0} XU</summary>      <div class="edit-row">        <div>          <div class="step-head" style="border-top:none;padding-top:0;margin-top:0">🎴 Front side (shown before redeem)</div>          <label>Reward image (paste image link)</label>          <img class="thumb" id="thumb-${i}" src="${esc(r.image||'')}" alt="" style="${r.image?'':'display:none'}"/>          <input value="${esc(r.image||'')}" placeholder="https://..." oninput="setPath(STATE,'rewards.${i}.image',this.value);const t=$('thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none';refreshStorePreview(${i})"/>          <div class="hint-small">Host the image elsewhere (Imgur, free Cloudinary, an existing product link...) then paste the URL here. Recommended: square image, 600×600px or larger.</div>          <label>Reward name</label>          <input value="${esc(r.name)}" oninput="setPath(STATE,'rewards.${i}.name',this.value);refreshStorePreview(${i})"/>          <label>Price (XU)</label>          <input type="number" value="${r.cost||0}" oninput="setPath(STATE,'rewards.${i}.cost',Number(this.value)||0);refreshStorePreview(${i})"/>          <label>Description</label>          <textarea oninput="setPath(STATE,'rewards.${i}.desc',this.value);refreshStorePreview(${i})">${esc(r.desc)}</textarea>          <label>Button label</label>          <input value="${esc(r.buttonLabel||'GET')}" placeholder="GET" oninput="setPath(STATE,'rewards.${i}.buttonLabel',this.value);refreshStorePreview(${i})"/>          <div class="step-head">🎁 Back side (shown after a successful redeem)</div>          <label>Reward type after redeem</label>          <select onchange="setPath(STATE,'rewards.${i}.payload.kind',this.value);renderAll()">            <option value="code" ${p.kind==='code'?'selected':''}>Code</option>            <option value="link" ${p.kind==='link'?'selected':''}>Link (file/landing page)</option>            <option value="ea" ${p.kind==='ea'?'selected':''}>File + dedicated setup guide</option>          </select>          ${payloadFields(p, i)}          <button class="btn del" onclick="STATE.rewards.splice(${i},1);renderAll()">🗑 Delete this reward</button>        </div>        <div class="prev-col">          <div class="prev-label">Preview</div>          <div id="prev-store-${i}">${storeCardHtml(r)}</div>          <button class="btn pv-toggle" onclick="toggleStoreFace(${i})">🔄 View back side</button>        </div>      </div>    </details>`;  }).join('');  const rewardLimit = IS_PAID ? 10 : 2;  const rewardCount = (STATE.rewards||[]).length;  const addRewardOrMsg = rewardCount < rewardLimit    ? `<button class="btn" onclick="STATE.rewards.push({id:'reward_'+Date.now().toString(36),name:'',cost:100,desc:'',image:'',buttonLabel:'GET',tier:1,payload:{kind:'code',code:''}});renderAll()">+ Add new reward (${rewardCount}/${rewardLimit})</button>`    : `<p class="hint-small">${IS_PAID ? `Limit reached (${rewardLimit} rewards).` : `Free plan limit reached (${rewardLimit} rewards) — ⭐ upgrade to Paid for up to 10.`}</p>`;  return `    <div class="sect" id="store">🎁 Reward Store</div>    <div class="panel">      ${introBlock(        "This is where members spend their XU to get real things — a discount code, a download link, a file. Whatever you add here can also be reused as a prize in Referral Milestones.",        ["Click + Add new reward below", "Give it a name, a price in XU, and pick what members receive (a code, a link, or a file)", "Save all"]      )}      ${toggleRow(STATE.storeEnabled, 'STATE.storeEnabled=this.checked;renderAll()', 'Enabled — Reward Store is visible in member nav.', 'Disabled — Reward Store link is hidden from members.')}      ${cards || '<p class="hint-small">No rewards in the store yet.</p>'}      ${addRewardOrMsg}    </div>`;}// ===== #codes =====
+function renderCodes(){  const rows = (STATE.redeemCodesList||[]).map((c,i)=>`    <div id="code-item-${i}">    <div class="row2">      <div><label>Code (secret string members enter)</label><input value="${esc(c.code)}" oninput="setPath(STATE,'redeemCodesList.${i}.code',this.value)"/></div>      <div><label>Coins awarded</label><input type="number" value="${c.xu}" oninput="setPath(STATE,'redeemCodesList.${i}.xu',Number(this.value)||0)"/></div>    </div>    <label>Display name (used on 🗓 Event calendar — does NOT show the real code)</label>    <input value="${esc(c.title||'')}" placeholder="e.g. Holiday voucher" oninput="setPath(STATE,'redeemCodesList.${i}.title',this.value)"/>    <label>Image (paste image link, optional)</label>    <img class="thumb" id="code-thumb-${i}" src="${esc(c.image||'')}" alt="" style="${c.image?'':'display:none'}"/>    <input value="${esc(c.image||'')}" placeholder="https://..." oninput="setPath(STATE,'redeemCodesList.${i}.image',this.value);const t=$('code-thumb-${i}');t.src=this.value;t.style.display=this.value?'':'none'"/>    <div class="row2">      <div><label>Start date (leave blank = usable right away)</label><input type="date" value="${esc(c.startDate||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.startDate',this.value)"/></div>      <div><label>End date (leave blank = never expires)</label><input type="date" value="${esc(c.endDate||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.endDate',this.value)"/></div>    </div>    <label>Repeat every (days, leave blank = no repeat)</label>    <input type="number" min="1" value="${esc(c.repeatDays||'')}" oninput="setPath(STATE,'redeemCodesList.${i}.repeatDays',this.value?Number(this.value):'')"/>    <div class="hint-small">Leave dates blank = code works right away and never expires. Set dates to limit when it can be used; repeat = recurs every N days.</div>    <button class="btn del" onclick="STATE.redeemCodesList.splice(${i},1);renderAll()">🗑 Delete code</button>    </div>  `).join('<hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:10px 0">');  return `    <div class="sect" id="codes">🔑 Special Codes</div>    <div class="panel">      ${introBlock(        "A secret word you give to specific people (in a livestream, DM, giveaway post) — whoever types it into the app gets free XU. Different from the Reward Store: this is a code YOU hand out, not something members buy.",        ["Click + Add code below", "Type a secret word and how much XU it gives", "Share that secret word with whoever you want to reward", "Save all"]      )}      ${toggleRow(STATE.codesEnabled, 'STATE.codesEnabled=this.checked;renderAll()', 'Enabled — members can redeem codes.', 'Disabled — members cannot redeem codes right now.')}      ${rows || '<p class="hint-small">No codes yet.</p>'}      <button class="btn" onclick="STATE.redeemCodesList.push({code:'',xu:0});renderAll()">+ Add code</button>    </div>`;}// ===== #chests — Rương Liên Minh (phát khi có member mua hàng — xem webhook.mjs) =====
+function renderChests(){  const rules = STATE.chestRules || {thresholds:[],rewardRange:{},expiryHours:48};  const rows = (rules.thresholds||[]).map((t,i)=>{    const range = rules.rewardRange[t.tier] || {min:0,max:0};    return `    <div class="item chest-tier-row">      <canvas class="chest-preview" id="chest-preview-${i}" data-tier="${esc(t.tier)}" width="64" height="64"></canvas>      <div class="tier-fields">        <label>Display name</label><input value="${esc(t.label)}" oninput="setPath(STATE,'chestRules.thresholds.${i}.label',this.value)"/>        <div class="row3">          <div><label>Min. purchase (USD)</label><input type="number" min="0" value="${t.minUsd}" oninput="setPath(STATE,'chestRules.thresholds.${i}.minUsd',Number(this.value)||0)"/></div>          <div><label>Min coins</label><input type="number" min="0" value="${range.min}" oninput="setPath(STATE,'chestRules.rewardRange.${t.tier}.min',Number(this.value)||0)"/></div>          <div><label>Max coins</label><input type="number" min="0" value="${range.max}" oninput="setPath(STATE,'chestRules.rewardRange.${t.tier}.max',Number(this.value)||0)"/></div>        </div>      </div>    </div>`;  }).join('');  return `    <div class="sect" id="chests">📬 Community Chest</div>    <div class="panel">      ${introBlock(        "Whenever ANY member buys something real on your Whop, EVERY other member gets a free surprise chest of XU in their Mailbox — a fun way to celebrate sales together. The buyer also gets an extra bonus chest just for themselves.",        ["Set how much XU each chest tier gives (Wood = small purchase, Gold = big purchase)", "Make sure the Webhook setup at the bottom is done once (ask for help if unsure)", "Save all"]      )}      ${toggleRow(STATE.mailboxEnabled, 'STATE.mailboxEnabled=this.checked;renderAll()', 'Enabled — Mailbox is visible in member nav.', 'Disabled — Mailbox link is hidden from members.')}      ${toggleRow(rules.enabled !== false, "setPath(STATE,'chestRules.enabled',this.checked);renderAll()", 'Enabled — purchases trigger a community chest.', 'Disabled — purchases no longer trigger a chest.')}      <p class="hint-small" style="margin-bottom:10px">When a member buys something on Whop, everyone else in the channel gets a chest in their 📬 Mailbox. The tier depends on the purchase amount; the coin reward is randomized within the range you set below.</p>      ${rows || '<p class="hint-small">No tiers configured yet.</p>'}      <div class="item">        <label>🎉 Buyer bonus</label>        <p class="hint-small" style="margin-top:-2px;margin-bottom:6px">Sent directly to the person who made the purchase, on top of the community chest above.</p>        <div class="row2">          <div><label>Min coins</label><input type="number" min="0" value="${(rules.buyerReward||{}).min||0}" oninput="setPath(STATE,'chestRules.buyerReward.min',Number(this.value)||0)"/></div>          <div><label>Max coins</label><input type="number" min="0" value="${(rules.buyerReward||{}).max||0}" oninput="setPath(STATE,'chestRules.buyerReward.max',Number(this.value)||0)"/></div>        </div>      </div>      <label>Chest claim deadline (hours)</label>      <input type="number" min="1" value="${rules.expiryHours}" oninput="setPath(STATE,'chestRules.expiryHours',Number(this.value)||48)"/>      <div class="hint-small">Requires a Webhook on the Whop Dev Dashboard (event <code>payment_succeeded</code>) pointing to <code>/.netlify/functions/webhook</code>, with <code>WHOP_WEBHOOK_SECRET</code> set on Netlify — one-time setup per app.</div>    </div>`;}// ===== #milestones — Deposit Milestones (members accumulate real USD spent in a period) =====
+function renderMilestones(){  const rules = STATE.milestoneRules || {enabled:false,tiers:[]};  const rewardOptions = (r) => `    <option value="" ${!r.rewardId?'selected':''}>— Reward XU directly —</option>    ${(STATE.rewards||[]).map(rw=>`<option value="${esc(rw.id)}" ${r.rewardId===rw.id?'selected':''}>${esc(rw.name||rw.id)}</option>`).join('')}`;  const rows = (rules.tiers||[]).map((t,i)=>{    const isSpin = t.rewardId === '__spin__';    const reward = t.rewardId && !isSpin ? (STATE.rewards||[]).find(rw=>rw.id===t.rewardId) : null;    return `    <div class="item">      <div class="row2">        <div><label>Member must refer at least (members)</label><input type="number" min="0" value="${t.thresholdReferrals||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.thresholdReferrals',Number(this.value)||0)"/></div>        <div><label>Milestone name</label><input value="${esc(t.label||'')}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.label',this.value)"/></div>      </div>      <div class="row2">        <div>          <label>Reward</label>          <select onchange="setPath(STATE,'milestoneRules.tiers.${i}.rewardId',this.value||null);renderAll()">${rewardOptions(t)}</select>        </div>        ${isSpin          ? `<div><label>How many spin tickets to give</label><input type="number" min="1" value="${t.spinTickets||1}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.spinTickets',Number(this.value)||1)"/></div>`          : t.rewardId            ? '<div><label>&nbsp;</label><div class="hint-small">Members get this Reward Store item for FREE.</div></div>'            : `<div><label>How much XU to give instead</label><input type="number" min="0" value="${t.xu||0}" oninput="setPath(STATE,'milestoneRules.tiers.${i}.xu',Number(this.value)||0)"/></div>`}      </div>      ${miniPreview(reward)}      <button class="btn del" onclick="STATE.milestoneRules.tiers.splice(${i},1);renderAll()">🗑 Delete this milestone</button>    </div>`;  }).join('');  return `    <div class="sect" id="milestones">🎯 Referral Milestones</div>    <div class="panel">      ${introBlock(        "Members earn a reward each time they cross a referral milestone you set (e.g. refer 5 people) — automatically, you don't have to do anything.",        ["(Optional) Add a reward in 🎁 Store first if you want to give an actual item instead of plain XU/spin tickets", "Click + Add milestone below, set how many referrals it takes and the reward", "Turn on Enabled, then Save all"]      )}      ${(STATE.rewards||[]).length===0 ? rewardEmptyWarning(false) : ''}      ${toggleRow(rules.enabled, "setPath(STATE,'milestoneRules.enabled',this.checked);renderAll()", 'Enabled — members can see the Referral Milestones page.', "Disabled — members can't see this program.")}      ${rows || '<p class="hint-small">No milestones yet.</p>'}      <button class="btn" onclick="STATE.milestoneRules.tiers.push({thresholdReferrals:1,rewardId:null,xu:50,label:'New milestone'});renderAll()">+ Add milestone</button>    </div>`;}// ===== #events — sự kiện (ảnh + tên + 1 ngày), sửa trực tiếp trên ô, kéo-thả lên lịch =====
+let eventsWeekOffset = 0;let dragChip = null; // idx của ô đang kéo (drop lần đầu lên lịch)
+function eventsLimit(){ return IS_PAID ? 10 : 3; }// Migrate dữ liệu cũ (startDate/endDate) về `date` nếu có, cắt về đúng giới
 // hạn tier (free 2 / paid 10) — admin thêm/xoá ô qua nút trong renderEvents().
-function normalizeEvents(raw, limit){
-  const list = Array.isArray(raw) ? raw : [];
-  return list.slice(0, limit).map((e,i)=>({
-    id: e.id || ('event_'+(i+1)),
-    name: e.name || ('Event '+(i+1)),
-    image: e.image || '',
-    date: e.date || e.startDate || '',
-    endDate: e.endDate || e.date || e.startDate || '',
-    desc: e.desc || '',
-    ...(e.recurringDays?.length ? { recurringDays: e.recurringDays } : {}),
-  }));
-}
-function evEndDate(e){ return e.endDate || e.date; }
-// Cột hiển thị trong lịch tuần đang xem, CLIP theo tuần nếu event dài hơn/lệch
+function normalizeEvents(raw, limit){  const list = Array.isArray(raw) ? raw : [];  return list.slice(0, limit).map((e,i)=>({    id: e.id || ('event_'+(i+1)),    name: e.name || ('Event '+(i+1)),    image: e.image || '',    date: e.date || e.startDate || '',    endDate: e.endDate || e.date || e.startDate || '',    desc: e.desc || '',    ...(e.recurringDays?.length ? { recurringDays: e.recurringDays } : {}),  }));}function evEndDate(e){ return e.endDate || e.date; }// Cột hiển thị trong lịch tuần đang xem, CLIP theo tuần nếu event dài hơn/lệch
 // ra ngoài tuần — so sánh thẳng chuỗi "YYYY-MM-DD" (đúng thứ tự ISO, không cần
 // parse Date). Trả null nếu event không giao với tuần đang xem.
-function weekOverlapCols(e, week){
-  const start = e.date, end = evEndDate(e);
-  if(!start) return null;
-  const weekStart = week[0], weekEnd = week[6];
-  if(end < weekStart || start > weekEnd) return null;
-  const clipStart = start < weekStart ? weekStart : start;
-  const clipEnd = end > weekEnd ? weekEnd : end;
-  return { startCol: week.indexOf(clipStart), endCol: week.indexOf(clipEnd) };
-}
-
-function evWeekDates(offset){
-  const todayKey = new Date().toISOString().slice(0,10);
-  const t = new Date(todayKey+'T00:00:00Z');
-  const start = new Date(t); start.setUTCDate(t.getUTCDate() - t.getUTCDay() + offset*7);
-  const days = [];
-  for(let i=0;i<7;i++){ const d=new Date(start); d.setUTCDate(start.getUTCDate()+i); days.push(d.toISOString().slice(0,10)); }
-  return days;
-}
-function addDays(dateKey, n){
-  const d = new Date(dateKey+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n);
-  return d.toISOString().slice(0,10);
-}
-
-function evCardHtml(e, idx){
-  return `
-    <span class="evt-name-inline">${esc(e.name)}</span>
-    <span class="ex" onclick="event.stopPropagation();deleteEventSlot(${idx})" title="Delete this event slot">🗑</span>
-  `;
-}
-function deleteEventSlot(idx){
-  STATE.events.splice(idx,1);
-  closeEventModal();
-  refreshEvents();
-}
-
-let eventImageTab = 'link';
-function eventImgBoxHtml(e){
-  return e.image
-    ? `<div class="img-box"><img src="${esc(e.image)}"/></div>`
-    : `<div class="img-box"><span class="ph">Suggested size: landscape, ~600×300px</span></div>`;
-}
-function updateEventImgBox(idx){
-  const box = $('ev-img-box-'+idx);
-  if (box) box.innerHTML = eventImgBoxHtml(STATE.events[idx]);
-}
-function eventModalBodyHtml(idx){
-  const e = STATE.events[idx];
-  const uploadLocked = !IS_PAID;
-  const imgControl = (eventImageTab === 'upload' && IS_PAID)
-    ? `<input type="file" accept="image/*" onchange="onEventImageFileChange(event,${idx})"/>`
-    : `<input type="text" placeholder="Paste image link..." value="${esc(e.image||'')}" oninput="STATE.events[${idx}].image=this.value;updateEventImgBox(${idx})"/>`;
-  return `
-    <span class="x" onclick="closeEventModal()">✕</span>
-    <div class="sect" style="margin-top:0">Edit event</div>
-    <label>Name</label>
-    <input type="text" class="name-input" value="${esc(e.name)}" oninput="STATE.events[${idx}].name=this.value"/>
-    <label>Date</label>
-    <div class="row2">
-      <input type="date" value="${esc(e.date||'')}" oninput="onEventDateChange(${idx},'date',this.value)"/>
-      <input type="date" value="${esc(evEndDate(e)||'')}" oninput="onEventDateChange(${idx},'endDate',this.value)"/>
-    </div>
-    <label>Description</label>
-    <textarea oninput="STATE.events[${idx}].desc=this.value">${esc(e.desc||'')}</textarea>
-    <label>Image (optional)</label>
-    <div id="ev-img-box-${idx}">${eventImgBoxHtml(e)}</div>
-    <div class="img-toggle">
-      <button class="btn ${eventImageTab==='link'?'on':''}" onclick="switchEventImageTab(${idx},'link')">🔗 Paste link</button>
-      <button class="btn ${eventImageTab==='upload'?'on':''} ${uploadLocked?'locked':''}" onclick="switchEventImageTab(${idx},'upload')">${uploadLocked?'🔒':'⬆'} Upload from device</button>
-    </div>
-    <div id="ev-img-control-${idx}">${imgControl}</div>
-    <div class="modal-actions">
-      ${e.date ? `<button class="btn" onclick="unscheduleEvent(${idx});closeEventModal()">📥 Remove from schedule</button>` : ''}
-      <button class="btn del" onclick="deleteEventSlot(${idx})">🗑 Delete event</button>
-      <button class="btn" onclick="closeEventModal();refreshEvents()">✅ Done</button>
-    </div>`;
-}
-function openEventModal(idx){
-  eventImageTab = 'link';
-  const wrap = document.createElement('div');
-  wrap.className = 'event-modal-overlay';
-  wrap.id = 'event-modal-overlay';
-  wrap.innerHTML = `<div class="event-modal">${eventModalBodyHtml(idx)}</div>`;
-  wrap.addEventListener('click', (ev) => { if (ev.target === wrap) { closeEventModal(); refreshEvents(); } });
-  document.body.appendChild(wrap);
-}
-function closeEventModal(){
-  const el = $('event-modal-overlay');
-  if (el) el.remove();
-}
-function switchEventImageTab(idx, tab){
-  if (tab === 'upload' && !IS_PAID){
-    closeEventModal();
-    switchTab('billing');
-    return;
-  }
-  eventImageTab = tab;
-  const modal = document.querySelector('#event-modal-overlay .event-modal');
-  if (modal) modal.innerHTML = eventModalBodyHtml(idx);
-}
-function onEventDateChange(idx, field, value){
-  const item = STATE.events[idx];
-  item[field] = value;
-  if (field === 'date' && evEndDate(item) < value) item.endDate = value;
-  if (field === 'endDate' && value < item.date) item.date = value;
-}
-function onEventImageFileChange(ev, idx){
-  const file = ev.target.files && ev.target.files[0];
-  if (!file) return;
-  if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const dataUrl = String(reader.result);
-    const dataBase64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
-    try {
-      const r = await tenantFetch('/.netlify/functions/upload-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.name, contentType: file.type, dataBase64 }),
-      });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || 'Upload failed');
-      STATE.events[idx].image = j.url;
-      updateEventImgBox(idx);
-    } catch (err) {
-      alert('⚠ Upload failed: ' + err.message);
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-function renderEvents(){
-  const week = evWeekDates(eventsWeekOffset);
-  const todayKey = new Date().toISOString().slice(0,10);
-  const dowLabel=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const headCells = week.map((dk,i)=>{
-    const isToday = dk===todayKey;
-    const [,m,dd]=dk.split('-');
-    return `<div class="ev-head-cell ${isToday?'today':''}" ondragover="event.preventDefault()" ondrop="onEvDrop(event,'${dk}')">${dowLabel[i]}<div class="dd">${dd}/${m}</div></div>`;
-  }).join('');
-
-  const events = STATE.events||[];
-  const recurringIdx   = events.map((_,i)=>i).filter(i =>  events[i].recurringDays?.length);
-  const scheduledIdx   = events.map((_,i)=>i).filter(i => !events[i].recurringDays?.length &&  events[i].date);
-  const unscheduledIdx = events.map((_,i)=>i).filter(i => !events[i].recurringDays?.length && !events[i].date);
-
-  const recurringBars = recurringIdx.map(idx=>{
-    const e = events[idx];
-    const cols = week.map((dk,col)=>({ dow: new Date(dk+'T00:00:00').getDay(), col }))
-                     .filter(({dow})=>e.recurringDays.includes(dow));
-    if(!cols.length) return '';
-    const startCol = cols[0].col, endCol = cols[cols.length-1].col;
-    return `<div class="ev-track">
-      <div class="evt-bar quest" style="grid-column:${startCol+1} / ${endCol+2};opacity:0.9" onclick="openEventModal(${idx})">
-        <span style="font-size:10px;opacity:0.6;margin-right:2px">🔁</span>
-        ${evCardHtml(e, idx)}
-        <span class="ex" onclick="event.stopPropagation();clearRecurring(${idx})" title="Remove recurring schedule">✕</span>
-      </div>
-    </div>`;
-  }).filter(Boolean).join('');
-
-  const scheduledBars = scheduledIdx.map(idx=>{
-    const e = events[idx];
-    const overlap = weekOverlapCols(e, week);
-    if(!overlap) return '';
-    const { startCol, endCol } = overlap;
-    return `<div class="ev-track">
-      <div class="evt-bar quest" style="grid-column:${startCol+1} / ${endCol+2}" onclick="openEventModal(${idx})">
-        <span class="grip grip-l" onmousedown="event.stopPropagation();startDragMove(event,${idx})" onclick="event.stopPropagation()" title="Drag to move">⠿</span>
-        ${evCardHtml(e, idx)}
-        <span class="ex" onclick="event.stopPropagation();unscheduleEvent(${idx})" title="Remove from schedule">✕</span>
-        <span class="grip grip-r" onmousedown="event.stopPropagation();startDragResize(event,${idx})" onclick="event.stopPropagation()" title="Drag to change end date">⠿</span>
-      </div>
-    </div>`;
-  }).filter(Boolean).join('');
-
-  const bars = recurringBars + (scheduledBars ||
-    (scheduledIdx.length
-      ? '<div class="ev-empty">No events scheduled this week.</div>'
-      : (recurringIdx.length ? '' : '<div class="ev-empty">Drag a card below onto a day to schedule it.</div>')));
-
-  const chips = unscheduledIdx.map(idx=>{
-    const e = events[idx];
-    return `<span class="chip quest" draggable="true" ondragstart="onChipDragStart(event,${idx})" onclick="openEventModal(${idx})">${evCardHtml(e, idx)}</span>`;
-  }).join('') || (events.length ? '<span class="hint-small">All events are scheduled.</span>' : '');
-
-  const limit = eventsLimit();
-  const addOrMsg = events.length < limit
-    ? `<button class="btn" onclick="STATE.events.push({id:'event_'+Date.now().toString(36),name:'Event '+(STATE.events.length+1),image:'',date:'',endDate:'',desc:''});refreshEvents()">+ Add event slot (${events.length}/${limit})</button>`
-    : `<p class="hint-small">${IS_PAID ? `Limit reached (${limit} slots).` : `Free plan limit reached (${limit} slots) — ⭐ upgrade to Paid for up to 10.`}</p>`;
-
-  return `<div id="events-wrap">
-    <div class="sect" id="events">🗓 Events</div>
-    <div class="panel">
-      ${introBlock(
-        "A simple calendar members see, announcing your livestreams, AMAs, or any event coming up — it doesn't give out any reward by itself, it's just a notice board.",
-        ["Click + Add event slot below", "Click the card to open a popup and set its name, dates, description and image", "Drag the card onto the day it happens; use the left ⠿ handle to move it, the right ⠿ handle to stretch it across multiple days", "Save all"]
-      )}
-      ${toggleRow(STATE.eventsEnabled, 'STATE.eventsEnabled=this.checked;refreshEvents()', 'Enabled — the event calendar is visible to members.', 'Disabled — members see an empty event calendar.')}
-      <p class="hint-small" style="margin-bottom:10px">Click a card to edit it in a popup, or drag/resize it directly on the calendar.</p>
-      <div class="events-nav">
-        <button class="btn" onclick="eventsWeekOffset--;refreshEvents()">‹ Previous week</button>
-        <span class="lbl">${week[0].slice(8,10)}/${week[0].slice(5,7)} — ${week[6].slice(8,10)}/${week[6].slice(5,7)}</span>
-        <button class="btn" onclick="eventsWeekOffset++;refreshEvents()">Next week ›</button>
-      </div>
-      <div class="ev-calendar" ondragover="event.preventDefault()" ondrop="onEvCalendarDrop(event)">
-        <div class="ev-head-row">${headCells}</div>
-        ${bars}
-      </div>
-      <div class="unscheduled-tray">
-        <div class="prev-label" style="text-align:left">📥 Unscheduled (drag onto a day above)</div>
-        ${chips}
-      </div>
-      ${addOrMsg}
-    </div>
-  </div>`;
-}
-function refreshEvents(){ $('events-wrap').outerHTML = renderEvents(); }
-function clearRecurring(idx){
-  delete STATE.events[idx].recurringDays;
-  STATE.events[idx].date = '';
-  STATE.events[idx].endDate = '';
-  refreshEvents();
-}
-
-function startDragMove(e, idx){
-  e.preventDefault();
-  const track = e.currentTarget.closest('.ev-track');
-  const cellWidth = track.getBoundingClientRect().width/7;
-  const item = STATE.events[idx];
-  const origStart = item.date;
-  const origEnd = evEndDate(item);
-  const x0 = e.clientX;
-  function onUp(ev){
-    document.removeEventListener('mouseup', onUp);
-    const delta = Math.round((ev.clientX - x0)/cellWidth);
-    if(delta){
-      item.date = addDays(origStart, delta);
-      item.endDate = addDays(origEnd, delta);
-      refreshEvents();
-    }
-  }
-  document.addEventListener('mouseup', onUp);
-}
-// Kéo tay cầm phải: chỉ đổi ngày KẾT THÚC (giãn/co độ dài event), không cho
+function weekOverlapCols(e, week){  const start = e.date, end = evEndDate(e);  if(!start) return null;  const weekStart = week[0], weekEnd = week[6];  if(end < weekStart || start > weekEnd) return null;  const clipStart = start < weekStart ? weekStart : start;  const clipEnd = end > weekEnd ? weekEnd : end;  return { startCol: week.indexOf(clipStart), endCol: week.indexOf(clipEnd) };}function evWeekDates(offset){  const todayKey = new Date().toISOString().slice(0,10);  const t = new Date(todayKey+'T00:00:00Z');  const start = new Date(t); start.setUTCDate(t.getUTCDate() - t.getUTCDay() + offset*7);  const days = [];  for(let i=0;i<7;i++){ const d=new Date(start); d.setUTCDate(start.getUTCDate()+i); days.push(d.toISOString().slice(0,10)); }  return days;}function addDays(dateKey, n){  const d = new Date(dateKey+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n);  return d.toISOString().slice(0,10);}function evCardHtml(e, idx){  return `    <span class="evt-name-inline">${esc(e.name)}</span>    <span class="ex" onclick="event.stopPropagation();deleteEventSlot(${idx})" title="Delete this event slot">🗑</span>  `;}function deleteEventSlot(idx){  STATE.events.splice(idx,1);  closeEventModal();  refreshEvents();}let eventImageTab = 'link';function eventImgBoxHtml(e){  return e.image    ? `<div class="img-box"><img src="${esc(e.image)}"/></div>`    : `<div class="img-box"><span class="ph">Suggested size: landscape, ~600×300px</span></div>`;}function updateEventImgBox(idx){  const box = $('ev-img-box-'+idx);  if (box) box.innerHTML = eventImgBoxHtml(STATE.events[idx]);}function eventModalBodyHtml(idx){  const e = STATE.events[idx];  const uploadLocked = !IS_PAID;  const imgControl = (eventImageTab === 'upload' && IS_PAID)    ? `<input type="file" accept="image/*" onchange="onEventImageFileChange(event,${idx})"/>`    : `<input type="text" placeholder="Paste image link..." value="${esc(e.image||'')}" oninput="STATE.events[${idx}].image=this.value;updateEventImgBox(${idx})"/>`;  return `    <span class="x" onclick="closeEventModal()">✕</span>    <div class="sect" style="margin-top:0">Edit event</div>    <label>Name</label>    <input type="text" class="name-input" value="${esc(e.name)}" oninput="STATE.events[${idx}].name=this.value"/>    <label>Date</label>    <div class="row2">      <input type="date" value="${esc(e.date||'')}" oninput="onEventDateChange(${idx},'date',this.value)"/>      <input type="date" value="${esc(evEndDate(e)||'')}" oninput="onEventDateChange(${idx},'endDate',this.value)"/>    </div>    <label>Description</label>    <textarea oninput="STATE.events[${idx}].desc=this.value">${esc(e.desc||'')}</textarea>    <label>Image (optional)</label>    <div id="ev-img-box-${idx}">${eventImgBoxHtml(e)}</div>    <div class="img-toggle">      <button class="btn ${eventImageTab==='link'?'on':''}" onclick="switchEventImageTab(${idx},'link')">🔗 Paste link</button>      <button class="btn ${eventImageTab==='upload'?'on':''} ${uploadLocked?'locked':''}" onclick="switchEventImageTab(${idx},'upload')">${uploadLocked?'🔒':'⬆'} Upload from device</button>    </div>    <div id="ev-img-control-${idx}">${imgControl}</div>    <div class="modal-actions">      ${e.date ? `<button class="btn" onclick="unscheduleEvent(${idx});closeEventModal()">📥 Remove from schedule</button>` : ''}      <button class="btn del" onclick="deleteEventSlot(${idx})">🗑 Delete event</button>      <button class="btn" onclick="closeEventModal();refreshEvents()">✅ Done</button>    </div>`;}function openEventModal(idx){  eventImageTab = 'link';  const wrap = document.createElement('div');  wrap.className = 'event-modal-overlay';  wrap.id = 'event-modal-overlay';  wrap.innerHTML = `<div class="event-modal">${eventModalBodyHtml(idx)}</div>`;  wrap.addEventListener('click', (ev) => { if (ev.target === wrap) { closeEventModal(); refreshEvents(); } });  document.body.appendChild(wrap);}function closeEventModal(){  const el = $('event-modal-overlay');  if (el) el.remove();}function switchEventImageTab(idx, tab){  if (tab === 'upload' && !IS_PAID){    closeEventModal();    switchTab('billing');    return;  }  eventImageTab = tab;  const modal = document.querySelector('#event-modal-overlay .event-modal');  if (modal) modal.innerHTML = eventModalBodyHtml(idx);}function onEventDateChange(idx, field, value){  const item = STATE.events[idx];  item[field] = value;  if (field === 'date' && evEndDate(item) < value) item.endDate = value;  if (field === 'endDate' && value < item.date) item.date = value;}function onEventImageFileChange(ev, idx){  const file = ev.target.files && ev.target.files[0];  if (!file) return;  if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }  const reader = new FileReader();  reader.onload = async () => {    const dataUrl = String(reader.result);    const dataBase64 = dataUrl.slice(dataUrl.indexOf(',') + 1);    try {      const r = await tenantFetch('/.netlify/functions/upload-image', {        method: 'POST',        headers: { 'Content-Type': 'application/json' },        body: JSON.stringify({ filename: file.name, contentType: file.type, dataBase64 }),      });      const j = await r.json();      if (!r.ok) throw new Error(j.error || 'Upload failed');      STATE.events[idx].image = j.url;      updateEventImgBox(idx);    } catch (err) {      alert('⚠ Upload failed: ' + err.message);    }  };  reader.readAsDataURL(file);}function renderEvents(){  const week = evWeekDates(eventsWeekOffset);  const todayKey = new Date().toISOString().slice(0,10);  const dowLabel=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];  const headCells = week.map((dk,i)=>{    const isToday = dk===todayKey;    const [,m,dd]=dk.split('-');    return `<div class="ev-head-cell ${isToday?'today':''}" ondragover="event.preventDefault()" ondrop="onEvDrop(event,'${dk}')">${dowLabel[i]}<div class="dd">${dd}/${m}</div></div>`;  }).join('');  const events = STATE.events||[];  const recurringIdx   = events.map((_,i)=>i).filter(i =>  events[i].recurringDays?.length);  const scheduledIdx   = events.map((_,i)=>i).filter(i => !events[i].recurringDays?.length &&  events[i].date);  const unscheduledIdx = events.map((_,i)=>i).filter(i => !events[i].recurringDays?.length && !events[i].date);  const recurringBars = recurringIdx.map(idx=>{    const e = events[idx];    const cols = week.map((dk,col)=>({ dow: new Date(dk+'T00:00:00').getDay(), col }))                     .filter(({dow})=>e.recurringDays.includes(dow));    if(!cols.length) return '';    const startCol = cols[0].col, endCol = cols[cols.length-1].col;    return `<div class="ev-track">      <div class="evt-bar quest" style="grid-column:${startCol+1} / ${endCol+2};opacity:0.9" onclick="openEventModal(${idx})">        <span style="font-size:10px;opacity:0.6;margin-right:2px">🔁</span>        ${evCardHtml(e, idx)}        <span class="ex" onclick="event.stopPropagation();clearRecurring(${idx})" title="Remove recurring schedule">✕</span>      </div>    </div>`;  }).filter(Boolean).join('');  const scheduledBars = scheduledIdx.map(idx=>{    const e = events[idx];    const overlap = weekOverlapCols(e, week);    if(!overlap) return '';    const { startCol, endCol } = overlap;    return `<div class="ev-track">      <div class="evt-bar quest" style="grid-column:${startCol+1} / ${endCol+2}" onclick="openEventModal(${idx})">        <span class="grip grip-l" onmousedown="event.stopPropagation();startDragMove(event,${idx})" onclick="event.stopPropagation()" title="Drag to move">⠿</span>        ${evCardHtml(e, idx)}        <span class="ex" onclick="event.stopPropagation();unscheduleEvent(${idx})" title="Remove from schedule">✕</span>        <span class="grip grip-r" onmousedown="event.stopPropagation();startDragResize(event,${idx})" onclick="event.stopPropagation()" title="Drag to change end date">⠿</span>      </div>    </div>`;  }).filter(Boolean).join('');  const bars = recurringBars + (scheduledBars ||    (scheduledIdx.length      ? '<div class="ev-empty">No events scheduled this week.</div>'      : (recurringIdx.length ? '' : '<div class="ev-empty">Drag a card below onto a day to schedule it.</div>')));  const chips = unscheduledIdx.map(idx=>{    const e = events[idx];    return `<span class="chip quest" draggable="true" ondragstart="onChipDragStart(event,${idx})" onclick="openEventModal(${idx})">${evCardHtml(e, idx)}</span>`;  }).join('') || (events.length ? '<span class="hint-small">All events are scheduled.</span>' : '');  const limit = eventsLimit();  const addOrMsg = events.length < limit    ? `<button class="btn" onclick="STATE.events.push({id:'event_'+Date.now().toString(36),name:'Event '+(STATE.events.length+1),image:'',date:'',endDate:'',desc:''});refreshEvents()">+ Add event slot (${events.length}/${limit})</button>`    : `<p class="hint-small">${IS_PAID ? `Limit reached (${limit} slots).` : `Free plan limit reached (${limit} slots) — ⭐ upgrade to Paid for up to 10.`}</p>`;  return `<div id="events-wrap">    <div class="sect" id="events">🗓 Events</div>    <div class="panel">      ${introBlock(        "A simple calendar members see, announcing your livestreams, AMAs, or any event coming up — it doesn't give out any reward by itself, it's just a notice board.",        ["Click + Add event slot below", "Click the card to open a popup and set its name, dates, description and image", "Drag the card onto the day it happens; use the left ⠿ handle to move it, the right ⠿ handle to stretch it across multiple days", "Save all"]      )}      ${toggleRow(STATE.eventsEnabled, 'STATE.eventsEnabled=this.checked;refreshEvents()', 'Enabled — the event calendar is visible to members.', 'Disabled — members see an empty event calendar.')}      <p class="hint-small" style="margin-bottom:10px">Click a card to edit it in a popup, or drag/resize it directly on the calendar.</p>      <div class="events-nav">        <button class="btn" onclick="eventsWeekOffset--;refreshEvents()">‹ Previous week</button>        <span class="lbl">${week[0].slice(8,10)}/${week[0].slice(5,7)} — ${week[6].slice(8,10)}/${week[6].slice(5,7)}</span>        <button class="btn" onclick="eventsWeekOffset++;refreshEvents()">Next week ›</button>      </div>      <div class="ev-calendar" ondragover="event.preventDefault()" ondrop="onEvCalendarDrop(event)">        <div class="ev-head-row">${headCells}</div>        ${bars}      </div>      <div class="unscheduled-tray">        <div class="prev-label" style="text-align:left">📥 Unscheduled (drag onto a day above)</div>        ${chips}      </div>      ${addOrMsg}    </div>  </div>`;}function refreshEvents(){ $('events-wrap').outerHTML = renderEvents(); }function clearRecurring(idx){  delete STATE.events[idx].recurringDays;  STATE.events[idx].date = '';  STATE.events[idx].endDate = '';  refreshEvents();}function startDragMove(e, idx){  e.preventDefault();  const track = e.currentTarget.closest('.ev-track');  const cellWidth = track.getBoundingClientRect().width/7;  const item = STATE.events[idx];  const origStart = item.date;  const origEnd = evEndDate(item);  const x0 = e.clientX;  function onUp(ev){    document.removeEventListener('mouseup', onUp);    const delta = Math.round((ev.clientX - x0)/cellWidth);    if(delta){      item.date = addDays(origStart, delta);      item.endDate = addDays(origEnd, delta);      refreshEvents();    }  }  document.addEventListener('mouseup', onUp);}// Kéo tay cầm phải: chỉ đổi ngày KẾT THÚC (giãn/co độ dài event), không cho
 // kết thúc sớm hơn ngày bắt đầu.
-function startDragResize(e, idx){
-  e.preventDefault();
-  const track = e.currentTarget.closest('.ev-track');
-  const cellWidth = track.getBoundingClientRect().width/7;
-  const item = STATE.events[idx];
-  const origEnd = evEndDate(item);
-  const x0 = e.clientX;
-  function onUp(ev){
-    document.removeEventListener('mouseup', onUp);
-    const delta = Math.round((ev.clientX - x0)/cellWidth);
-    if(delta){
-      let newEnd = addDays(origEnd, delta);
-      if(newEnd < item.date) newEnd = item.date;
-      item.endDate = newEnd;
-      refreshEvents();
-    }
-  }
-  document.addEventListener('mouseup', onUp);
-}
-function unscheduleEvent(idx){
-  STATE.events[idx].date = '';
-  STATE.events[idx].endDate = '';
-  refreshEvents();
-}
-function onChipDragStart(e, idx){ dragChip = idx; }
-function onEvDrop(e, dateKey){
-  e.preventDefault();
-  if(dragChip == null) return;
-  STATE.events[dragChip].date = dateKey;
-  STATE.events[dragChip].endDate = dateKey;
-  dragChip = null;
-  refreshEvents();
-}
-// Thả lệch xuống dưới hàng tiêu đề ngày (vd lên vùng event đã lên lịch, hoặc vùng
+function startDragResize(e, idx){  e.preventDefault();  const track = e.currentTarget.closest('.ev-track');  const cellWidth = track.getBoundingClientRect().width/7;  const item = STATE.events[idx];  const origEnd = evEndDate(item);  const x0 = e.clientX;  function onUp(ev){    document.removeEventListener('mouseup', onUp);    const delta = Math.round((ev.clientX - x0)/cellWidth);    if(delta){      let newEnd = addDays(origEnd, delta);      if(newEnd < item.date) newEnd = item.date;      item.endDate = newEnd;      refreshEvents();    }  }  document.addEventListener('mouseup', onUp);}function unscheduleEvent(idx){  STATE.events[idx].date = '';  STATE.events[idx].endDate = '';  refreshEvents();}function onChipDragStart(e, idx){ dragChip = idx; }function onEvDrop(e, dateKey){  e.preventDefault();  if(dragChip == null) return;  STATE.events[dragChip].date = dateKey;  STATE.events[dragChip].endDate = dateKey;  dragChip = null;  refreshEvents();}// Thả lệch xuống dưới hàng tiêu đề ngày (vd lên vùng event đã lên lịch, hoặc vùng
 // trống chưa có event) vẫn tính đúng cột/ngày theo vị trí X — bọc cả khối lịch
 // (.ev-calendar) thành 1 vùng nhận thả lớn, không chỉ riêng ô tiêu đề nhỏ.
-function onEvCalendarDrop(e){
-  e.preventDefault();
-  if(dragChip == null) return;
-  const rect = e.currentTarget.getBoundingClientRect();
-  const col = Math.min(6, Math.max(0, Math.floor((e.clientX - rect.left) / (rect.width / 7))));
-  const week = evWeekDates(eventsWeekOffset);
-  onEvDrop(e, week[col]);
-}
-
-// ===== Lưu tất cả =====
-function buildSavePayload(){
-  const redeemCodes = {};
-  (STATE.redeemCodesList||[]).forEach(c=>{
-    const code = (c.code||'').trim().toLowerCase();
-    if (!code) return;
-    const entry = { xu: Number(c.xu)||0 };
-    if (c.title) entry.title = c.title;
-    if (c.image) entry.image = c.image;
-    if (c.startDate) entry.startDate = c.startDate;
-    if (c.endDate) entry.endDate = c.endDate;
-    if (c.repeatDays) entry.repeatDays = Number(c.repeatDays);
-    redeemCodes[code] = entry;
-  });
-
-  return {
-    seasonTopRewards: STATE.seasonTopRewards,
-    checkinRewards: STATE.checkinRewards,
-    rewards: STATE.rewards,
-    redeemCodes,
-    codesEnabled: STATE.codesEnabled,
-    dailyEnabled: STATE.dailyEnabled,
-    storeEnabled: STATE.storeEnabled,
-    mailboxEnabled: STATE.mailboxEnabled,
-    chestRules: STATE.chestRules,
-    events: STATE.events,
-    eventsEnabled: STATE.eventsEnabled,
-    milestoneRules: STATE.milestoneRules,
-    spinRules: STATE.spinRules,
-    auctionRules: STATE.auctionRules,
-    auctionProducts: STATE.auctionProducts||[],
-    branding: STATE.branding,
-  };
-}
-async function saveConfig(){
-  const r = await tenantFetch('/.netlify/functions/admin-config', {
-    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(buildSavePayload())
-  });
-  const j = await r.json();
-  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
-}
-async function saveAll(){
-  const btn = $('save-all');
-  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Saving...';
-  try{
-    await saveConfig();
-    btn.textContent = '✅ Saved!';
-    setTimeout(load, 700);
-  }catch(e){
-    alert('⚠ Save failed: '+e.message);
-    btn.disabled = false; btn.textContent = old;
-  }
-}
-
-setTimeout(load, 300);
-</script>
-</body>
+function onEvCalendarDrop(e){  e.preventDefault();  if(dragChip == null) return;  const rect = e.currentTarget.getBoundingClientRect();  const col = Math.min(6, Math.max(0, Math.floor((e.clientX - rect.left) / (rect.width / 7))));  const week = evWeekDates(eventsWeekOffset);  onEvDrop(e, week[col]);}// ===== Lưu tất cả =====
+function buildSavePayload(){  const redeemCodes = {};  (STATE.redeemCodesList||[]).forEach(c=>{    const code = (c.code||'').trim().toLowerCase();    if (!code) return;    const entry = { xu: Number(c.xu)||0 };    if (c.title) entry.title = c.title;    if (c.image) entry.image = c.image;    if (c.startDate) entry.startDate = c.startDate;    if (c.endDate) entry.endDate = c.endDate;    if (c.repeatDays) entry.repeatDays = Number(c.repeatDays);    redeemCodes[code] = entry;  });  return {    seasonTopRewards: STATE.seasonTopRewards,    checkinRewards: STATE.checkinRewards,    rewards: STATE.rewards,    redeemCodes,    codesEnabled: STATE.codesEnabled,    dailyEnabled: STATE.dailyEnabled,    storeEnabled: STATE.storeEnabled,    mailboxEnabled: STATE.mailboxEnabled,    chestRules: STATE.chestRules,    events: STATE.events,    eventsEnabled: STATE.eventsEnabled,    milestoneRules: STATE.milestoneRules,    branding: STATE.branding,  };}async function saveConfig(){  const r = await tenantFetch('/.netlify/functions/admin-config', {    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(buildSavePayload())  });  const j = await r.json();  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));}async function saveAll(){  const btn = $('save-all');  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Saving...';  try{    await saveConfig();    btn.textContent = '✅ Saved!';    setTimeout(load, 700);  }catch(e){    alert('⚠ Save failed: '+e.message);    btn.disabled = false; btn.textContent = old;  }}setTimeout(load, 300);
+    </script>
+  </body>
 </html>

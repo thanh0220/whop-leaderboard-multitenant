@@ -284,8 +284,6 @@
     <a href="/events.html" class="refresh" style="text-decoration:none">🗓 Events</a>
     <a href="/mailbox.html" class="refresh" style="text-decoration:none">📬 Mailbox</a>
     <a href="/milestones.html" class="refresh" style="text-decoration:none">🎯 Milestones</a>
-    <a href="/spin.html" class="refresh" style="text-decoration:none">🎰 Lucky Spin</a>
-    <a href="/auction.html" class="refresh" style="text-decoration:none">🔨 Auction</a>
     <span class="updated" id="updated">--</span>
     <button class="refresh" id="refresh" onclick="loadData()">↻ Refresh</button>
   </div>
@@ -375,7 +373,7 @@ function tenantFetch(path, opts){
     const j = await r.json();
     if(!r.ok) return;
     const map = { '/events.html': j.eventsEnabled, '/milestones.html': j.milestonesEnabled,
-      '/spin.html': j.spinEnabled, '/auction.html': j.auctionEnabled,
+
       '/daily.html': j.dailyEnabled, '/store.html': j.storeEnabled, '/mailbox.html': j.mailboxEnabled };
     document.querySelectorAll('.nav a, .topbar-right a').forEach(a=>{
       const href = a.getAttribute('href').split('?')[0];
