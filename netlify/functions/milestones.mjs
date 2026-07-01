@@ -18,6 +18,8 @@ function summarize(payload) {
   return "";
 }
 
+function gdriveImg(url){if(!url)return url;const m=url.match(/\/file\/d\/([^/?#]+)/);return m?'https://drive.google.com/uc?export=view&id='+m[1]:url;}
+
 class AlreadyClaimedError extends Error {}
 
 // Mốc theo SỐ LƯỢT GIỚI THIỆU (referral) — dùng đúng số `referrals` đã tính ở
@@ -57,7 +59,7 @@ export const handler = async (event) => {
         icon: (isCustomItem || reward) ? "🎁" : (isSpin ? "🎰" : t.icon),
         xu: (!isCustomItem && !reward && !isSpin) ? t.xu : null,
         spinTickets: isSpin ? (t.spinTickets || 1) : null,
-        image: isCustomItem ? (t.customItem.image || null) : (reward ? (reward.image || null) : null),
+        image: isCustomItem ? (gdriveImg(t.customItem.image) || null) : (reward ? (reward.image || null) : null),
         unlocked: referrals >= t.thresholdReferrals,
         claimed: claimedTiers.includes(i),
       };
