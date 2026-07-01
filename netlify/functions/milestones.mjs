@@ -49,14 +49,15 @@ export const handler = async (event) => {
   if (event.httpMethod === "GET") {
     const tiers = (rules.tiers || []).map((t, i) => {
       const isSpin = t.rewardId === "__spin__";
-      const reward = t.rewardId && !isSpin ? cfg.rewards.find((r) => r.id === t.rewardId) : null;
+      const isCustomItem = !!t.customItem && !isSpin;
+      const reward = !isCustomItem && t.rewardId && !isSpin ? cfg.rewards.find((r) => r.id === t.rewardId) : null;
       return {
         thresholdReferrals: t.thresholdReferrals,
-        label: reward ? reward.name : t.label,
-        icon: reward ? "🎁" : (isSpin ? "🎰" : t.icon),
-        xu: (!reward && !isSpin) ? t.xu : null,
+        label: isCustomItem ? (t.customItem.name || t.label) : (reward ? reward.name : t.label),
+        icon: (isCustomItem || reward) ? "🎁" : (isSpin ? "🎰" : t.icon),
+        xu: (!isCustomItem && !reward && !isSpin) ? t.xu : null,
         spinTickets: isSpin ? (t.spinTickets || 1) : null,
-        image: reward ? (reward.image || null) : null,
+        image: isCustomItem ? (t.customItem.image || null) : (reward ? (reward.image || null) : null),
         unlocked: referrals >= t.thresholdReferrals,
         claimed: claimedTiers.includes(i),
       };
@@ -101,6 +102,8 @@ export const handler = async (event) => {
       await casUpdate(store, tenantKey("spin-tickets", companyId, userId), (current) => {
         return String((Number(current) || 0) + ticketsGranted);
       }, { type: "text" });
+    } else if (tier.customItem) {
+      resultCode = tier.customItem.name || "Item reward";
     } else if (tier.rewardId) {
       const reward = cfg.rewards.find((r) => r.id === tier.rewardId);
       if (reward) {
