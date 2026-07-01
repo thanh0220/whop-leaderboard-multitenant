@@ -108,6 +108,7 @@
     border-radius:8px;padding:8px 12px;margin-bottom:14px}
   .item-card-progress b{color:var(--gold2)}
   .item-card .cta-btn{width:100%}
+  .item-card-3d-wrap{width:100%;height:210px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 45%,#1a0800,#050200)}
 
   .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
     background:#2a1c08;border:1px solid var(--gold);border-radius:12px;padding:14px 22px;color:#ffe9a8;
@@ -345,7 +346,7 @@ function render(j, selIdx){
     const badgeText  = t.claimed ? '✅ Claimed' : (ready ? '✨ Unlocked!' : '🎯 Exclusive Reward');
     panel = `
     <div class="item-card">
-      ${t.image ? `<img class="item-card-img" src="${esc(t.image)}" alt="${esc(t.label)}"/>` : `<div class="item-card-img-ph">🎁</div>`}
+      ${t.boxStyle ? `<div class="item-card-3d-wrap"><canvas id="item-3d-${selIdx}" width="200" height="200"></canvas></div>` : t.image ? `<img class="item-card-img" src="${esc(t.image)}" alt="${esc(t.label)}"/>` : `<div class="item-card-img-ph">🎁</div>`}
       <div class="item-card-badge ${badgeClass}">${badgeText}</div>
       <div class="item-card-body">
         <div class="item-card-divider"></div>
@@ -381,14 +382,20 @@ function render(j, selIdx){
     const i = visStart + vi;
     if (t.claimed) return;
     const canvas = $('chest-'+i);
-    if (canvas && window.GemChest) chestRegistry['n'+i] = window.GemChest.create(canvas, chestTierFor(i));
+    if (canvas && window.GemChest) chestRegistry['n'+i] = window.GemChest.create(canvas, t.boxStyle || chestTierFor(i));
   });
+
+  if (t.boxStyle && window.GemChest) {
+    const cardCanvas = document.getElementById('item-3d-'+selIdx);
+    if (cardCanvas) chestRegistry['card'] = window.GemChest.create(cardCanvas, t.boxStyle);
+  }
 }
 
 async function claim(i, btn){
   btn.disabled = true;
   const animDone = new Promise(res => setTimeout(res, 650));
   chestRegistry['n'+i]?.open();
+  chestRegistry['card']?.open();
   try{
     const reqPromise = tenantFetch('/.netlify/functions/milestones', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({tierIndex:i})});
     const [r] = await Promise.all([reqPromise, animDone]);
