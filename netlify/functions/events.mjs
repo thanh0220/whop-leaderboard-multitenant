@@ -35,6 +35,7 @@ export const handler = async (event) => {
         date: e.date,
         endDate: e.endDate || e.date,
         repeatCount: Math.max(0, Number(e.repeatCount) || 0),
+        link: e.link || null,
         desc: e.desc || ""
       }));
 
