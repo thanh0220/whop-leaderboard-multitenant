@@ -73,7 +73,7 @@ function makeGemGeometry(shape) {
   }
 }
 
-function buildScene(canvas, tier) {
+function buildScene(canvas, tier, opts = {}) {
   const gemColor   = GEM_COLORS[tier]  || GEM_COLORS.gold;
   const bodyColor  = TIER_BODY[tier]   || TIER_BODY.gold;
   const ribbonColor = TIER_RIBBON[tier] || TIER_RIBBON.gold;
@@ -140,7 +140,9 @@ function buildScene(canvas, tier) {
   group.rotation.y = -0.35;
   scene.add(group);
 
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  const hasBg = opts.background !== undefined;
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: !hasBg, antialias: true });
+  if (hasBg) renderer.setClearColor(opts.background, 1);
   renderer.setSize(canvas.width, canvas.height, false);
   renderer.render(scene, camera);
 
@@ -191,7 +193,7 @@ function buildScene(canvas, tier) {
 }
 
 window.GemChest = {
-  create(canvas, tier) { return buildScene(canvas, tier); },
+  create(canvas, tier, opts) { return buildScene(canvas, tier, opts); },
   // Danh sách 20 styles mới để admin chọn
   CUSTOM_STYLES: [
     { id: 'crimson',     label: '🔴 Crimson',     group: 'Octahedron' },
