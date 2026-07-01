@@ -168,6 +168,7 @@ function weekOverlapCols(item, week){
 }
 
 let CURRENT_EVENTS = [];
+let MODAL_EVENT = null;
 
 function evtRow(item, week, idx){
   const overlap = weekOverlapCols(item, week);
@@ -186,11 +187,29 @@ function fmtEventDateRange(item){
 }
 function openEventModal(idx){
   const item = CURRENT_EVENTS[idx];
+  if (!item) return;
+  MODAL_EVENT = item;
   const wrap = document.createElement('div');
   wrap.className = 'event-modal-overlay';
   wrap.id = 'event-modal-overlay';
   const imgHtml = item.image ? `<img class="ev-modal-img" src="${esc(item.image)}"/>` : '';
   const descHtml = item.desc ? `<div class="ev-modal-desc">${esc(item.desc)}</div>` : '';
+  const today = new Date().toISOString().slice(0,10);
+  const isUpcoming = (item.endDate || item.date) >= today;
+  const calHtml = isUpcoming ? `
+    <div style="margin-top:16px;border-top:1px solid var(--card-border);padding-top:14px">
+      <div style="font-size:11px;color:var(--card-muted);margin-bottom:8px;text-align:center">📆 Add to your calendar so you don't forget</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <a href="${esc(makeGCalUrl(item))}" target="_blank" rel="noopener"
+          style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;background:rgba(66,133,244,.15);border:1px solid rgba(66,133,244,.3);color:#6ba8ff;font-size:12px;font-weight:600;text-decoration:none">
+          📅 Google Calendar
+        </a>
+        <button onclick="addToIcs(MODAL_EVENT)"
+          style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:var(--card-text);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
+          📆 Apple / Outlook
+        </button>
+      </div>
+    </div>` : '';
   wrap.innerHTML = `
     <div class="event-modal">
       <span class="x" onclick="closeEventModal()">✕</span>
@@ -198,6 +217,7 @@ function openEventModal(idx){
       <div class="ev-modal-name">${esc(item.name)}</div>
       <div class="ev-modal-date">📅 ${fmtEventDateRange(item)}</div>
       ${descHtml}
+      ${calHtml}
     </div>`;
   wrap.addEventListener('click', (ev) => { if (ev.target === wrap) closeEventModal(); });
   document.body.appendChild(wrap);
@@ -207,20 +227,60 @@ function closeEventModal(){
   if (el) el.remove();
 }
 
-function expandRecurring(list) {
-  const today = new Date();
-  const sun = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - today.getUTCDay()));
-  const toISO = d => d.toISOString().slice(0,10);
-  return list.map(e => {
-    if (!e.recurringDays?.length) return e;
-    const sorted = [...e.recurringDays].sort((a,b)=>a-b);
-    const days = sorted.map(dow => {
-      const d = new Date(sun);
-      d.setUTCDate(sun.getUTCDate() + dow);
-      return toISO(d);
-    });
-    return { ...e, date: days[0], endDate: days[days.length-1] };
-  });
+function addDays(dk, n){
+  try {
+    const d = new Date(dk + 'T00:00:00Z');
+    if (isNaN(d)) return dk;
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  } catch(_){ return dk; }
+}
+
+// Expand each event into one entry per weekly occurrence (repeatCount controls how many extra weeks)
+function expandByRepeatCount(list) {
+  const result = [];
+  for (const e of list) {
+    if (!e.date) continue;
+    const count = Math.min(Math.max(0, Number(e.repeatCount) || 0), 364);
+    const end = e.endDate || e.date;
+    for (let i = 0; i <= count; i++) {
+      result.push({ ...e, date: addDays(e.date, i * 7), endDate: addDays(end, i * 7) });
+    }
+  }
+  return result;
+}
+
+function makeGCalUrl(item){
+  try {
+    const start = (item.date || '').replace(/-/g, '');
+    if (!start) return '#';
+    const end = addDays(item.endDate || item.date, 1).replace(/-/g, '');
+    const p = new URLSearchParams({ action:'TEMPLATE', text: item.name || '', dates: start+'/'+end, details: item.desc || '' });
+    return 'https://calendar.google.com/calendar/render?' + p.toString();
+  } catch(_){ return '#'; }
+}
+
+function addToIcs(item){
+  try {
+    const start = (item.date || '').replace(/-/g, '');
+    if (!start) return;
+    const end = addDays(item.endDate || item.date, 1).replace(/-/g, '');
+    const lines = [
+      'BEGIN:VCALENDAR','VERSION:2.0','CALSCALE:GREGORIAN','METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      'DTSTART;VALUE=DATE:' + start,
+      'DTEND;VALUE=DATE:' + end,
+      'SUMMARY:' + (item.name||'').replace(/[\\;,]/g,'\\$&'),
+    ];
+    if (item.desc) lines.push('DESCRIPTION:' + item.desc.replace(/[\\;,]/g,'\\$&').replace(/\n/g,'\\n'));
+    lines.push('END:VEVENT','END:VCALENDAR');
+    const blob = new Blob([lines.join('\r\n')], {type:'text/calendar'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'event.ics';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  } catch(err){ console.error('ICS error:', err); }
 }
 
 let weekOffset = 0;
@@ -237,7 +297,7 @@ function changeWeek(delta){
 }
 
 function renderWeek(d, offset){
-  const events = expandRecurring(d.events || []).filter(e=>e.date);
+  const events = expandByRepeatCount(d.events || []);
   CURRENT_EVENTS = events;
   const today = new Date().toISOString().slice(0,10);
 
