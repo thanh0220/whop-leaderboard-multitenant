@@ -44,6 +44,26 @@
   .node.selected{background:rgba(255,255,255,.14);box-shadow:0 0 0 2px var(--gold2),0 0 14px rgba(244,196,65,.5)}
   .chest-box{width:64px;height:64px;margin:0 auto 6px;position:relative;perspective:300px}
   .chest-box canvas{width:64px;height:64px;display:block}
+  /* Mystery card — dùng cho Custom Item milestones */
+  .mcard-wrap{width:46px;height:64px;margin:0 auto}
+  .mcard-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;animation:mcard-float 3s ease-in-out infinite;transition:transform .55s ease}
+  .mcard-face{position:absolute;inset:0;border-radius:7px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center}
+  .mcard-front{border:1.5px solid;box-shadow:inset 0 0 8px #ffffff06}
+  .mcard-back{transform:rotateY(180deg);font-size:20px;background:linear-gradient(150deg,#1a0800,#4a1e00);border:1.5px solid #f59e0b;box-shadow:0 0 8px #f59e0b44}
+  .mcard-q{font-size:26px;font-weight:bold;font-family:Georgia,serif;animation:mq-pulse 2s ease-in-out infinite alternate}
+  @keyframes mcard-float{0%,100%{transform:translateY(0) rotateY(-9deg)}50%{transform:translateY(-5px) rotateY(9deg)}}
+  @keyframes mq-pulse{from{opacity:.65}to{opacity:1}}
+  /* 5 màu */
+  .mcard-c0 .mcard-front{background:linear-gradient(150deg,#0e0028,#2d006b);border-color:#7c3aed}
+  .mcard-c0 .mcard-q{color:#c084fc;filter:drop-shadow(0 0 6px #7c3aed)}
+  .mcard-c1 .mcard-front{background:linear-gradient(150deg,#000e28,#001a6b);border-color:#3b82f6}
+  .mcard-c1 .mcard-q{color:#93c5fd;filter:drop-shadow(0 0 6px #3b82f6)}
+  .mcard-c2 .mcard-front{background:linear-gradient(150deg,#180c00,#4a2800);border-color:#f59e0b}
+  .mcard-c2 .mcard-q{color:#fcd34d;filter:drop-shadow(0 0 6px #f59e0b)}
+  .mcard-c3 .mcard-front{background:linear-gradient(150deg,#001a10,#004d2c);border-color:#10b981}
+  .mcard-c3 .mcard-q{color:#6ee7b7;filter:drop-shadow(0 0 6px #10b981)}
+  .mcard-c4 .mcard-front{background:linear-gradient(150deg,#1a0008,#4a0018);border-color:#f43f5e}
+  .mcard-c4 .mcard-q{color:#fda4af;filter:drop-shadow(0 0 6px #f43f5e)}
   .lock-badge{position:absolute;top:-2px;right:6px;font-size:15px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
   .node .amt{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5)}
   .node .claimed-mark{font-size:26px;line-height:64px}
@@ -108,7 +128,6 @@
     border-radius:8px;padding:8px 12px;margin-bottom:14px}
   .item-card-progress b{color:var(--gold2)}
   .item-card .cta-btn{width:100%}
-  .item-card-3d-wrap{width:100%;height:210px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 45%,#1a0800,#050200)}
 
   .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
     background:#2a1c08;border:1px solid var(--gold);border-radius:12px;padding:14px 22px;color:#ffe9a8;
@@ -303,7 +322,9 @@ function render(j, selIdx){
         ${locked ? `<div class="lock-badge">🔒</div>` : ''}
         ${t.claimed
           ? `<div class="claimed-mark">🪙</div>`
-          : `<canvas id="chest-${i}" width="64" height="64"></canvas>`}
+          : t.customItem
+            ? `<div class="mcard-wrap"><div class="mcard-inner mcard-c${i%5}" id="mcard-inner-${i}"><div class="mcard-face mcard-front"><div class="mcard-q">?</div></div><div class="mcard-face mcard-back">✨</div></div></div>`
+            : `<canvas id="chest-${i}" width="64" height="64"></canvas>`}
       </div>
       <div class="amt">${fmtMoney(t.thresholdReferrals)} ref</div>
     </div>`;
@@ -346,7 +367,7 @@ function render(j, selIdx){
     const badgeText  = t.claimed ? '✅ Claimed' : (ready ? '✨ Unlocked!' : '🎯 Exclusive Reward');
     panel = `
     <div class="item-card">
-      ${t.boxStyle ? `<div class="item-card-3d-wrap"><canvas id="item-3d-${selIdx}" width="200" height="200"></canvas></div>` : t.image ? `<img class="item-card-img" src="${esc(t.image)}" alt="${esc(t.label)}"/>` : `<div class="item-card-img-ph">🎁</div>`}
+      ${t.image ? `<img class="item-card-img" src="${esc(t.image)}" alt="${esc(t.label)}"/>` : `<div class="item-card-img-ph">🎁</div>`}
       <div class="item-card-badge ${badgeClass}">${badgeText}</div>
       <div class="item-card-body">
         <div class="item-card-divider"></div>
@@ -381,14 +402,23 @@ function render(j, selIdx){
   j.tiers.slice(visStart, visEnd).forEach((t, vi) => {
     const i = visStart + vi;
     if (t.claimed) return;
-    const canvas = $('chest-'+i);
-    if (canvas && window.GemChest) chestRegistry['n'+i] = window.GemChest.create(canvas, t.boxStyle || chestTierFor(i));
+    if (t.customItem) {
+      chestRegistry['n'+i] = {
+        open() {
+          const el = document.getElementById('mcard-inner-'+i);
+          if (!el) return;
+          el.style.animation = 'none';
+          el.style.transition = 'transform .55s ease';
+          el.style.transform = 'rotateY(180deg)';
+        },
+        dispose() {}
+      };
+    } else {
+      const canvas = $('chest-'+i);
+      if (canvas && window.GemChest) chestRegistry['n'+i] = window.GemChest.create(canvas, chestTierFor(i));
+    }
   });
 
-  if (t.boxStyle && window.GemChest) {
-    const cardCanvas = document.getElementById('item-3d-'+selIdx);
-    if (cardCanvas) chestRegistry['card'] = window.GemChest.create(cardCanvas, t.boxStyle);
-  }
 }
 
 async function claim(i, btn){
