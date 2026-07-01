@@ -146,7 +146,7 @@
 </style>
 </head>
 <body>
-<a class="powered-badge" id="powered-badge" href="https://whop.com/apps/app_YI4gVdrJb3il0W/" target="_blank" rel="noopener" style="text-decoration:none;cursor:pointer">⚡ Powered by GTVăn</a>
+<div class="powered-badge" id="powered-badge" onclick="window.open('https://whop.com/apps/app_YI4gVdrJb3il0W/','_blank')" style="cursor:pointer">⚡ Powered by GTVăn</div>
 <div class="wrap">
   <div class="nav">
     <a href="/">🏆 Leaderboard</a>
@@ -315,8 +315,8 @@ function render(){
       btnLabel = '🔐 Sign in to redeem';
       btnDisabled = false;
       btnOnclick = `openWhopSignin(event)`;
-    } else if(done){ btnClass='btn done'; btnLabel='🔄 Flip to view reward'; btnDisabled=false; btnOnclick=`flipCard('${rw.id}',event)`; }
-    else if(can){ btnClass=rw.tier>=4?'btn primary':'btn'; btnLabel=esc(rw.buttonLabel||'GET'); btnDisabled=false; btnOnclick=`redeem('${rw.id}',this)`; }
+    } else if(done){ btnClass='btn done'; btnLabel='🔄 Flip to view reward'; btnDisabled=false; btnOnclick=`flipCard('${esc(rw.id)}',event)`; }
+    else if(can){ btnClass=rw.tier>=4?'btn primary':'btn'; btnLabel=esc(rw.buttonLabel||'GET'); btnDisabled=false; btnOnclick=`redeem('${esc(rw.id)}',this)`; }
     else { btnClass='btn'; btnLabel='Not enough XU'; btnDisabled=true; btnOnclick=''; }
 
     const costHtml = done
@@ -366,7 +366,7 @@ function render(){
           <div class="fb-title">${esc(rw.name)}</div>
         </div>
         <div class="fb-body">${backBody}</div>
-        <button class="btn flip-back-btn" onclick="flipCard('${rw.id}',event)">🔄 Flip back</button>
+        <button class="btn flip-back-btn" onclick="flipCard('${esc(rw.id)}',event)">🔄 Flip back</button>
       </div>`;
 
     return `<div class="flip-card" id="fc-${esc(rw.id)}"><div class="flip-inner">${frontInner}${back}</div></div>`;
