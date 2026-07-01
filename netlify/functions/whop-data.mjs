@@ -116,11 +116,16 @@ export const handler = async (event) => {
     // Member cap (Free 50 / Paid 500) theo ngày tham gia SỚM NHẤT — cắt NGAY
     // TRƯỚC pipeline enrichment tốn API (affiliates/payments/per-user fetch ở
     // dưới) để tenant free thực sự giảm chi phí gọi Whop, không chỉ ẩn ở UI.
-    const totalMembersReal = members.length;
+    // Filter active-only trước khi đếm totalMembersReal để không tính expired/cancelled.
+    const ACTIVE_STATUS_EARLY = ["active","completed","trialing","past_due","canceling"];
+    const activeBeforeCap = members.filter(m =>
+      m.valid === true || ACTIVE_STATUS_EARLY.includes(String(m.status || "").toLowerCase())
+    );
+    const totalMembersReal = activeBeforeCap.length;
     const paid = await isPaidTier(companyId);
     const tierLevel = await getTierLevel(companyId);
     const memberCap = [50, 500, 9999, 9999][tierLevel] ?? 50;
-    members = members
+    members = activeBeforeCap
       .slice()
       .sort((a, b) => (membershipCreatedMs(a) || 0) - (membershipCreatedMs(b) || 0))
       .slice(0, memberCap);
