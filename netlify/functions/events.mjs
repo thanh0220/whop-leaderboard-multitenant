@@ -26,16 +26,23 @@ export const handler = async (event) => {
       return json(200, { events: [], branding: cfg.branding, isPaid: paid });
     }
 
+    const today = new Date().toISOString().slice(0, 10);
+    const todayDow = new Date(today + 'T00:00:00Z').getUTCDay();
+
     const events = (cfg.events || [])
       .slice(0, limit)
-      .filter((e) => e.date)
-      .map((e) => ({
-        name: e.name,
-        image: e.image || null,
-        date: e.date,
-        endDate: e.endDate || e.date,
-        desc: e.desc || "",
-      }));
+      .filter((e) => e.date || e.recurringDays?.length)
+      .map((e) => {
+        if (e.recurringDays?.length) {
+          const dow = e.recurringDays[0];
+          const daysAhead = (dow - todayDow + 7) % 7;
+          const d = new Date(today + 'T00:00:00Z');
+          d.setUTCDate(d.getUTCDate() + daysAhead);
+          const nextDate = d.toISOString().slice(0, 10);
+          return { name: e.name, image: e.image || null, date: nextDate, endDate: nextDate, desc: e.desc || "", recurring: true };
+        }
+        return { name: e.name, image: e.image || null, date: e.date, endDate: e.endDate || e.date, desc: e.desc || "" };
+      });
 
     return json(200, { events, branding: cfg.branding, isPaid: paid });
   } catch (e) {
