@@ -76,22 +76,7 @@ const ALLOWED_KEYS = [
 // deepMerge của _tenant.mjs — caller phải tự gửi cả mảng đầy đủ).
 export const handler = async (event) => {
   if (event.queryStringParameters && event.queryStringParameters.debug) {
-    const h = event.headers || {};
-    const auth = await getAuthContext(event);
-    let linkResult = null;
-    if (auth.companyId) {
-      const realId = await getRealCompanyId(auth.companyId);
-      linkResult = await autoLinkExperiences(auth.companyId, realId);
-    }
-    return json(200, {
-      debug: true,
-      hasTokenHeader: !!(h["x-whop-user-token"] || h["X-Whop-User-Token"]),
-      referer: h["referer"] || h["Referer"] || null,
-      auth,
-      verifyError: lastVerifyError,
-      adminCheckError: lastAdminCheckError,
-      linkResult,
-    });
+    return json(403, { error: "Debug endpoint disabled." });
   }
 
   const { userId, companyId } = await getAuthContext(event);
@@ -162,7 +147,21 @@ export const handler = async (event) => {
     if ("milestoneRules" in partial && (typeof partial.milestoneRules !== "object" || partial.milestoneRules === null || Array.isArray(partial.milestoneRules))) {
       return json(400, { error: "milestoneRules must be an object." });
     }
-
+    // Validate nội dung rewards — chặn payload có kind lạ hoặc cost âm
+    if (Array.isArray(partial.rewards)) {
+      for (const r of partial.rewards) {
+        if (typeof r !== "object" || r === null) continue;
+        if (r.cost !== undefined && (typeof r.cost !== "number" || r.cost < 0 || !isFinite(r.cost))) {
+          return json(400, { error: "Reward cost must be a non-negative number." });
+        }
+        if (r.payload && typeof r.payload === "object") {
+          const { kind } = r.payload;
+          if (kind && !["code", "link", "ea"].includes(kind)) {
+            return json(400, { error: `Invalid reward payload kind: ${kind}` });
+          }
+        }
+      }
+    }
 
     // Giới hạn theo tier (server-side, không tin client):
     // Free: 3 events / 2 rewards | Growth: 10/10 | Pro: 20/20 | Agency: không giới hạn

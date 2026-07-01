@@ -1,4 +1,4 @@
-import { pointsStore, tenantKey, casUpdate, InsufficientFundsError } from "./_store.mjs";
+import { pointsStore, tenantKey, casUpdate, InsufficientFundsError, claimLock, ClaimLockedError } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getCompanyAccessToken } from "./_tokens.mjs";
 import { computeEarned } from "./_points.mjs";
@@ -37,6 +37,11 @@ export const handler = async (event) => {
     const { earned } = await computeEarned(userId, apiKey, companyId, cfg);
 
     const store = pointsStore();
+    try {
+      await claimLock(store, `redeem:${companyId}:${userId}:${body.rewardId}`);
+    } catch (e) {
+      if (e instanceof ClaimLockedError) return json(409, { error: "Redeem already in progress. Please wait a moment." });
+    }
     const payload = reward.payload || { kind: "code", code: "" };
     const codeSummary = summarize(payload);
 

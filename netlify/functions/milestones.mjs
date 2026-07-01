@@ -1,4 +1,4 @@
-import { pointsStore, tenantKey, casUpdate } from "./_store.mjs";
+import { pointsStore, tenantKey, casUpdate, claimLock, ClaimLockedError } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getTenantConfig } from "./_tenant.mjs";
 import { getCompanyAccessToken } from "./_tokens.mjs";
@@ -89,6 +89,11 @@ export const handler = async (event) => {
   // try/catch — lỗi tạm thời không được làm function crash với response
   // không phải JSON (client gọi r.json() sẽ lỗi parse nếu để lọt).
   try {
+    try {
+      await claimLock(store, `milestone:${companyId}:${userId}:${tierIndex}`);
+    } catch (e) {
+      if (e instanceof ClaimLockedError) return json(409, { error: "Claim already in progress. Please wait a moment." });
+    }
     await casUpdate(store, claimedKey, (current) => {
       const list = Array.isArray(current) ? current : [];
       if (list.includes(tierIndex)) throw new AlreadyClaimedError();

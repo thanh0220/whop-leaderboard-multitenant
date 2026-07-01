@@ -130,10 +130,10 @@ async function resolveCompanyId(event, userId) {
       return tenantId;
     }
   }
-  // Fallback cho link cũ/trường hợp Whop chưa cấu hình lại path, hoặc API
-  // experience lookup ở trên lỗi (mất mạng, thiếu WHOP_APP_API_KEY...) — vẫn
-  // hoạt động như trước (có rủi ro nhầm tenant đã biết), tốt hơn là lỗi cứng.
-  return resolveTenantIdFromReferer(event);
+  // Không fallback về referer-subdomain — cách đó nguy hiểm (2 company khác
+  // nhau có thể share cùng subdomain, dẫn đến data leak giữa tenant). Trả null
+  // để caller trả 400. Link cũ không có companyId/experienceId cần cập nhật.
+  return null;
 }
 
 // Trả { userId, companyId }. Xem resolveCompanyId() ngay trên để biết

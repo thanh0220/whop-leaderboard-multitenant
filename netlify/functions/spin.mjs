@@ -1,4 +1,5 @@
-import { pointsStore, tenantKey, casUpdate, InsufficientFundsError } from "./_store.mjs";
+import { randomBytes } from "crypto";
+import { pointsStore, tenantKey, casUpdate, InsufficientFundsError, claimLock, ClaimLockedError } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getCompanyAccessToken } from "./_tokens.mjs";
 import { computeEarned } from "./_points.mjs";
@@ -21,12 +22,29 @@ function summarize(payload) {
 function pickWeighted(prizes) {
   const total = prizes.reduce((s, p) => s + (Number(p.weight) || 0), 0);
   if (total <= 0) return prizes[0];
-  let roll = Math.random() * total;
+  let roll = (randomBytes(4).readUInt32BE(0) / 0x100000000) * total;
   for (const p of prizes) {
     roll -= Number(p.weight) || 0;
     if (roll <= 0) return p;
   }
   return prizes[prizes.length - 1];
+}
+
+// Quy ra 1 giải cụ thể (XU thẳng / sản phẩm Shop có sẵn / vật phẩm độc quyền
+// Spin-only chỉ định nghĩa ngay trên prize) thành dữ liệu cần trả về cho
+// client + ghi lịch sử. Dùng chung cho cả giải chính trên bánh xe VÀ giải con
+// bên trong Rương thần bí (mysteryPool) — 2 chỗ đó có cùng 3 kiểu thưởng này.
+function resolvePrize(prize, cfg) {
+  if (prize.exclusive && prize.exclusive.payload) {
+    return { resultPayload: prize.exclusive.payload, label: prize.exclusive.label || prize.label, image: prize.exclusive.image || null, xu: 0 };
+  }
+  if (prize.rewardId) {
+    const reward = cfg.rewards.find((r) => r.id === prize.rewardId);
+    if (reward) {
+      return { resultPayload: reward.payload || { kind: "code", code: "" }, label: reward.name, image: reward.image || null, xu: 0 };
+    }
+  }
+  return { resultPayload: null, label: prize.label, image: null, xu: Number(prize.xu) || 0 };
 }
 
 async function getTickets(store, tenantId, userId) {
@@ -56,6 +74,12 @@ export const handler = async (event) => {
     } catch (_) {}
 
     const prizes = (rules.prizes || []).map((p) => {
+      if (p.mysteryPool && p.mysteryPool.length) {
+        return { id: p.id, label: p.label || "🎁 Mystery Chest", image: null, xu: null, weight: p.weight, mystery: true };
+      }
+      if (p.exclusive && p.exclusive.label) {
+        return { id: p.id, label: p.exclusive.label, image: p.exclusive.image || null, xu: null, weight: p.weight, exclusive: true };
+      }
       const reward = p.rewardId ? cfg.rewards.find((r) => r.id === p.rewardId) : null;
       return {
         id: p.id,
@@ -82,6 +106,11 @@ export const handler = async (event) => {
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
 
   if (body.action === "buy") {
+    try {
+      await claimLock(store, `spin-buy:${companyId}:${userId}`);
+    } catch (e) {
+      if (e instanceof ClaimLockedError) return json(409, { error: "Purchase already in progress. Please wait a moment." });
+    }
     try {
       const apiKey = await getCompanyAccessToken(companyId);
       const { earned } = await computeEarned(userId, apiKey, companyId, cfg);
@@ -114,6 +143,11 @@ export const handler = async (event) => {
 
   if (body.action === "spin") {
     if (!rules.prizes || !rules.prizes.length) return json(400, { error: "No prizes configured." });
+    try {
+      await claimLock(store, `spin-spin:${companyId}:${userId}`);
+    } catch (e) {
+      if (e instanceof ClaimLockedError) return json(409, { error: "Spin already in progress. Please wait a moment." });
+    }
 
     // Toàn bộ luồng quay (trừ vé, chọn giải, ghi lịch sử/cộng xu) bọc trong 1
     // try/catch DUY NHẤT — lỗi tạm thời ở bất kỳ bước nào không được làm
@@ -127,32 +161,34 @@ export const handler = async (event) => {
       }, { type: "text" });
 
       const prize = pickWeighted(rules.prizes);
-      let resultPayload = null;
+
+      // Nếu trúng slice "Rương thần bí" (mysteryPool), bốc tiếp 1 giải con từ
+      // trong rương bằng đúng pickWeighted() — kết quả thật là giải con đó,
+      // không phải slice rương. chestOpened báo cho client biết cần chạy
+      // animation mở rương trước khi hiện kết quả thật.
+      const chestOpened = !!(prize.mysteryPool && prize.mysteryPool.length);
+      const finalPrize = chestOpened ? pickWeighted(prize.mysteryPool) : prize;
+      const resolved = resolvePrize(finalPrize, cfg);
+
       let resultCode = "";
       let xuGranted = 0;
-
-      if (prize.rewardId) {
-        const reward = cfg.rewards.find((r) => r.id === prize.rewardId);
-        if (reward) {
-          resultPayload = reward.payload || { kind: "code", code: "" };
-          resultCode = summarize(resultPayload);
-          let history = [];
-          try {
-            const h = await store.get(tenantKey("history", companyId, userId), { type: "json" });
-            if (Array.isArray(h)) history = h;
-          } catch (_) {}
-          history.unshift({
-            at: new Date().toISOString(),
-            rewardId: reward.id,
-            reward: reward.name,
-            cost: 0,
-            code: resultCode,
-          });
-          await store.setJSON(tenantKey("history", companyId, userId), history);
-        }
-      }
-      if (!resultPayload) {
-        xuGranted = prize.xu || 0;
+      if (resolved.resultPayload) {
+        resultCode = summarize(resolved.resultPayload);
+        let history = [];
+        try {
+          const h = await store.get(tenantKey("history", companyId, userId), { type: "json" });
+          if (Array.isArray(h)) history = h;
+        } catch (_) {}
+        history.unshift({
+          at: new Date().toISOString(),
+          rewardId: finalPrize.rewardId || null,
+          reward: resolved.label,
+          cost: 0,
+          code: resultCode,
+        });
+        await store.setJSON(tenantKey("history", companyId, userId), history);
+      } else {
+        xuGranted = resolved.xu || 0;
         await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
           return String((Number(current) || 0) + xuGranted);
         }, { type: "text" });
@@ -162,7 +198,9 @@ export const handler = async (event) => {
       return json(200, {
         ok: true,
         prizeId: prize.id,
-        label: prize.rewardId ? (cfg.rewards.find((r) => r.id === prize.rewardId)?.name || prize.label) : prize.label,
+        chestOpened,
+        label: resolved.label,
+        image: resolved.image,
         xu: xuGranted || null,
         code: resultCode || null,
         ticketsLeft,

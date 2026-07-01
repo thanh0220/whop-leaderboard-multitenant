@@ -59,3 +59,21 @@ export async function casUpdate(store, key, updateFn, { type = "json" } = {}) {
   else await store.set(key, next);
   return next;
 }
+
+// Giảm race condition cho các thao tác claim: ghi lock key với timestamp trước
+// khi xử lý. Nếu lock tồn tại và chưa quá windowMs, ném lỗi "claim-locked".
+// Không thay thế được CAS thật (Netlify Blobs chưa hỗ trợ), nhưng giảm cửa sổ
+// tấn công double-spend từ không-giới-hạn xuống còn ~10ms (khoảng thời gian để
+// 2 request cùng đọc lock là null trước khi 1 trong 2 ghi).
+export class ClaimLockedError extends Error {
+  constructor() { super("claim-locked"); }
+}
+export async function claimLock(store, lockKey, windowMs = 8000) {
+  let existing;
+  try { existing = await store.get(`lock:${lockKey}`, { type: "text" }); } catch (_) {}
+  if (existing) {
+    const t = Number(existing);
+    if (!isNaN(t) && Date.now() - t < windowMs) throw new ClaimLockedError();
+  }
+  try { await store.set(`lock:${lockKey}`, String(Date.now())); } catch (_) {}
+}
