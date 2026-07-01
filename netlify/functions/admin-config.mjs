@@ -178,6 +178,11 @@ export const handler = async (event) => {
     if ("rewards" in partial && partial.rewards.length > rewardsLimit) {
       return json(400, { error: `Your plan allows up to ${rewardsLimit} rewards. Upgrade for more.` });
     }
+    const milestoneLimitArr = [4, 10, 9999, 9999];
+    const msLimit = cfg.unlockAllFeatures ? 9999 : (milestoneLimitArr[tierLevel] ?? 4);
+    if ("milestoneRules" in partial && (partial.milestoneRules?.tiers || []).length > msLimit) {
+      return json(400, { error: `Your plan allows up to ${msLimit} milestones. Upgrade for more.` });
+    }
     if ("branding" in partial && !paid) {
       partial.branding = { ...partial.branding, logoUrl: cfg.branding.logoUrl || null };
     }

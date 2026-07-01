@@ -60,6 +60,7 @@ export const handler = async (event) => {
         xu: (!isCustomItem && !reward && !isSpin) ? t.xu : null,
         spinTickets: isSpin ? (t.spinTickets || 1) : null,
         image: isCustomItem ? (gdriveImg(t.customItem.image) || null) : (reward ? (reward.image || null) : null),
+        boxStyle: isCustomItem ? (t.customItem.boxStyle || null) : null,
         unlocked: referrals >= t.thresholdReferrals,
         claimed: claimedTiers.includes(i),
       };
