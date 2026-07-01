@@ -202,7 +202,7 @@
 <script>
 const $=id=>document.getElementById(id);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2400);}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),3500);}
 function fmtMoney(n){return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});}
 
 function tenantQS(){
@@ -326,6 +326,7 @@ function render(j, selIdx){
             ? `<div class="mcard-wrap"><div class="mcard-inner mcard-c${i%5}" id="mcard-inner-${i}"><div class="mcard-face mcard-front"><div class="mcard-q">?</div></div><div class="mcard-face mcard-back">✨</div></div></div>`
             : `<canvas id="chest-${i}" width="64" height="64"></canvas>`}
       </div>
+      ${t.customItem && !t.claimed ? `<div style="font-size:9px;color:rgba(255,255,255,.4);text-align:center;margin-bottom:2px">Mystery</div>` : ''}
       <div class="amt">${fmtMoney(t.thresholdReferrals)} ref</div>
     </div>`;
   }).join('');
@@ -358,7 +359,9 @@ function render(j, selIdx){
   } else if (ready){
     cta = `<button class="cta-btn ready" onclick="claim(${selIdx},this)">🎁 Claim</button>`;
   } else {
-    cta = `<button class="cta-btn" disabled>Need ${fmtMoney(need)} more referral${need===1?'':'s'}</button>`;
+    cta = need === 0
+      ? `<button class="cta-btn ready" onclick="claim(${selIdx},this)">🎁 Claim</button>`
+      : `<button class="cta-btn" disabled>Need ${fmtMoney(need)} more referral${need===1?'':'s'}</button>`;
   }
 
   let panel;
@@ -374,6 +377,7 @@ function render(j, selIdx){
         <div class="item-card-status">${t.claimed ? 'Already claimed' : (ready ? "You've unlocked" : 'Preview reward')}</div>
         <div class="item-card-title">${esc(t.label)}</div>
         <div class="item-card-progress">Progress: <b>${fmtMoney(j.referrals)} / ${fmtMoney(t.thresholdReferrals)} referrals</b></div>
+        ${!ready && !t.claimed ? `<div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:4px">Share your referral link to unlock this reward</div>` : ''}
         ${cta}
       </div>
     </div>`;
@@ -392,6 +396,7 @@ function render(j, selIdx){
         <div class="label2">${esc(t.label)}</div>
         ${rewardLine}
         <div class="progress-txt">Progress: <b>${fmtMoney(j.referrals)} / ${fmtMoney(t.thresholdReferrals)} referrals</b></div>
+        ${!ready && !t.claimed ? `<div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:4px">Share your referral link to unlock this reward</div>` : ''}
       </div>
       ${cta}
     </div>`;

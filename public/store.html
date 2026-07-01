@@ -168,7 +168,7 @@ let DATA=null;
 const $=id=>document.getElementById(id);
 function fmt(n){return Number(n||0).toLocaleString('en-US');}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2400);}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),3500);}
 
 /* Mọi request gửi kèm experienceId/companyId Whop truyền vào URL khi nhúng
    app trong iframe — backend dùng để biết đang phục vụ business nào. */
@@ -307,7 +307,8 @@ function render(){
       : `<div class="thumb" style="background:linear-gradient(135deg,var(--card1),var(--card2))"></div>`;
     const progress=(!can && !done)
       ? `<div class="progress"><i style="width:${pct}%"></i></div>
-         <div class="progress-label"><span>Need <b>${fmt(gap)} more XU</b></span><span>${pct}%</span></div>`
+         <div class="progress-label"><span>Need <b>${fmt(gap)} more XU</b></span><span>${pct}%</span></div>
+         <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px">💡 Check in daily or refer members to earn XU</div>`
       : '';
     let btnClass, btnLabel, btnDisabled, btnOnclick;
     if(d.demo){

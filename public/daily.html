@@ -95,7 +95,7 @@
 </style>
 </head>
 <body>
-<a class="powered-badge" id="powered-badge" href="https://whop.com/apps/app_YI4gVdrJb3il0W/" target="_blank" rel="noopener" style="text-decoration:none;cursor:pointer">⚡ Powered by GTVăn</a>
+<div class="powered-badge" id="powered-badge" onclick="window.open('https://whop.com/apps/app_YI4gVdrJb3il0W/','_blank')" style="cursor:pointer">⚡ Powered by GTVăn</div>
 <div class="wrap">
   <div class="nav">
     <a href="/">🏆 Leaderboard</a>
@@ -114,7 +114,7 @@
 <script>
 const $=id=>document.getElementById(id);
 const fmt=n=>Number(n||0).toLocaleString('en-US');
-function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2400);}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),3500);}
 
 /* Mọi request gửi kèm experienceId/companyId Whop truyền vào URL khi nhúng
    app trong iframe — backend dùng để biết đang phục vụ business nào. */
@@ -201,9 +201,9 @@ function render(d){
         </button>
       </div>
       <div class="calendar">${calendarHTML(ck)}</div>
-      <p style="font-size:12px;color:var(--card-muted);margin-top:12px;text-align:center">
-        Breaking the streak resets you to day 1. Milestone days have bigger rewards 🎉
-      </p>
+      <div style="background:rgba(245,158,11,.08);border-left:3px solid #f59e0b;border-radius:6px;padding:8px 12px;font-size:12px;color:#fcd34d;margin-top:12px">
+        ⚠️ Missing a day resets your streak to Day 1. Milestone days have bigger rewards 🎉
+      </div>
     </div>
 
     <div class="sect">🏆 Season ${se.label||''}</div>

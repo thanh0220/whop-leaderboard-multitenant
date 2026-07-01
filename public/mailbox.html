@@ -112,7 +112,7 @@
 </style>
 </head>
 <body>
-<a class="powered-badge" id="powered-badge" href="https://whop.com/apps/app_YI4gVdrJb3il0W/" target="_blank" rel="noopener" style="text-decoration:none;cursor:pointer">⚡ Powered by GTVăn</a>
+<div class="powered-badge" id="powered-badge" onclick="window.open('https://whop.com/apps/app_YI4gVdrJb3il0W/','_blank')" style="cursor:pointer">⚡ Powered by GTVăn</div>
 <div class="wrap">
   <div class="nav">
     <a href="/">🏆 Leaderboard</a>
@@ -133,7 +133,7 @@
 <script>
 const $=id=>document.getElementById(id);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2400);}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),3500);}
 
 function tenantQS(){
   const u = new URL(location.href);
@@ -213,7 +213,7 @@ function render(entries){
       <div class="info">
         <div class="label">${esc(e.label)}</div>
         <div class="desc"><b>${esc(e.buyerName)}</b> made a purchase on Whop</div>
-        ${e.claimed ? '<div class="claimed-tag">✅ Claimed +'+e.xu+' XU</div>' : `<div class="exp" data-exp="${esc(e.expiresAt)}">${fmtCountdown(e.expiresAt)}</div>`}
+        ${e.claimed ? '<div class="claimed-tag">✅ Claimed +'+e.xu+' XU</div>' : `<div style="font-size:12px;color:#fcd34d;font-weight:600;margin-bottom:2px">+${e.xu} XU</div><div class="exp" data-exp="${esc(e.expiresAt)}">${fmtCountdown(e.expiresAt)}</div>`}
       </div>
       ${e.claimed ? '' : `<button class="btn" onclick="claim('${esc(e.id)}',this)">Claim</button>`}
       <div class="pop" id="pop-${esc(e.id)}"></div>
