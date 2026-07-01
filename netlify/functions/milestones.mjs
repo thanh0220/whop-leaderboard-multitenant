@@ -18,7 +18,7 @@ function summarize(payload) {
   return "";
 }
 
-function gdriveImg(url){if(!url)return url;const m=url.match(/\/file\/d\/([^/?#]+)/);return m?'https://drive.google.com/uc?export=view&id='+m[1]:url;}
+function gdriveImg(url){if(!url)return url;const m=url.match(/\/file\/d\/([^/?#]+)/);return m?'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w800':url;}
 
 class AlreadyClaimedError extends Error {}
 
