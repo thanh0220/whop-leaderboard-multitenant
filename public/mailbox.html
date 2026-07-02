@@ -104,6 +104,21 @@
     background:var(--chip-bg);border:1px solid var(--card-border);border-radius:8px;padding:4px 9px;
     display:none;pointer-events:none}
 
+  .promo-card{display:flex;align-items:flex-start;gap:14px;background:linear-gradient(160deg,#0e1a28,#0a0f18);
+    border:1px solid rgba(39,227,255,.3);border-radius:14px;padding:14px;margin-bottom:10px}
+  .promo-card .promo-icon{font-size:28px;flex-shrink:0;line-height:1.2}
+  .promo-card .promo-info{flex:1;min-width:0}
+  .promo-card .promo-lbl{font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--cyan);margin-bottom:4px}
+  .promo-card .promo-sub{font-size:12px;color:var(--card-muted);margin-bottom:8px}
+  .promo-code-box{background:rgba(0,0,0,.4);border:1.5px dashed rgba(39,227,255,.4);border-radius:8px;
+    padding:8px 12px;font-family:'Oswald',sans-serif;font-size:17px;font-weight:700;letter-spacing:.1em;
+    color:var(--cyan);word-break:break-all;margin-bottom:8px}
+  .promo-copy-btn{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    background:rgba(39,227,255,.1);border:1px solid rgba(39,227,255,.35);color:var(--cyan);
+    padding:6px 12px;border-radius:7px;cursor:pointer;transition:.15s}
+  .promo-copy-btn:hover{background:rgba(39,227,255,.22)}
+  .promo-warn{font-size:11px;color:#f59e0b;margin-top:6px}
+
   @media (prefers-color-scheme: light){
     body{background:radial-gradient(120% 70% at 50% -10%,rgba(224,18,58,.10),#f4f1fb 45%,#eef1f7 100%);background-attachment:fixed}
     .chest{box-shadow:0 4px 14px rgba(22,28,44,.07)}
@@ -241,7 +256,25 @@ function render(entries){
     return;
   }
   const sparkAngles = [[-26,-10,-22],[24,-8,18],[-10,-34,-14],[12,-30,26],[-34,-22,-30],[30,-20,32]];
-  $('content').innerHTML = entries.map(e => `
+  $('content').innerHTML = entries.map(e => {
+    // Promo code entries get a special card (not a chest)
+    if (e.type === 'promo') {
+      const warnMsg = !e.promoCreated
+        ? '<div class="promo-warn">⚠ Code pending — the app needs additional Whop permissions to generate live codes. Contact your admin.</div>'
+        : '';
+      return `<div class="promo-card" id="chest-${esc(e.id)}">
+        <div class="promo-icon">🏷️</div>
+        <div class="promo-info">
+          <div class="promo-lbl">${esc(e.label)}</div>
+          <div class="promo-sub">${e.discountPct ? e.discountPct+'% discount on Whop — valid for 30 days' : 'Your streak reward'}</div>
+          <div class="promo-code-box" id="pc-${esc(e.id)}">${esc(e.promoCode||'')}</div>
+          <button class="promo-copy-btn" onclick="copyPromoCode('${esc(e.id)}','${esc(e.promoCode||'')}',this)">📋 Copy code</button>
+          ${warnMsg}
+        </div>
+      </div>`;
+    }
+    // Normal chest entry
+    return `
     <div class="chest ${e.tier}" id="chest-${esc(e.id)}">
       <div class="chest3d">
         ${e.claimed
@@ -256,7 +289,8 @@ function render(entries){
       </div>
       ${e.claimed ? '' : `<button class="btn" onclick="claim('${esc(e.id)}',this)">Claim</button>`}
       <div class="pop" id="pop-${esc(e.id)}"></div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   entries.forEach(e => {
     if (e.claimed) return;
@@ -272,6 +306,19 @@ function render(entries){
   setInterval(()=>{
     document.querySelectorAll('.exp[data-exp]').forEach(el=>{ el.textContent = fmtCountdown(el.dataset.exp); });
   }, 1000);
+}
+
+function copyPromoCode(id, code, btn){
+  if(!code) return;
+  navigator.clipboard.writeText(code).then(()=>{
+    const old=btn.textContent; btn.textContent='✅ Copied!';
+    setTimeout(()=>{ btn.textContent=old; },1800);
+  }).catch(()=>{
+    const el=document.getElementById('pc-'+id);
+    if(el){ const r=document.createRange(); r.selectNode(el); window.getSelection().removeAllRanges(); window.getSelection().addRange(r); document.execCommand('copy'); window.getSelection().removeAllRanges(); }
+    const old=btn.textContent; btn.textContent='✅ Copied!';
+    setTimeout(()=>{ btn.textContent=old; },1800);
+  });
 }
 
 async function claim(id, btn){

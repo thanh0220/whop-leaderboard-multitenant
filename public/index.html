@@ -322,6 +322,17 @@
     <div class="prizes" id="prizes"></div>
   </div>
 
+  <div id="referral-section" style="display:none;margin-bottom:14px">
+    <div style="background:linear-gradient(135deg,rgba(39,227,255,.08),rgba(178,102,255,.06));border:1px solid rgba(39,227,255,.25);border-radius:14px;padding:14px 16px">
+      <div style="font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);margin-bottom:8px">📣 Your Referral Link</div>
+      <div style="font-size:12px;color:var(--card-muted);margin-bottom:10px">Share this link — when someone joins through it, you get referral credit.</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="referral-link-input" type="text" readonly style="flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(39,227,255,.3);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;font-family:monospace" value="Loading..."/>
+        <button onclick="copyReferralLink()" style="flex-shrink:0;padding:8px 14px;border-radius:8px;border:1px solid var(--line2);background:rgba(39,227,255,.12);color:var(--cyan);font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer" id="referral-copy-btn">Copy</button>
+      </div>
+    </div>
+  </div>
+
   <div class="controls">
     <div class="tabs">
       <button class="tab active" data-sort="season" onclick="setSort('season',this)">🏆 Season</button>
@@ -610,6 +621,12 @@ async function loadData(){
       tenantFetch('/.netlify/functions/me').then(r=>r.json()).catch(()=>({}))
     ]);
     if(meJson.userId){ meData=meJson; meUserId=meJson.userId; meUsername=meJson.username||null; }
+    if(meJson.referralLink){
+      const sec=document.getElementById('referral-section');
+      const inp=document.getElementById('referral-link-input');
+      if(sec) sec.style.display='block';
+      if(inp) inp.value=meJson.referralLink;
+    }
     if(!res.ok){ const j=await res.json().catch(()=>({})); throw new Error(j.error||('HTTP '+res.status)); }
     const json=await res.json();
     if(json.error) throw new Error(json.error);
@@ -676,6 +693,20 @@ async function submitCode(){
 document.addEventListener('keydown',(e)=>{
   if(e.key==='Escape') closeCodeModal();
 });
+
+function copyReferralLink(){
+  const inp=document.getElementById('referral-link-input');
+  const btn=document.getElementById('referral-copy-btn');
+  if(!inp||!inp.value||inp.value==='Loading...') return;
+  navigator.clipboard.writeText(inp.value).then(()=>{
+    const old=btn.textContent; btn.textContent='Copied!';
+    setTimeout(()=>{ btn.textContent=old; },1800);
+  }).catch(()=>{
+    inp.select(); document.execCommand('copy');
+    const old=btn.textContent; btn.textContent='Copied!';
+    setTimeout(()=>{ btn.textContent=old; },1800);
+  });
+}
 
 </script>
 

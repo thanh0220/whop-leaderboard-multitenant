@@ -187,6 +187,19 @@ function calendarHTML(ck){
 
 function render(d){
   const ck=d.checkin, se=d.seasonVip||d.season||{};
+  const shieldActive=ck.shieldActive;
+  const shieldExpiresAt=ck.shieldExpiresAt;
+  const canAffordShield=d.available>=20;
+  const shieldExpLabel=shieldExpiresAt?shieldExpiresAt.slice(5).replace('-','/'):'';
+  const shieldHtml=shieldActive
+    ?`<div style="display:flex;align-items:center;gap:8px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px;color:#4ade80">
+        <span>🛡️</span><div><b>Streak Shield active</b> — streak protected until ${shieldExpLabel}</div>
+      </div>`
+    :(ck.streak>0
+      ?`<button class="btn gold" id="shield-btn" style="width:100%;margin-top:10px" ${!canAffordShield?'disabled':''}>
+          🛡️ Activate 30-Day Streak Shield — 20 XU
+        </button>${!canAffordShield?`<div style="font-size:11px;color:var(--card-muted);text-align:center;margin-top:4px">Need 20 XU to activate</div>`:''}`
+      :'');
   const html=`
     <div class="bal">
       <div class="b main"><div class="v">${fmt(d.available)}</div><div class="l">🪙 Available XU</div></div>
@@ -206,6 +219,7 @@ function render(d){
       <div style="background:rgba(245,158,11,.08);border-left:3px solid #f59e0b;border-radius:6px;padding:8px 12px;font-size:12px;color:#fcd34d;margin-top:12px">
         ⚠️ Missing a day resets your streak to Day 1. Milestone days have bigger rewards 🎉
       </div>
+      ${shieldHtml}
     </div>
 
     <div class="sect">🏆 Season Prizes ${se.label||''}</div>
@@ -247,6 +261,26 @@ function render(d){
       $('claim-ck').disabled=false;
     }
   };
+
+  const shieldBtn=$('shield-btn');
+  if(shieldBtn){
+    shieldBtn.onclick=async ()=>{
+      shieldBtn.disabled=true;
+      shieldBtn.textContent='Activating...';
+      try{
+        const r=await tenantFetch('/.netlify/functions/streak-shield',{method:'POST'});
+        let j=null;
+        try{ j=await r.json(); }catch(_){ j=null; }
+        if(!r.ok) throw new Error((j&&j.error)||'Could not activate shield.');
+        toast('🛡️ Streak Shield activated! Your streak is protected.');
+        setTimeout(load,400);
+      }catch(e){
+        toast('⚠ '+e.message);
+        shieldBtn.disabled=false;
+        shieldBtn.textContent='🛡️ Activate 30-Day Streak Shield — 20 XU';
+      }
+    };
+  }
 
   // countdown
   if(se.endsAt){
