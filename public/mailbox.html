@@ -129,6 +129,43 @@
 <div class="toast" id="toast"></div>
 
 <script type="module" src="/chest3d.module.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+(function(){
+  if(typeof THREE==='undefined') return;
+  const TC={gold:{body:0xf4c441,dark:0xa87b08,shine:0xfff4cc},silver:{body:0xd6dae2,dark:0x8b93a3,shine:0xffffff},bronze:{body:0xe1955a,dark:0x8b5a2b,shine:0xf5c9a0}};
+  function buildTrophy(canvas,tier){
+    const c=TC[tier]||TC.gold;
+    const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(40,1,0.1,10);
+    camera.position.set(0.6,0.4,2.1);camera.lookAt(0,0,0);
+    scene.add(new THREE.AmbientLight(0xffffff,0.65));
+    const key=new THREE.DirectionalLight(0xffffff,1.1);key.position.set(-1.5,3,2);scene.add(key);
+    const fill=new THREE.DirectionalLight(0xffeebb,0.45);fill.position.set(2.5,0.5,1);scene.add(fill);
+    const mB=new THREE.MeshStandardMaterial({color:c.body,metalness:0.78,roughness:0.22});
+    const mD=new THREE.MeshStandardMaterial({color:c.dark,metalness:0.60,roughness:0.30});
+    const mS=new THREE.MeshStandardMaterial({color:c.shine,metalness:0.95,roughness:0.06});
+    const g=new THREE.Group();
+    const base=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.46,0.12,8),mB);base.position.y=-0.64;g.add(base);
+    const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.18,0.44,8),mD);stem.position.y=-0.30;g.add(stem);
+    const cup=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.19,0.58,12),mB);cup.position.y=0.24;g.add(cup);
+    const rim=new THREE.Mesh(new THREE.TorusGeometry(0.42,0.055,8,16),mS);rim.rotation.x=Math.PI/2;rim.position.y=0.53;g.add(rim);
+    const lh=new THREE.Mesh(new THREE.TorusGeometry(0.175,0.042,6,10,Math.PI),mD);lh.rotation.z=Math.PI/2;lh.position.set(-0.50,0.24,0);g.add(lh);
+    const rh=new THREE.Mesh(new THREE.TorusGeometry(0.175,0.042,6,10,Math.PI),mD);rh.rotation.z=-Math.PI/2;rh.position.set(0.50,0.24,0);g.add(rh);
+    for(let i=0;i<4;i++){const a=(i/4)*Math.PI*2;const s=new THREE.Mesh(new THREE.SphereGeometry(0.05,5,5),mS);s.position.set(Math.cos(a)*0.42,0.57,Math.sin(a)*0.42);g.add(s);}
+    g.rotation.y=-0.35;scene.add(g);
+    const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+    renderer.setSize(canvas.width,canvas.height,false);
+    renderer.render(scene,camera);
+    let rafId=null,opening=false,t0=performance.now();
+    function idleTick(now){if(opening)return;const t=(now-t0)/1000;g.rotation.y=-0.35+Math.sin(t*0.72)*0.28;g.position.y=Math.sin(t*1.1)*0.036;renderer.render(scene,camera);rafId=requestAnimationFrame(idleTick);}
+    rafId=requestAnimationFrame(idleTick);
+    function open(){if(opening)return;opening=true;cancelAnimationFrame(rafId);const start=performance.now(),fromY=g.rotation.y;function tick(now){const p=Math.min(1,(now-start)/700),e=1-Math.pow(1-p,3);g.rotation.y=fromY+e*Math.PI*2;g.scale.setScalar(1+Math.sin(p*Math.PI)*0.2);g.position.y=Math.sin(p*Math.PI)*0.1;renderer.render(scene,camera);if(p<1){rafId=requestAnimationFrame(tick);}else{g.scale.setScalar(1);g.position.y=0;opening=false;t0=performance.now();rafId=requestAnimationFrame(idleTick);}}rafId=requestAnimationFrame(tick);}
+    function dispose(){cancelAnimationFrame(rafId);renderer.dispose();if(renderer.forceContextLoss)renderer.forceContextLoss();}
+    return{open,dispose};
+  }
+  window.TrophyVoxel={create:buildTrophy};
+})();
+</script>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -214,7 +251,7 @@ function render(entries){
       </div>
       <div class="info">
         <div class="label">${esc(e.label)}</div>
-        <div class="desc"><b>${esc(e.buyerName)}</b> made a purchase on Whop</div>
+        ${e.buyerName ? `<div class="desc"><b>${esc(e.buyerName)}</b> made a purchase on Whop</div>` : (e.desc ? `<div class="desc">${esc(e.desc)}</div>` : '')}
         ${e.claimed ? '<div class="claimed-tag">✅ Claimed +'+e.xu+' XU</div>' : `<div style="font-size:12px;color:#fcd34d;font-weight:600;margin-bottom:2px">+${e.xu} XU</div><div class="exp" data-exp="${esc(e.expiresAt)}">${fmtCountdown(e.expiresAt)}</div>`}
       </div>
       ${e.claimed ? '' : `<button class="btn" onclick="claim('${esc(e.id)}',this)">Claim</button>`}
@@ -224,7 +261,10 @@ function render(entries){
   entries.forEach(e => {
     if (e.claimed) return;
     const canvas = $('cv-' + e.id);
-    if (canvas && window.ChestVoxel) {
+    if (!canvas) return;
+    if (e.icon === '🏆' && window.TrophyVoxel) {
+      chestRegistry[e.id] = window.TrophyVoxel.create(canvas, e.tier || 'gold');
+    } else if (window.ChestVoxel) {
       chestRegistry[e.id] = window.ChestVoxel.create(canvas, e.tier);
     }
   });

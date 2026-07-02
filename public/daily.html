@@ -186,7 +186,7 @@ function calendarHTML(ck){
 }
 
 function render(d){
-  const ck=d.checkin, se=d.season||{};
+  const ck=d.checkin, se=d.seasonVip||d.season||{};
   const html=`
     <div class="bal">
       <div class="b main"><div class="v">${fmt(d.available)}</div><div class="l">🪙 Available XU</div></div>
@@ -208,16 +208,24 @@ function render(d){
       </div>
     </div>
 
-    <div class="sect">🏆 Season ${se.label||''}</div>
+    <div class="sect">🏆 Season Prizes ${se.label||''}</div>
     <div class="panel">
       <div style="text-align:center;margin-bottom:14px">
         <div style="font-family:'Oswald',sans-serif;font-size:11px;color:var(--card-muted);letter-spacing:.15em;text-transform:uppercase">Time left</div>
         <div id="cd" style="font-family:'Oswald',sans-serif;font-size:30px;font-weight:700;color:var(--gold);text-shadow:0 0 16px rgba(244,196,65,.35)">--</div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">👑 VIP Members</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
         ${(se.topRewards||[]).map(t=>`
           <div style="display:flex;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--chip-bg);border-radius:10px;font-size:13px">
             <b style="color:var(--gold)">${t.rank}</b><span style="color:var(--card-muted);text-align:right">${t.prize}</span>
+          </div>`).join('')}
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">🤝 Referrals</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${((d.seasonRef||{}).topRewards||[]).map(t=>`
+          <div style="display:flex;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--chip-bg);border-radius:10px;font-size:13px">
+            <b style="color:var(--cyan)">${t.rank}</b><span style="color:var(--card-muted);text-align:right">${t.prize}</span>
           </div>`).join('')}
       </div>
     </div>`;

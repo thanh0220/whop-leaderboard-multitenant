@@ -397,6 +397,7 @@ const TIERS = [
 
 let allData = [];
 let affiliateData = []; // separate affiliate dataset (Referrals tab)
+let seasonVipData = null, seasonRefData = null;
 let sortBy = 'season';
 let scope = 'all'; // all | month (VIP tab only)
 
@@ -443,12 +444,25 @@ function avatarEl(m,cls){
   return `<div class="${cls}" style="background:${bg};color:${fg}">${esc(initials(m.username))}</div>`;
 }
 
+function updateSeasonPanel(){
+  const isPaid = sortBy==='paid';
+  const isRef  = sortBy==='referrals';
+  const sd = isRef ? seasonRefData : seasonVipData;
+  const label = isRef
+    ? (sd?.label ? 'SEASON '+sd.label.toUpperCase()+' — REFERRALS' : 'SEASON — REFERRALS')
+    : (sd?.label ? 'SEASON '+sd.label.toUpperCase()+' — VIP MEMBERS' : 'SEASON — VIP MEMBERS');
+  document.getElementById('season-name').textContent = label;
+  const prizes = sd?.topRewards || [];
+  document.getElementById('prizes').innerHTML = prizes.map((p,i)=>
+    `<div class="prize r${i+1}"><div class="pp">${p.rank}</div><div class="pxu">🪙 ${p.prize}</div></div>`).join('');
+}
 function setSort(s,el){
   sortBy=s;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('hero-title').textContent=HERO_TITLE[s];
   document.getElementById('scope').style.display = (s==='paid')?'flex':'none';
+  updateSeasonPanel();
   render();
 }
 function setScope(s,el){
@@ -566,6 +580,8 @@ async function loadData(){
     if(json.error) throw new Error(json.error);
     allData=json.leaderboard||[];
     affiliateData=json.affiliateBoard||[];
+    seasonVipData=json.seasonVip||null;
+    seasonRefData=json.seasonRef||null;
     const topPaid=[...allData].sort((a,b)=>toUsd(b.paidAmount,b.paidCurrency)-toUsd(a.paidAmount,a.paidCurrency))[0];
     document.getElementById('s-members').textContent=json.stats?.totalMembers ?? allData.length;
     document.getElementById('s-paid').textContent=json.stats?.paidMembers ?? allData.filter(m=>m.paid).length;
@@ -573,10 +589,7 @@ async function loadData(){
     document.getElementById('updated').textContent='Updated: '+new Date(json.updatedAt).toLocaleTimeString('en-US');
     document.getElementById('brand-name').textContent=json.branding?.displayName||'Leaderboard';
     document.getElementById('powered-badge').style.display=(json.isPaid&&json.branding?.logoUrl)?'none':'block';
-    document.getElementById('season-name').textContent=json.season?.label?('SEASON '+json.season.label.toUpperCase()):'SEASON';
-    const prizes=json.season?.topRewards||[];
-    document.getElementById('prizes').innerHTML=prizes.map((p,i)=>
-      `<div class="prize r${i+1}"><div class="pp">${p.rank}</div><div class="pxu">🪙 ${p.prize}</div></div>`).join('');
+    updateSeasonPanel();
     render();
   }catch(err){
     document.getElementById('content').innerHTML=`<div class="err">⚠️ Could not load data: <strong>${err.message}</strong><br><small>Please open this page inside Whop so the app can detect the right community.</small></div>`;
