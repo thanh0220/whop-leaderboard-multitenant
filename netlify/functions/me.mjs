@@ -75,14 +75,13 @@ export const handler = async (event) => {
 
     // Các lệnh đọc Blobs dưới đây độc lập với nhau — chạy song song thay vì
     // tuần tự để giảm thời gian load trang.
-    const [{ earned, paidUsd, referrals, months, bonus, username }, spentRaw, historyRaw, checkinRaw, paid, referralLinkRaw] =
+    const [{ earned, paidUsd, referrals, months, bonus, username }, spentRaw, historyRaw, checkinRaw, paid] =
       await Promise.all([
         computeEarned(userId, apiKey, companyId, cfg),
         store.get(tenantKey("spent", companyId, userId)).catch(() => null),
         store.get(tenantKey("history", companyId, userId), { type: "json" }).catch(() => null),
         store.get(tenantKey("checkin", companyId, userId), { type: "json" }).catch(() => null),
         isPaidTier(companyId, cfg),
-        store.get(tenantKey("referral-link", companyId, userId), { type: "json" }).catch(() => null),
       ]);
 
     const spent = Number(spentRaw) || 0;
@@ -112,8 +111,6 @@ export const handler = async (event) => {
       seasonVip: { ...seasonInfo(), topRewards: cfg.seasonVipTopRewards },
       seasonRef: { ...seasonInfo(), topRewards: cfg.seasonRefTopRewards },
       branding: cfg.branding,
-      referralLinkEnabled: !!cfg.referralLinkEnabled,
-      referralLink: (cfg.referralLinkEnabled && referralLinkRaw && referralLinkRaw.linkUrl) ? referralLinkRaw.linkUrl : null,
     });
   } catch (err) {
     return json(500, { error: err.message });

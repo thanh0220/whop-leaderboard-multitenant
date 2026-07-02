@@ -68,8 +68,6 @@ const ALLOWED_KEYS = [
   "onboardingCompleted",
   "digestEnabled",
   "digestEmail",
-  "referralLinkEnabled",
-  "referralDestUrl",
   "promoRewards",
 ];
 
@@ -125,8 +123,6 @@ export const handler = async (event) => {
         onboardingCompleted: !!cfg.onboardingCompleted,
         digestEnabled: !!cfg.digestEnabled,
         digestEmail: cfg.digestEmail || "",
-        referralLinkEnabled: !!cfg.referralLinkEnabled,
-        referralDestUrl: cfg.referralDestUrl || "",
         promoRewards: cfg.promoRewards || { enabled: false, milestones: [] },
       });
     }
