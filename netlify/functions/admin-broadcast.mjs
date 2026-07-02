@@ -116,6 +116,7 @@ export const handler = async (event) => {
 
     const store = (sendChannel === "mailbox" || sendChannel === "both") ? pointsStore() : null;
     let sent = 0, failed = 0;
+    const errors = [];
     const CHUNK = 5;
     for (let i = 0; i < targets.length; i += CHUNK) {
       await Promise.all(targets.slice(i, i + CHUNK).map(async ({ userId: uid }) => {
@@ -142,11 +143,14 @@ export const handler = async (event) => {
             await store.setJSON(key, list.slice(0, 50));
           }
           sent++;
-        } catch (_) { failed++; }
+        } catch (e) {
+          failed++;
+          if (errors.length < 3) errors.push(`${uid}: ${e.message}`);
+        }
       }));
     }
 
-    return json(200, { sent, failed, total: targets.length });
+    return json(200, { sent, failed, total: targets.length, errors });
   } catch (err) {
     return json(500, { error: err.message });
   }
