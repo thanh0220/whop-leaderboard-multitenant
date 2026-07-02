@@ -100,6 +100,30 @@ export const handler = async (event) => {
       }
     } catch (_) {}
 
+    // Batch-fetch display names for at-risk + VIP users
+    const allUserIds = [...new Set([...atRisk.map((u) => u.userId), ...vip.map((u) => u.userId)])];
+    const userNames = {};
+    if (allUserIds.length > 0) {
+      try {
+        const r = await fetch(
+          `https://api.whop.com/api/v1/memberships?company_id=${encodeURIComponent(realCompanyId)}&per_page=100&expand[]=user`,
+          { headers: { Authorization: `Bearer ${apiKey}` } }
+        );
+        if (r.ok) {
+          const j = await r.json();
+          for (const m of (j.data || [])) {
+            const u = m.user && typeof m.user === "object" ? m.user : null;
+            const uid = u ? u.id : (typeof m.user === "string" ? m.user : m.user_id || "");
+            if (uid && allUserIds.includes(uid)) {
+              userNames[uid] = u ? (u.username || u.name || u.email || uid) : uid;
+            }
+          }
+        }
+      } catch (_) {}
+    }
+    for (const u of atRisk) u.username = userNames[u.userId] || null;
+    for (const u of vip) u.username = userNames[u.userId] || null;
+
     const result = {
       atRisk: atRisk.slice(0, 20),
       vip: vip.slice(0, 20),
