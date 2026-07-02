@@ -211,6 +211,8 @@ function tenantQS(){
   let co  = u.searchParams.get('companyId') || '';
   if (!exp) { const m = location.pathname.match(/\/experiences\/([^/]+)/); if (m) exp = m[1]; }
   if (!co)  { const m = location.pathname.match(/\/dashboard\/([^/]+)/);  if (m) co  = m[1]; }
+  if (exp) sessionStorage.setItem('whop_exp', exp); else exp = sessionStorage.getItem('whop_exp') || '';
+  if (co)  sessionStorage.setItem('whop_co',  co);  else co  = sessionStorage.getItem('whop_co')  || '';
   const p = new URLSearchParams();
   if (exp) p.set('experienceId', exp);
   if (co)  p.set('companyId', co);

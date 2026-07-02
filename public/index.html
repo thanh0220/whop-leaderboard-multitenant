@@ -274,7 +274,7 @@
 </style>
 </head>
 <body>
-  <a class="powered-badge" id="powered-badge" href="https://whop.com/apps/app_YI4gVdrJb3il0W/" target="_blank" rel="noopener" style="text-decoration:none;cursor:pointer">⚡ Powered by GTVăn</a>
+  <div class="powered-badge" id="powered-badge" onclick="window.open('https://whop.com/apps/app_YI4gVdrJb3il0W/','_blank')" style="cursor:pointer">⚡ Powered by GTVăn</div>
 
 <div class="topbar">
   <div class="brand"><span class="suit">♠</span> <span id="brand-name">Leaderboard</span></div>
@@ -349,6 +349,8 @@ function tenantQS(){
   // (Whop nhúng app theo dạng /experiences/exp_xxx hoặc /dashboard/biz_xxx).
   if (!exp) { const m = location.pathname.match(/\/experiences\/([^/]+)/); if (m) exp = m[1]; }
   if (!co)  { const m = location.pathname.match(/\/dashboard\/([^/]+)/);  if (m) co  = m[1]; }
+  if (exp) sessionStorage.setItem('whop_exp', exp); else exp = sessionStorage.getItem('whop_exp') || '';
+  if (co)  sessionStorage.setItem('whop_co',  co);  else co  = sessionStorage.getItem('whop_co')  || '';
   const p = new URLSearchParams();
   if (exp) p.set('experienceId', exp);
   if (co)  p.set('companyId', co);

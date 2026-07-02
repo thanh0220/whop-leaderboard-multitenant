@@ -161,6 +161,8 @@ function tenantQS(){
   let co=u.searchParams.get('companyId')||'';
   if(!exp){const m=location.pathname.match(/\/experiences\/([^/]+)/);if(m)exp=m[1];}
   if(!co){const m=location.pathname.match(/\/dashboard\/([^/]+)/);if(m)co=m[1];}
+  if(exp)sessionStorage.setItem('whop_exp',exp);else exp=sessionStorage.getItem('whop_exp')||'';
+  if(co)sessionStorage.setItem('whop_co',co);else co=sessionStorage.getItem('whop_co')||'';
   const p=new URLSearchParams();
   if(exp)p.set('experienceId',exp);
   if(co)p.set('companyId',co);
@@ -245,6 +247,12 @@ function expandByRepeatCount(list){
   return result;
 }
 
+function validLink(link){
+  if(!link)return null;
+  try{const u=new URL(link);return(u.protocol==='https:'||u.protocol==='http:')?link:null;}
+  catch(_){return null;}
+}
+
 /* ── Calendar helpers ── */
 function makeGCalUrl(item){
   try{
@@ -297,7 +305,7 @@ function renderFeatured(item){
     <div class="feat-date">📅 ${fmtRange(item)}</div>
     <div class="feat-row">
       <div class="days-badge ${isTodayClass}">🗓 ${esc(daysTxt)}</div>
-      ${item.link?`<a href="${esc(item.link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;background:rgba(244,196,65,.15);border:1px solid rgba(244,196,65,.35);color:var(--gold);font-size:13px;font-weight:700;text-decoration:none">🔗 Join Event</a>`:''}
+      ${validLink(item.link)?`<a href="${esc(validLink(item.link)||'')}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;background:rgba(244,196,65,.15);border:1px solid rgba(244,196,65,.35);color:var(--gold);font-size:13px;font-weight:700;text-decoration:none">🔗 Join Event</a>`:''}
       <button class="rsvp-btn" id="rsvp-btn" onclick="toggleRsvp()">✓ I'll attend</button>
     </div>
     <div class="feat-att" id="feat-att"></div>
@@ -331,7 +339,7 @@ function openEventModal(idx,listName){
   const isUpcoming=(item.endDate||item.date)>=today;
   const imgHtml=item.image?`<img class="ev-modal-img" src="${esc(item.image)}"/>`:'';
   const descHtml=item.desc?`<div class="ev-modal-desc">${esc(item.desc)}</div>`:'';
-  const joinBtn=item.link?`<a href="${esc(item.link)}" target="_blank" rel="noopener"
+  const joinBtn=validLink(item.link)?`<a href="${esc(validLink(item.link)||'')}" target="_blank" rel="noopener"
       style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:10px;
         background:rgba(244,196,65,.15);border:1px solid rgba(244,196,65,.35);color:var(--gold);
         font-size:13px;font-weight:700;text-decoration:none;margin-top:14px">
@@ -340,12 +348,12 @@ function openEventModal(idx,listName){
   const calHtml=isUpcoming?`
     <div style="margin-top:16px;border-top:1px solid var(--card-border);padding-top:14px">
       ${joinBtn}
-      <div style="font-size:11px;color:var(--card-muted);margin-bottom:8px;text-align:center;${item.link?'margin-top:12px':''}">📆 Add to your calendar so you don't forget</div>
+      <div style="font-size:11px;color:var(--card-muted);margin-bottom:8px;text-align:center;${validLink(item.link)?'margin-top:12px':''}">📆 Add to your calendar so you don't forget</div>
       <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
         <a class="cal-btn-g" href="${esc(makeGCalUrl(item))}" target="_blank" rel="noopener">📅 Google Calendar</a>
         <button class="cal-btn-i" onclick="addToIcs(MODAL_EVENT)">📆 Apple / Outlook</button>
       </div>
-    </div>`:(item.link?`<div style="margin-top:14px;text-align:center"><a href="${esc(item.link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:10px;background:rgba(244,196,65,.12);border:1px solid rgba(244,196,65,.3);color:var(--gold);font-size:13px;font-weight:700;text-decoration:none">🔗 View recording</a></div>`:'');
+    </div>`:(validLink(item.link)?`<div style="margin-top:14px;text-align:center"><a href="${esc(validLink(item.link)||'')}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:10px;background:rgba(244,196,65,.12);border:1px solid rgba(244,196,65,.3);color:var(--gold);font-size:13px;font-weight:700;text-decoration:none">🔗 View recording</a></div>`:'');
 
   const wrap=document.createElement('div');
   wrap.className='event-modal-overlay';wrap.id='event-modal-overlay';
