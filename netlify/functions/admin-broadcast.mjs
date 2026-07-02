@@ -10,15 +10,23 @@ const json = (code, obj) => ({
 });
 
 const isWarm = (m) => {
+  // Whop v1 membership fields — check multiple possible indicators
   if (m.paid_at) return true;
+  if (m.renewable === true) return true;
+  if (m.status === "active" && m.cancel_at_period_end === false) return true;
   if (m.plan_price && Number(m.plan_price) > 0) return true;
   if (m.paid_amount && Number(m.paid_amount) > 0) return true;
-  if (m.plan && m.plan.price && Number(m.plan.price) > 0) return true;
+  if (m.plan && typeof m.plan === "object") {
+    if (Number(m.plan.price) > 0) return true;
+    if (m.plan.billing_period && m.plan.billing_period !== "free") return true;
+    if (m.plan.base_currency_price && Number(m.plan.base_currency_price) > 0) return true;
+  }
   return false;
 };
 
 async function fetchAllMembers(realCompanyId, apiKey) {
-  const warm = [], cold = [];
+  // Map keyed by userId — deduplicate (Whop returns multiple memberships per user)
+  const warmMap = new Map(), coldMap = new Map();
   for (let page = 1; page <= 10; page++) {
     let r;
     try {
@@ -36,12 +44,17 @@ async function fetchAllMembers(realCompanyId, apiKey) {
       const uid = u ? u.id : (typeof m.user === "string" ? m.user : m.user_id || "");
       if (!uid) continue;
       const username = u ? (u.username || u.name || uid) : uid;
-      if (isWarm(m)) warm.push({ userId: uid, username });
-      else cold.push({ userId: uid, username });
+      // If already warm, keep warm regardless of other memberships
+      if (isWarm(m)) {
+        warmMap.set(uid, { userId: uid, username });
+        coldMap.delete(uid);
+      } else if (!warmMap.has(uid)) {
+        coldMap.set(uid, { userId: uid, username });
+      }
     }
     if (!j.next_page && !j.pagination?.next) break;
   }
-  return { warm, cold };
+  return { warm: [...warmMap.values()], cold: [...coldMap.values()] };
 }
 
 export const handler = async (event) => {
