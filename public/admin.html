@@ -1396,7 +1396,7 @@
         <a href="#store" onclick="switchTab('store');return false;">🎁 Store</a>
         <a href="#codes" onclick="switchTab('codes');return false;">🔑 Codes</a>
         <a href="#events" onclick="switchTab('events');return false;">🗓 Events</a>
-        <a href="#chests" onclick="switchTab('chests');return false;">📦 Community Chest</a>
+        <a href="#chests" onclick="switchTab('chests');return false;">📬 Mailbox</a>
         <a href="#milestones" onclick="switchTab('milestones');return false;">🎯 Milestones</a>
         <a href="#season" onclick="switchTab('season');return false;">🏆 Season</a>
         <a href="#automations" onclick="switchTab('automations');return false;">⚡ Automations</a>
@@ -1479,7 +1479,7 @@ function renderChests(){
   }).join('');
 
   const br = rules.buyerReward || {};
-  return `<div class="sect" id="chests">📦 Community Chest</div>
+  return `<div class="sect" id="chests">📬 Mailbox</div>
   <div class="panel">
     ${introBlock("When any member buys something on Whop, everyone else gets a free chest of XU in their Mailbox. The buyer also gets a bonus chest just for themselves.",["Set the XU range for each chest tier below","Save all"])}
     ${toggleRow(STATE.mailboxEnabled,'STATE.mailboxEnabled=this.checked;renderAll()','Enabled — Mailbox is visible in member nav.','Disabled — Mailbox is hidden from members.')}
