@@ -1565,57 +1565,48 @@ function renderAutomations(){
 }
 
 // ===== #insights — Member Insights (admin-only, read-only) =====
-let insightsData = null;
-let insightsLoading = false;
 function renderInsights(){
-  const dataHtml = insightsLoading
-    ? '<div class="state">Loading member data...</div>'
-    : insightsData
-      ? renderInsightsData(insightsData)
-      : '<button class="btn" onclick="loadInsights()">🔄 Load At-risk / VIP data</button>';
-
   return `<div class="sect" id="insights">👥 Members</div>
 
   <div class="panel">
     <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">📢 Broadcast Message</div>
-    <div class="hint-small" style="margin-bottom:14px">Gửi tin nhắn đến toàn bộ member — họ sẽ thấy trong Mailbox. Có thể mất 10–30 giây nếu cộng đồng đông.</div>
+    <div class="hint-small" style="margin-bottom:14px">Send a message to all members — they'll see it in their Mailbox. May take 10–30 seconds for large communities.</div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div id="broadcast-warm" onclick="selectBroadcastTarget('warm')" style="padding:14px;border-radius:10px;border:2px solid rgba(244,196,65,.4);background:rgba(244,196,65,.07);cursor:pointer;transition:all .15s">
         <div style="font-size:18px;margin-bottom:4px">🔥</div>
-        <div style="font-family:'Oswald',sans-serif;font-size:13px;color:var(--gold);letter-spacing:.04em">Member Ấm</div>
-        <div style="font-size:11px;color:var(--card-muted);margin-top:3px">Đã trả tiền (paid members)</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;color:var(--gold);letter-spacing:.04em">Warm Members</div>
+        <div id="warm-count" style="font-size:11px;color:var(--card-muted);margin-top:3px">Paid members</div>
       </div>
       <div id="broadcast-cold" onclick="selectBroadcastTarget('cold')" style="padding:14px;border-radius:10px;border:2px solid rgba(39,227,255,.3);background:rgba(39,227,255,.05);cursor:pointer;transition:all .15s">
         <div style="font-size:18px;margin-bottom:4px">❄️</div>
-        <div style="font-family:'Oswald',sans-serif;font-size:13px;color:var(--cyan);letter-spacing:.04em">Member Lạnh</div>
-        <div style="font-size:11px;color:var(--card-muted);margin-top:3px">Chưa trả tiền (free members)</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;color:var(--cyan);letter-spacing:.04em">Cold Members</div>
+        <div id="cold-count" style="font-size:11px;color:var(--card-muted);margin-top:3px">Free members</div>
       </div>
     </div>
-    <div id="broadcast-all-wrap" style="margin-bottom:12px">
-      <div id="broadcast-all" onclick="selectBroadcastTarget('all')" style="padding:12px 14px;border-radius:10px;border:2px solid rgba(178,102,255,.3);background:rgba(178,102,255,.05);cursor:pointer;display:flex;align-items:center;gap:10px">
-        <span style="font-size:16px">📣</span>
-        <div>
-          <div style="font-family:'Oswald',sans-serif;font-size:13px;color:#b680ff;letter-spacing:.04em">Tất cả Member</div>
-          <div style="font-size:11px;color:var(--card-muted)">Gửi cho cả paid lẫn free</div>
-        </div>
+    <div id="broadcast-all" onclick="selectBroadcastTarget('all')" style="padding:12px 14px;border-radius:10px;border:2px solid rgba(178,102,255,.3);background:rgba(178,102,255,.05);cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <span style="font-size:16px">📣</span>
+      <div>
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;color:#b680ff;letter-spacing:.04em">All Members</div>
+        <div id="all-count" style="font-size:11px;color:var(--card-muted)">Paid + free</div>
       </div>
     </div>
 
-    <textarea id="broadcast-msg" rows="4" placeholder="Nhập tin nhắn gửi cho member..." style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;resize:vertical;font-family:inherit"></textarea>
+    <div style="margin-bottom:12px">
+      <button class="btn" id="member-stats-btn" onclick="loadMemberStats()" style="font-size:12px">🔄 Load member stats</button>
+      <div id="member-stats-list" style="margin-top:10px"></div>
+    </div>
+
+    <textarea id="broadcast-msg" rows="4" placeholder="Type your message here..." style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;resize:vertical;font-family:inherit"></textarea>
     <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
-      <button class="btn" id="broadcast-btn" onclick="sendBroadcast()" style="background:linear-gradient(135deg,var(--gold),#d39a11);color:#1a1200;border-color:transparent">📢 Gửi tin nhắn</button>
-      <span id="broadcast-status" style="font-size:12px;color:var(--card-muted)">Chọn nhóm và nhập tin nhắn</span>
+      <button class="btn" id="broadcast-btn" onclick="sendBroadcast()" style="background:linear-gradient(135deg,var(--gold),#d39a11);color:#1a1200;border-color:transparent">📢 Send message</button>
+      <span id="broadcast-status" style="font-size:12px;color:var(--card-muted)">Select a group, then type your message</span>
     </div>
-  </div>
-
-  <div class="panel" style="margin-top:14px">
-    <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">🎯 At-risk / VIP</div>
-    <div id="insights-content">${dataHtml}</div>
   </div>`;
 }
 
 let _broadcastTarget = null;
+let _memberStats = null;
 function selectBroadcastTarget(t){
   _broadcastTarget = t;
   ['warm','cold','all'].forEach(k => {
@@ -1624,9 +1615,41 @@ function selectBroadcastTarget(t){
     el.style.opacity = k === t ? '1' : '0.45';
     el.style.transform = k === t ? 'scale(1.02)' : 'scale(1)';
   });
-  const labels = { warm:'Member Ấm (paid)', cold:'Member Lạnh (free)', all:'Tất cả member' };
+  const labels = { warm:'Warm members (paid)', cold:'Cold members (free)', all:'All members' };
   const status = $('broadcast-status');
-  if (status) status.textContent = 'Đang chọn: ' + (labels[t] || t);
+  if (status) status.textContent = 'Selected: ' + (labels[t] || t);
+  renderMemberStatsList(t);
+}
+
+async function loadMemberStats(){
+  const btn = $('member-stats-btn');
+  const list = $('member-stats-list');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Loading...'; }
+  if (list) list.innerHTML = '';
+  try {
+    const r = await tenantFetch('/.netlify/functions/admin-broadcast');
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    _memberStats = j;
+    const wc = $('warm-count'); if (wc) wc.textContent = `${j.warmCount} paid members`;
+    const cc = $('cold-count'); if (cc) cc.textContent = `${j.coldCount} free members`;
+    const ac = $('all-count');  if (ac) ac.textContent = `${j.warmCount + j.coldCount} members total`;
+    renderMemberStatsList(_broadcastTarget);
+  } catch(e) {
+    if (list) list.innerHTML = `<span style="font-size:12px;color:#ff6b6b">⚠ ${esc(e.message)}</span>`;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Load member stats'; }
+  }
+}
+
+function renderMemberStatsList(target){
+  const list = $('member-stats-list');
+  if (!list || !_memberStats) return;
+  if (!target) { list.innerHTML = ''; return; }
+  const members = target === 'warm' ? _memberStats.warm : target === 'cold' ? _memberStats.cold : [...(_memberStats.warm||[]), ...(_memberStats.cold||[])];
+  if (!members.length) { list.innerHTML = '<span style="font-size:12px;color:var(--card-muted)">No members in this group.</span>'; return; }
+  list.innerHTML = `<div style="font-size:11px;color:var(--card-muted);margin-bottom:6px">${members.length} member${members.length!==1?'s':''} will receive this message:</div>`
+    + members.map(m => `<span style="display:inline-block;font-size:11px;background:var(--chip-bg);border-radius:5px;padding:2px 7px;margin:2px 3px 2px 0;color:var(--card-text)">${esc(m.username)}</span>`).join('');
 }
 
 async function sendBroadcast(){
@@ -1660,79 +1683,6 @@ async function sendBroadcast(){
   }
 }
 
-async function loadInsights(){
-  insightsLoading = true;
-  const el = $('insights-content');
-  if (el) el.innerHTML = '<div class="state">Loading member data... (may take a few seconds)</div>';
-  try {
-    const r = await tenantFetch('/.netlify/functions/member-insights');
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
-    insightsData = j;
-    insightsLoading = false;
-    if (el) el.innerHTML = renderInsightsData(j);
-  } catch (e) {
-    insightsLoading = false;
-    if (el) el.innerHTML = `<div style="color:#ff6b6b;font-size:13px">⚠ ${esc(e.message)}</div>`;
-  }
-}
-
-function renderInsightsData(d){
-  const displayName = (u) => u.username || ('@' + (u.userId||'?').slice(-8));
-  const fmtVip = (u) => `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)">
-    <span style="font-size:13px;color:var(--card-text);flex:1">${esc(displayName(u))}</span>
-    <span style="font-size:12px;color:var(--cyan);font-family:'Oswald',sans-serif;font-weight:700">🔥${u.streak}</span>
-  </div>`;
-  const fmtAtRisk = (u) => `<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">
-    <span style="font-size:13px;color:var(--card-text);flex:1">${esc(displayName(u))}</span>
-    <span style="font-size:11px;color:#f59e0b;font-family:'Oswald',sans-serif">🔥${u.streak}</span>
-    <button onclick="sendWinback('${esc(u.userId)}','${esc(displayName(u))}')" style="background:rgba(244,196,65,.15);border:1px solid rgba(244,196,65,.4);color:var(--gold);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:11px;font-weight:600;flex-shrink:0">💬 Nudge</button>
-  </div>`;
-  const fmtNew = (u) => `<div style="font-size:13px;color:var(--card-text);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)">${esc(u.username || ('@' + (u.userId||'?').slice(-8)))}</div>`;
-
-  const atRiskHtml = (d.atRisk||[]).map(fmtAtRisk).join('') || '<span style="font-size:12px;color:var(--card-muted)">None right now.</span>';
-  const vipHtml = (d.vip||[]).map(fmtVip).join('') || '<span style="font-size:12px;color:var(--card-muted)">None yet.</span>';
-  const newJHtml = (d.newJoiners||[]).map(fmtNew).join('') || '<span style="font-size:12px;color:var(--card-muted)">No recent joiners.</span>';
-  const cached = d.cachedAt ? new Date(d.cachedAt).toLocaleTimeString() : '';
-  return `
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px">
-      <div style="background:rgba(255,150,50,.07);border:1px solid rgba(255,150,50,.3);border-radius:10px;padding:12px">
-        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:#f59e0b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">⚠ At-risk (5+ days)</div>
-        <div style="font-size:11px;color:var(--card-muted);margin-bottom:8px">Click 💬 Nudge để gửi tin nhắn</div>
-        ${atRiskHtml}
-      </div>
-      <div style="background:rgba(39,227,255,.06);border:1px solid rgba(39,227,255,.2);border-radius:10px;padding:12px">
-        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">⭐ VIP (streak ≥ 14)</div>
-        ${vipHtml}
-      </div>
-      <div style="background:rgba(178,102,255,.07);border:1px solid rgba(178,102,255,.25);border-radius:10px;padding:12px">
-        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:#b680ff;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">🆕 Joined this week</div>
-        ${newJHtml}
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;gap:12px">
-      <button class="btn" onclick="insightsData=null;loadInsights()">🔄 Refresh</button>
-      <span style="font-size:11px;color:var(--card-muted)">Scanned ${d.totalScanned||0} members${cached ? ' · cached at '+cached : ''}</span>
-    </div>`;
-}
-
-async function sendWinback(targetUserId, displayName){
-  const DEFAULT_MSG = `Hey! Your streak is about to reset — don't lose your progress! Check in today to keep it going 🔥`;
-  const msg = prompt(`Message to ${displayName}:`, DEFAULT_MSG);
-  if (!msg || !msg.trim()) return;
-  try {
-    const r = await tenantFetch('/.netlify/functions/admin-msg', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ targetUserId, message: msg.trim() }),
-    });
-    const j = await r.json();
-    if (!r.ok) { alert('Error: ' + (j.error || r.status)); return; }
-    alert(`✅ Message sent to ${displayName}! They'll see it in their Mailbox.`);
-  } catch(e) {
-    alert('Network error: ' + e.message);
-  }
-}
 
 setTimeout(load, 300);
     </script>
