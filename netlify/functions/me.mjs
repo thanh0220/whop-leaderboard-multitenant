@@ -108,7 +108,8 @@ export const handler = async (event) => {
       rewards: paid ? cfg.rewards : cfg.rewards.slice(0, 2),
       points: cfg.points,
       checkin: { today, streak: ck.streak, canClaim: checkinCanClaim, nextStreak, nextReward, calendar: cfg.checkinRewards },
-      season: { ...seasonInfo(), topRewards: cfg.seasonTopRewards },
+      seasonVip: { ...seasonInfo(), topRewards: cfg.seasonVipTopRewards },
+      seasonRef: { ...seasonInfo(), topRewards: cfg.seasonRefTopRewards },
       branding: cfg.branding,
     });
   } catch (err) {

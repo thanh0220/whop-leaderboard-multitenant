@@ -53,7 +53,8 @@ const ALLOWED_KEYS = [
   "points",
   "fx",
   "checkinRewards",
-  "seasonTopRewards",
+  "seasonVipTopRewards",
+  "seasonRefTopRewards",
   "rewards",
   "redeemCodes",
   "codesEnabled",
@@ -105,7 +106,8 @@ export const handler = async (event) => {
         points: cfg.points,
         fx: cfg.fx,
         checkinRewards: cfg.checkinRewards,
-        seasonTopRewards: cfg.seasonTopRewards,
+        seasonVipTopRewards: cfg.seasonVipTopRewards,
+        seasonRefTopRewards: cfg.seasonRefTopRewards,
         rewards: cfg.rewards,
         redeemCodes: cfg.redeemCodes,
         codesEnabled: cfg.codesEnabled,
@@ -133,7 +135,7 @@ export const handler = async (event) => {
       if (Object.prototype.hasOwnProperty.call(body, k)) partial[k] = body[k];
     }
     // Light shape validation — avoids saving the wrong type and breaking the member-facing pages.
-    for (const k of ["checkinRewards", "seasonTopRewards", "rewards", "events"]) {
+    for (const k of ["checkinRewards", "seasonVipTopRewards", "seasonRefTopRewards", "rewards", "events"]) {
       if (k in partial && !Array.isArray(partial[k])) {
         return json(400, { error: `${k} must be an array.` });
       }

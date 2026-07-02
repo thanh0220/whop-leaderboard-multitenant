@@ -1,6 +1,7 @@
 import { getAuthContext } from "./_auth.mjs";
 import { getCompanyAccessToken, getRealCompanyId } from "./_tokens.mjs";
 import { getTenantConfig, isPaidTier, getTierLevel } from "./_tenant.mjs";
+import { pointsStore, tenantKey } from "./_store.mjs";
 
 const WHOP_API = "https://api.whop.com/api/v5";
 
@@ -462,18 +463,44 @@ export const handler = async (event) => {
 
     const _n = new Date();
     const _endMs = Date.UTC(_n.getUTCFullYear(), _n.getUTCMonth() + 1, 1);
-    const season = {
-      seasonKey: `${_n.getUTCFullYear()}-${String(_n.getUTCMonth()+1).padStart(2,'0')}`,
+    const seasonKey = `${_n.getUTCFullYear()}-${String(_n.getUTCMonth()+1).padStart(2,'0')}`;
+    const seasonBase = {
+      seasonKey,
       label: `Month ${String(_n.getUTCMonth()+1).padStart(2,'0')}/${_n.getUTCFullYear()}`,
       endsAt: new Date(_endMs).toISOString(),
       secondsLeft: Math.max(0, Math.floor((_endMs - _n.getTime()) / 1000)),
-      topRewards: cfg.seasonTopRewards,
     };
+    const seasonVip = { ...seasonBase, topRewards: cfg.seasonVipTopRewards };
+    const seasonRef = { ...seasonBase, topRewards: cfg.seasonRefTopRewards };
+
+    // Lưu 2 snapshot riêng biệt để season-prize.mjs phân phối tự động
+    try {
+      const ss = pointsStore();
+      // VIP snapshot: top members theo paidUsdMonth (chi tiêu tháng này)
+      const vipTop = [...allMembers]
+        .filter(m => Number(m.paidAmountMonth) > 0)
+        .sort((a, b) => Number(b.paidAmountMonth) - Number(a.paidAmountMonth))
+        .slice(0, 20)
+        .map((m, idx) => ({ rank: idx + 1, userId: m.userId, username: m.username, paidAmountMonth: m.paidAmountMonth }));
+      await ss.setJSON(tenantKey("season-snapshot-vip", companyId, seasonKey), {
+        seasonKey, updatedAt: new Date().toISOString(), top: vipTop,
+      });
+      // Referral snapshot: top members theo số referral — map username → userId từ allMembers
+      const usernameToUserId = {};
+      allMembers.forEach(m => { if (m.username) usernameToUserId[m.username.toLowerCase()] = m.userId; });
+      const refTop = [...affiliateBoard]
+        .slice(0, 20)
+        .map((m, idx) => ({ rank: idx + 1, userId: usernameToUserId[m.username?.toLowerCase()] || null, username: m.username, referrals: m.referrals }))
+        .filter(m => m.userId);
+      await ss.setJSON(tenantKey("season-snapshot-ref", companyId, seasonKey), {
+        seasonKey, updatedAt: new Date().toISOString(), top: refTop,
+      });
+    } catch (err) { console.error("[snapshot] Failed to save season snapshots:", err.message); }
 
     return {
       statusCode: 200,
       headers: corsHeaders,
-      body: JSON.stringify({ leaderboard, affiliateBoard, stats, season, branding: cfg.branding, isPaid: paid, updatedAt: new Date().toISOString() }),
+      body: JSON.stringify({ leaderboard, affiliateBoard, stats, seasonVip, seasonRef, branding: cfg.branding, isPaid: paid, updatedAt: new Date().toISOString() }),
     };
   } catch (err) {
     return {

@@ -1,4 +1,4 @@
-import { pointsStore, tenantKey, casUpdate } from "./_store.mjs";
+import { pointsStore, tenantKey, casUpdate, claimLock, ClaimLockedError } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getTenantConfig, isPaidTier } from "./_tenant.mjs";
 
@@ -48,7 +48,10 @@ export const handler = async (event) => {
   // retry do tranh chấp ETag) không làm function crash với response không
   // phải JSON (client gọi r.json() sẽ lỗi parse nếu để lọt).
   let claimedEntry = null;
+
+  // Bước 1: lock + mark claimed
   try {
+    await claimLock(store, `${companyId}:${userId}:${body.entryId}`);
     await casUpdate(store, key, (current) => {
       const curList = Array.isArray(current) ? current : [];
       const e = curList.find((x) => x.id === body.entryId);
@@ -59,16 +62,32 @@ export const handler = async (event) => {
       claimedEntry = e;
       return curList;
     });
-
-    const bonus = Number(await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
-      return String((Number(current) || 0) + claimedEntry.xu);
-    }, { type: "text" }));
-
-    return json(200, { ok: true, xu: claimedEntry.xu, tier: claimedEntry.tier, bonusTotal: bonus, message: `+${claimedEntry.xu} XU from ${claimedEntry.label}!` });
   } catch (e) {
     if (e instanceof InvalidEntryError) return json(400, { error: "Invalid or expired chest." });
     if (e instanceof AlreadyClaimedEntryError) return json(409, { error: "This chest has already been claimed." });
     if (e instanceof ExpiredEntryError) return json(400, { error: "This chest has expired." });
+    if (e instanceof ClaimLockedError) return json(429, { error: "Please wait a moment and try again." });
     return json(500, { error: e.message || "Could not claim this chest." });
+  }
+
+  // Bước 2: cộng XU — nếu lỗi thì rollback claimed để user retry được
+  try {
+    const bonus = Number(await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
+      return String((Number(current) || 0) + claimedEntry.xu);
+    }, { type: "text" }));
+    return json(200, { ok: true, xu: claimedEntry.xu, tier: claimedEntry.tier, bonusTotal: bonus, message: `+${claimedEntry.xu} XU from ${claimedEntry.label}!` });
+  } catch (bonusErr) {
+    console.error(`[mailbox] bonus write failed for ${userId} entry ${body.entryId}:`, bonusErr.message);
+    try {
+      await casUpdate(store, key, (current) => {
+        const curList = Array.isArray(current) ? current : [];
+        const e = curList.find((x) => x.id === body.entryId);
+        if (e) e.claimed = false;
+        return curList;
+      });
+    } catch (rollbackErr) {
+      console.error(`[mailbox] ROLLBACK FAILED ${userId} entry ${body.entryId}:`, rollbackErr.message);
+    }
+    return json(500, { error: "Could not credit XU. Please try again." });
   }
 };
