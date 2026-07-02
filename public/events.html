@@ -345,7 +345,7 @@ function openEventModal(idx,listName){
         <a class="cal-btn-g" href="${esc(makeGCalUrl(item))}" target="_blank" rel="noopener">📅 Google Calendar</a>
         <button class="cal-btn-i" onclick="addToIcs(MODAL_EVENT)">📆 Apple / Outlook</button>
       </div>
-    </div>`:(item.link?`<div style="margin-top:14px;text-align:center"><a href="${esc(item.link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:10px;background:rgba(244,196,65,.12);border:1px solid rgba(244,196,65,.3);color:var(--gold);font-size:13px;font-weight:700;text-decoration:none">🔗 View recording</a></div>`):'';
+    </div>`:(item.link?`<div style="margin-top:14px;text-align:center"><a href="${esc(item.link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:10px;background:rgba(244,196,65,.12);border:1px solid rgba(244,196,65,.3);color:var(--gold);font-size:13px;font-weight:700;text-decoration:none">🔗 View recording</a></div>`:'');
 
   const wrap=document.createElement('div');
   wrap.className='event-modal-overlay';wrap.id='event-modal-overlay';
