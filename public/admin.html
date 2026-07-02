@@ -1668,30 +1668,60 @@ async function loadInsights(){
 }
 
 function renderInsightsData(d){
-  const fmtUser = (u) => `<span style="font-size:12px;background:var(--chip-bg);border-radius:6px;padding:4px 8px;display:inline-block;margin:2px 4px 2px 0">${esc(u.username || u.userId || '?')} ${u.streak ? `<span style="color:var(--cyan);font-family:'Oswald',sans-serif">🔥${u.streak}</span>` : ''}</span>`;
-  const atRisk = (d.atRisk||[]).map(u => fmtUser({...u,username:u.userId})).join('') || '<span style="font-size:12px;color:var(--card-muted)">None right now.</span>';
-  const vip = (d.vip||[]).map(u => fmtUser({...u,username:u.userId})).join('') || '<span style="font-size:12px;color:var(--card-muted)">None yet.</span>';
-  const newJ = (d.newJoiners||[]).map(u => fmtUser(u)).join('') || '<span style="font-size:12px;color:var(--card-muted)">No recent joiners.</span>';
+  const displayName = (u) => u.username || ('@' + (u.userId||'?').slice(-8));
+  const fmtVip = (u) => `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+    <span style="font-size:13px;color:var(--card-text);flex:1">${esc(displayName(u))}</span>
+    <span style="font-size:12px;color:var(--cyan);font-family:'Oswald',sans-serif;font-weight:700">🔥${u.streak}</span>
+  </div>`;
+  const fmtAtRisk = (u) => `<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+    <span style="font-size:13px;color:var(--card-text);flex:1">${esc(displayName(u))}</span>
+    <span style="font-size:11px;color:#f59e0b;font-family:'Oswald',sans-serif">🔥${u.streak}</span>
+    <button onclick="sendWinback('${esc(u.userId)}','${esc(displayName(u))}')" style="background:rgba(244,196,65,.15);border:1px solid rgba(244,196,65,.4);color:var(--gold);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:11px;font-weight:600;flex-shrink:0">💬 Nudge</button>
+  </div>`;
+  const fmtNew = (u) => `<div style="font-size:13px;color:var(--card-text);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)">${esc(u.username || ('@' + (u.userId||'?').slice(-8)))}</div>`;
+
+  const atRiskHtml = (d.atRisk||[]).map(fmtAtRisk).join('') || '<span style="font-size:12px;color:var(--card-muted)">None right now.</span>';
+  const vipHtml = (d.vip||[]).map(fmtVip).join('') || '<span style="font-size:12px;color:var(--card-muted)">None yet.</span>';
+  const newJHtml = (d.newJoiners||[]).map(fmtNew).join('') || '<span style="font-size:12px;color:var(--card-muted)">No recent joiners.</span>';
   const cached = d.cachedAt ? new Date(d.cachedAt).toLocaleTimeString() : '';
   return `
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px">
       <div style="background:rgba(255,150,50,.07);border:1px solid rgba(255,150,50,.3);border-radius:10px;padding:12px">
-        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:#f59e0b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">⚠ At-risk (5+ days inactive)</div>
-        ${atRisk}
+        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:#f59e0b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">⚠ At-risk (5+ days inactive)</div>
+        <div style="font-size:11px;color:var(--card-muted);margin-bottom:8px">Click 💬 Nudge to send them a message</div>
+        ${atRiskHtml}
       </div>
       <div style="background:rgba(39,227,255,.06);border:1px solid rgba(39,227,255,.2);border-radius:10px;padding:12px">
-        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">⭐ VIP (streak ≥ 14 days)</div>
-        ${vip}
+        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">⭐ VIP (streak ≥ 14 days)</div>
+        ${vipHtml}
       </div>
       <div style="background:rgba(178,102,255,.07);border:1px solid rgba(178,102,255,.25);border-radius:10px;padding:12px">
-        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:#b680ff;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">🆕 Joined this week</div>
-        ${newJ}
+        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:#b680ff;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">🆕 Joined this week</div>
+        ${newJHtml}
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:12px">
       <button class="btn" onclick="insightsData=null;loadInsights()">🔄 Refresh</button>
       <span style="font-size:11px;color:var(--card-muted)">Scanned ${d.totalScanned||0} members${cached ? ' · cached at '+cached : ''}</span>
     </div>`;
+}
+
+async function sendWinback(targetUserId, displayName){
+  const DEFAULT_MSG = `Hey! Your streak is about to reset — don't lose your progress! Check in today to keep it going 🔥`;
+  const msg = prompt(`Message to ${displayName}:`, DEFAULT_MSG);
+  if (!msg || !msg.trim()) return;
+  try {
+    const r = await tenantFetch('/.netlify/functions/admin-msg', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetUserId, message: msg.trim() }),
+    });
+    const j = await r.json();
+    if (!r.ok) { alert('Error: ' + (j.error || r.status)); return; }
+    alert(`✅ Message sent to ${displayName}! They'll see it in their Mailbox.`);
+  } catch(e) {
+    alert('Network error: ' + e.message);
+  }
 }
 
 setTimeout(load, 300);

@@ -257,6 +257,16 @@ function render(entries){
   }
   const sparkAngles = [[-26,-10,-22],[24,-8,18],[-10,-34,-14],[12,-30,26],[-34,-22,-30],[30,-20,32]];
   $('content').innerHTML = entries.map(e => {
+    // Admin message entries (no XU, no claim)
+    if (e.type === 'message') {
+      return `<div class="promo-card" id="chest-${esc(e.id)}" style="background:rgba(39,227,255,.06);border-color:rgba(39,227,255,.25)">
+        <div class="promo-icon">💬</div>
+        <div class="promo-info">
+          <div class="promo-lbl" style="color:var(--cyan)">${esc(e.label||'Message from Admin')}</div>
+          <div class="promo-sub" style="white-space:pre-wrap;color:var(--card-text)">${esc(e.message||'')}</div>
+        </div>
+      </div>`;
+    }
     // Promo code entries get a special card (not a chest)
     if (e.type === 'promo') {
       const warnMsg = !e.promoCreated
