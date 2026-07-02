@@ -271,6 +271,13 @@
     .code-card{box-shadow:0 14px 34px rgba(22,28,44,.14)}
     .err{color:#9a2030}
   }
+  .you-badge{background:rgba(39,227,255,.15);color:var(--cyan);border:1px solid rgba(39,227,255,.45);font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;padding:2px 7px;border-radius:5px;flex-shrink:0}
+  .you-row{border-color:rgba(39,227,255,.4)!important;background:linear-gradient(160deg,rgba(39,227,255,.07),rgba(39,227,255,.02))!important;box-shadow:0 0 18px rgba(39,227,255,.14)}
+  .my-rank-footer{display:flex;align-items:center;gap:13px;padding:11px 15px;border-radius:12px;background:linear-gradient(160deg,rgba(39,227,255,.05),rgba(39,227,255,.01));border:1px dashed rgba(39,227,255,.3);color:var(--card-text);margin-top:6px}
+  .my-rank-footer .rank{flex:0 0 auto;width:34px;height:34px;border-radius:8px;display:grid;place-items:center;font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;color:var(--cyan);background:rgba(39,227,255,.08);border:1px solid rgba(39,227,255,.3)}
+  .my-rank-footer .rinfo{flex:1;min-width:0}
+  .my-rank-footer .rname{font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px}
+  .my-rank-footer .rhint{font-size:11px;color:var(--card-muted);margin-top:2px}
 </style>
 </head>
 <body>
@@ -400,6 +407,7 @@ let affiliateData = []; // separate affiliate dataset (Referrals tab)
 let seasonVipData = null, seasonRefData = null;
 let sortBy = 'season';
 let scope = 'all'; // all | month (VIP tab only)
+let meUserId = null, meUsername = null, meData = null;
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -510,6 +518,14 @@ function render(){
         <div class="ramount">${a.referrals} referrals${a.commission>0?' · $'+Number(a.commission).toFixed(2):''}</div></div>`;
     }).join('')}</div>`:'';
     document.getElementById('content').innerHTML=podium+list;
+    if(meUsername&&!q){
+      const myIdx=data.findIndex(a=>(a.username||'').toLowerCase()===(meUsername||'').toLowerCase());
+      if(myIdx===-1){
+        const refs=Number(meData?.referrals)||0;
+        document.getElementById('content').insertAdjacentHTML('beforeend',
+          selfRankFooterEl('—', refs>0?refs+' referrals — not in top list':'No referrals yet this month'));
+      }
+    }
     return;
   }
 
@@ -548,12 +564,27 @@ function render(){
   }).join('')}</div>`:'';
   const list=rest.length?`<div class="list">${rest.map((m,i)=>rowEl(m,i+3)).join('')}</div>`:'';
   document.getElementById('content').innerHTML=podium+list;
+  if(meUserId&&!q){
+    const myIdx=data.findIndex(m=>m.userId===meUserId);
+    if(myIdx===-1){
+      const hint=sortBy==='paid'?'Not in VIP leaderboard yet':'No activity this season yet';
+      document.getElementById('content').insertAdjacentHTML('beforeend',selfRankFooterEl('—',hint));
+    }
+  }
 }
 
 function rowEl(m,idx){
-  return `<div class="row"><div class="rank">${idx+1}</div>${avatarEl(m,'ravatar')}
-    <div class="rinfo"><div class="rname">${esc(m.username)} ${badge(m)}</div></div>
+  const isMe=meUserId&&m.userId===meUserId;
+  return `<div class="row${isMe?' you-row':''}"><div class="rank">${idx+1}</div>${avatarEl(m,'ravatar')}
+    <div class="rinfo"><div class="rname">${esc(m.username)} ${badge(m)}${isMe?'<span class="you-badge">YOU</span>':''}</div></div>
     <div class="ramount">${metric(m)}</div></div>`;
+}
+
+function selfRankFooterEl(rankLabel, hint){
+  const me={username:meUsername||'You',avatar:null};
+  return `<div class="my-rank-footer"><div class="rank">${rankLabel}</div>${avatarEl(me,'ravatar')}
+    <div class="rinfo"><div class="rname">${esc(meUsername||'You')} <span class="you-badge">YOU</span></div>
+    <div class="rhint">${hint}</div></div></div>`;
 }
 
 /* đếm ngược tới hết tháng */
@@ -574,7 +605,11 @@ async function loadData(){
   btn.classList.add('loading');btn.textContent='↻ Loading...';
   document.getElementById('content').innerHTML=`<div class="state"><div class="spinner"></div><div>Loading data from Whop...</div></div>`;
   try{
-    const res=await tenantFetch('/.netlify/functions/whop-data');
+    const [res, meJson] = await Promise.all([
+      tenantFetch('/.netlify/functions/whop-data'),
+      tenantFetch('/.netlify/functions/me').then(r=>r.json()).catch(()=>({}))
+    ]);
+    if(meJson.userId){ meData=meJson; meUserId=meJson.userId; meUsername=meJson.username||null; }
     if(!res.ok){ const j=await res.json().catch(()=>({})); throw new Error(j.error||('HTTP '+res.status)); }
     const json=await res.json();
     if(json.error) throw new Error(json.error);
