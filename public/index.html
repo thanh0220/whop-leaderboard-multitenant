@@ -621,11 +621,20 @@ async function loadData(){
       tenantFetch('/.netlify/functions/me').then(r=>r.json()).catch(()=>({}))
     ]);
     if(meJson.userId){ meData=meJson; meUserId=meJson.userId; meUsername=meJson.username||null; }
-    if(meJson.referralLink){
+    if(meJson.referralLinkEnabled){
       const sec=document.getElementById('referral-section');
       const inp=document.getElementById('referral-link-input');
       if(sec) sec.style.display='block';
-      if(inp) inp.value=meJson.referralLink;
+      if(meJson.referralLink){
+        if(inp) inp.value=meJson.referralLink;
+      } else {
+        // Link chưa được tạo — gọi endpoint để tạo lần đầu
+        tenantFetch('/.netlify/functions/referral-link').then(r=>r.json()).then(j=>{
+          if(j.linkUrl && inp) inp.value=j.linkUrl;
+        }).catch(()=>{
+          if(inp) inp.value='Link unavailable — check Whop permissions';
+        });
+      }
     }
     if(!res.ok){ const j=await res.json().catch(()=>({})); throw new Error(j.error||('HTTP '+res.status)); }
     const json=await res.json();
