@@ -75,13 +75,14 @@ export const handler = async (event) => {
 
     // Các lệnh đọc Blobs dưới đây độc lập với nhau — chạy song song thay vì
     // tuần tự để giảm thời gian load trang.
-    const [{ earned, paidUsd, referrals, months, bonus, username }, spentRaw, historyRaw, checkinRaw, paid] =
+    const [{ earned, paidUsd, referrals, months, bonus, username }, spentRaw, historyRaw, checkinRaw, paid, referralLinkRaw] =
       await Promise.all([
         computeEarned(userId, apiKey, companyId, cfg),
         store.get(tenantKey("spent", companyId, userId)).catch(() => null),
         store.get(tenantKey("history", companyId, userId), { type: "json" }).catch(() => null),
         store.get(tenantKey("checkin", companyId, userId), { type: "json" }).catch(() => null),
         isPaidTier(companyId, cfg),
+        store.get(tenantKey("referral-link", companyId, userId), { type: "json" }).catch(() => null),
       ]);
 
     const spent = Number(spentRaw) || 0;
@@ -89,9 +90,9 @@ export const handler = async (event) => {
 
     // ---- daily check-in state ----
     const today = utcDayKey();
-    let ck = { lastDay: null, streak: 0 };
+    let ck = { lastDay: null, streak: 0, shieldExpiresAt: null };
     if (checkinRaw && typeof checkinRaw === "object") {
-      ck = { lastDay: checkinRaw.lastDay || null, streak: Number(checkinRaw.streak) || 0 };
+      ck = { lastDay: checkinRaw.lastDay || null, streak: Number(checkinRaw.streak) || 0, shieldExpiresAt: checkinRaw.shieldExpiresAt || null };
     }
     const checkinCanClaim = ck.lastDay !== today;
     const nextStreak = checkinCanClaim
@@ -107,10 +108,11 @@ export const handler = async (event) => {
       // Free 2 / Paid 10 — chỉ ẩn phần dư khỏi member nếu tenant downgrade, không xoá data thật.
       rewards: paid ? cfg.rewards : cfg.rewards.slice(0, 2),
       points: cfg.points,
-      checkin: { today, streak: ck.streak, canClaim: checkinCanClaim, nextStreak, nextReward, calendar: cfg.checkinRewards },
+      checkin: { today, streak: ck.streak, canClaim: checkinCanClaim, nextStreak, nextReward, calendar: cfg.checkinRewards, shieldActive: !!(ck.shieldExpiresAt && ck.shieldExpiresAt >= today), shieldExpiresAt: ck.shieldExpiresAt || null },
       seasonVip: { ...seasonInfo(), topRewards: cfg.seasonVipTopRewards },
       seasonRef: { ...seasonInfo(), topRewards: cfg.seasonRefTopRewards },
       branding: cfg.branding,
+      referralLink: (cfg.referralLinkEnabled && referralLinkRaw && referralLinkRaw.linkUrl) ? referralLinkRaw.linkUrl : null,
     });
   } catch (err) {
     return json(500, { error: err.message });

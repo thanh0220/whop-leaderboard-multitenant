@@ -2,6 +2,8 @@ import { pointsStore, tenantKey, casUpdate } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getTenantConfig } from "./_tenant.mjs";
 import { utcDayKey } from "./_season.mjs";
+import { getCompanyAccessToken, getRealCompanyId } from "./_tokens.mjs";
+import { triggerPromoReward } from "./_promo-reward.mjs";
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -73,11 +75,17 @@ export const handler = async (event) => {
     try {
       await casUpdate(store, tenantKey("checkin", companyId, userId), (current) => {
         const cur = current && typeof current === "object"
-          ? { lastDay: current.lastDay || null, streak: Number(current.streak) || 0 }
-          : { lastDay: null, streak: 0 };
+          ? { lastDay: current.lastDay || null, streak: Number(current.streak) || 0, shieldExpiresAt: current.shieldExpiresAt || null }
+          : { lastDay: null, streak: 0, shieldExpiresAt: null };
         if (cur.lastDay === today) throw new AlreadyCheckedInError(cur.streak);
-        newStreak = cur.lastDay === yesterday(today) ? cur.streak + 1 : 1;
-        return { lastDay: today, streak: newStreak };
+        const shieldValid = cur.shieldExpiresAt && cur.shieldExpiresAt >= today;
+        const isConsecutive = cur.lastDay === yesterday(today);
+        if (isConsecutive || shieldValid) {
+          newStreak = cur.streak + 1;
+        } else {
+          newStreak = 1;
+        }
+        return { lastDay: today, streak: newStreak, shieldExpiresAt: cur.shieldExpiresAt };
       });
 
       const idx = ((newStreak - 1) % CHECKIN_REWARDS.length + CHECKIN_REWARDS.length) % CHECKIN_REWARDS.length;
@@ -86,6 +94,19 @@ export const handler = async (event) => {
       const bonus = Number(await casUpdate(store, tenantKey("bonus", companyId, userId), (current) => {
         return String((Number(current) || 0) + reward);
       }, { type: "text" }));
+
+      // Fire-and-forget promo reward if streak hits a configured milestone
+      if (cfg.promoRewards?.enabled) {
+        const hit = (cfg.promoRewards.milestones || []).find((m) => m.streakDays === newStreak);
+        if (hit) {
+          Promise.all([
+            getCompanyAccessToken(companyId),
+            getRealCompanyId(companyId, cfg),
+          ]).then(([apiKey, realCompanyId]) =>
+            triggerPromoReward(userId, companyId, newStreak, hit.discountPct, apiKey, realCompanyId)
+          ).catch(() => {});
+        }
+      }
 
       return json(200, {
         ok: true,

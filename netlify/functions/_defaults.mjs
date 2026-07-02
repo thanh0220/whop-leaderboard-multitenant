@@ -126,4 +126,16 @@ export const DEFAULT_TENANT = {
       { thresholdReferrals: 20, rewardId: null, xu: 2000, label: "Diamond Reward", icon: "🎁" },
     ],
   },
+  // Referral tracking link per member (requires tracking_link:create permission in Whop)
+  referralLinkEnabled: false,
+  referralDestUrl: "",
+  // Auto promo code on streak milestone (requires promo_code:create permission in Whop)
+  promoRewards: {
+    enabled: false,
+    milestones: [
+      { streakDays: 7,  discountPct: 10 },
+      { streakDays: 14, discountPct: 15 },
+      { streakDays: 30, discountPct: 20 },
+    ],
+  },
 };
