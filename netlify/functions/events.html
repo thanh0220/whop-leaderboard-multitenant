@@ -1,67 +1,154 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Lịch Sự Kiện — Whop Community App</title>
+<title>Events — Whop Community App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#070910;--red:#ff2d4b;--cyan:#27e3ff;--gold:#f4c441;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3)}
+  :root{--bg:#070910;--red:#ff2d4b;--cyan:#27e3ff;--gold:#f4c441;--muted:#8a93a6;--text:#eef2f8;--line2:rgba(39,227,255,.3);
+    --ctrl-bg:rgba(255,255,255,.03);--ctrl-border:rgba(255,255,255,.12);
+    --card1:#16202f;--card2:#0a0f18;--card-border:rgba(255,255,255,.08);
+    --card-text:#eef2f8;--card-muted:#8a93a6;--chip-bg:rgba(0,0,0,.25);
+    --modal-bg:#0e1622;--modal-border:rgba(255,255,255,.12);--green:#22c55e}
+  @media(prefers-color-scheme:light){
+    :root{--bg:#eef1f7;--muted:#5d6478;--text:#161c2c;--red:#e0123a;--cyan:#0098bb;--gold:#c9860a;
+      --line2:rgba(0,152,187,.32);--ctrl-bg:rgba(22,28,44,.04);--ctrl-border:rgba(22,28,44,.14);
+      --card1:#ffffff;--card2:#eef2f9;--card-border:rgba(22,28,44,.09);
+      --card-text:#161c2c;--card-muted:#5d6478;--chip-bg:#e4e9f2;
+      --modal-bg:#ffffff;--modal-border:rgba(22,28,44,.12)}
+  }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Be Vietnam Pro',sans-serif;color:var(--text);min-height:100vh;padding:0 0 60px;
     background:radial-gradient(120% 70% at 50% -10%,rgba(255,45,75,.13),var(--bg) 55%),var(--bg);background-attachment:fixed}
   .wrap{max-width:960px;margin:0 auto;padding:22px 18px}
   .nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
   .nav a{font-family:'Oswald',sans-serif;letter-spacing:.1em;text-transform:uppercase;font-size:11px;
-    padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.12);
-    background:rgba(255,255,255,.03);color:var(--muted);text-decoration:none;transition:.15s}
+    padding:8px 14px;border-radius:999px;border:1px solid var(--ctrl-border);
+    background:var(--ctrl-bg);color:var(--muted);text-decoration:none;transition:.15s}
   .nav a.on{border-color:var(--line2);background:rgba(39,227,255,.1);color:var(--cyan);box-shadow:0 0 14px rgba(39,227,255,.25)}
   .top{display:flex;align-items:center;gap:10px;font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:.14em;
     text-transform:uppercase;font-size:16px;margin-bottom:14px}
   .top .s{color:var(--red);font-size:18px;text-shadow:0 0 12px rgba(255,45,75,.7)}
   .top b{color:var(--red)}
 
-  .legend{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-  .lg{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;text-align:center}
-  .lg .n{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;line-height:1}
-  .lg .l{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px}
-  .lg.season .n{color:var(--gold)} .lg.code .n{color:var(--red)} .lg.quest .n{color:var(--cyan)}
-  @media(max-width:560px){.legend{grid-template-columns:1fr}}
+  /* ── Featured UP NEXT ── */
+  .feat-card{background:linear-gradient(135deg,rgba(39,227,255,.06),rgba(39,227,255,.01));
+    border:1px solid rgba(39,227,255,.25);border-radius:16px;padding:18px 20px;
+    margin-bottom:18px;position:relative;overflow:hidden}
+  .feat-card::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;
+    background:radial-gradient(circle,rgba(39,227,255,.07),transparent 70%);pointer-events:none}
+  .feat-tag{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+    color:var(--cyan);opacity:.75;margin-bottom:7px}
+  .feat-name{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:3px}
+  .feat-date{font-size:12px;color:var(--card-muted);margin-bottom:14px}
+  .feat-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .days-badge{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12);border-radius:10px;
+    padding:8px 16px;font-size:13px;font-weight:700;color:var(--text)}
+  .days-today{background:rgba(255,45,75,.15);border-color:rgba(255,45,75,.4);color:#fca5a5}
+  .rsvp-btn{margin-left:auto;background:var(--cyan);color:#070910;border:none;border-radius:10px;
+    padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;
+    display:flex;align-items:center;gap:6px;white-space:nowrap;font-family:inherit}
+  .rsvp-btn.attending{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+  .rsvp-btn:hover{opacity:.85}
+  .feat-att{font-size:11px;color:var(--card-muted);margin-top:8px}
+  .cal-row{display:none;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+  .cal-row.show{display:flex}
+  .cal-hint{font-size:11px;color:var(--card-muted);width:100%;margin-bottom:2px}
+  .cal-btn-g{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;
+    background:rgba(66,133,244,.15);border:1px solid rgba(66,133,244,.3);color:#6ba8ff;
+    font-size:12px;font-weight:600;text-decoration:none;transition:.15s}
+  .cal-btn-g:hover{opacity:.8}
+  .cal-btn-i{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;
+    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:var(--card-text);
+    font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+  .cal-btn-i:hover{opacity:.8}
 
-  .panel{background:linear-gradient(160deg,#16202f,#0a0f18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px}
+  /* ── Section label ── */
+  .sect-lbl{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--card-muted);margin:18px 0 10px;display:flex;align-items:center;gap:8px}
+
+  /* ── Week calendar ── */
+  .counter{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .counter b{color:var(--cyan)}
+  .panel{background:linear-gradient(160deg,var(--card1),var(--card2));border:1px solid var(--card-border);border-radius:16px;padding:18px;color:var(--card-text)}
   .head-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px}
-  .head-cell{text-align:center;font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+  .head-cell{text-align:center;font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.06em;color:var(--card-muted);text-transform:uppercase}
   .head-cell.today{color:var(--cyan)}
-  .head-cell .dd{font-size:13px;color:var(--text);font-weight:700;margin-top:2px}
+  .head-cell .dd{font-size:13px;color:var(--card-text);font-weight:700;margin-top:2px}
   .head-cell.today .dd{color:var(--cyan)}
-
   .track{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;min-height:38px}
-  .evt{border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap}
-  .evt small{font-weight:400;opacity:.8;font-size:10.5px}
-  .evt.season{background:rgba(244,196,65,.16);border:1px solid rgba(244,196,65,.5);color:var(--gold)}
-  .evt.code{background:rgba(255,45,75,.16);border:1px solid rgba(255,45,75,.5);color:#ffb0bd}
-  .evt.quest{background:rgba(39,227,255,.16);border:1px solid rgba(39,227,255,.5);color:var(--cyan)}
 
-  .empty{text-align:center;color:var(--muted);font-size:13px;padding:14px 0}
+  /* Event bar states */
+  .evt{border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap;cursor:pointer;transition:.15s}
+  .evt:hover{opacity:.8}
+  .evt.upcoming{background:rgba(39,227,255,.16);border:1px solid rgba(39,227,255,.5);color:var(--cyan)}
+  .evt.live{background:rgba(255,45,75,.14);border:1px solid rgba(255,45,75,.45);color:#fca5a5;animation:live-blink 2s ease-in-out infinite}
+  .evt.past{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.35)}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:#ff2d4b;flex-shrink:0;animation:live-blink 1s ease-in-out infinite}
+  @keyframes live-blink{0%,100%{opacity:1}50%{opacity:.3}}
+  .evt span.nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+  /* ── Past events list ── */
+  .past-list{display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
+  .past-item{background:linear-gradient(160deg,var(--card1),var(--card2));border:1px solid var(--card-border);
+    border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.15s}
+  .past-item:hover{border-color:rgba(255,255,255,.16)}
+  .past-img{width:44px;height:44px;border-radius:8px;object-fit:cover;background:var(--card2);
+    flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden}
+  .past-img img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+  .past-info{flex:1;min-width:0}
+  .past-name{font-size:14px;font-weight:600;color:var(--card-text);margin-bottom:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .past-date-lbl{font-size:11px;color:var(--card-muted)}
+
+  /* ── Modal ── */
+  .event-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+  .event-modal{background:var(--modal-bg);border:1px solid var(--line2);border-radius:16px;padding:20px;max-width:420px;width:100%;position:relative;text-align:center;color:var(--card-text)}
+  .event-modal .x{position:absolute;top:10px;right:14px;cursor:pointer;color:var(--card-muted);font-size:18px}
+  .event-modal .x:hover{color:var(--card-text)}
+  .ev-modal-name{font-family:'Oswald',sans-serif;font-size:17px;font-weight:700;color:var(--cyan);margin:6px 0 8px}
+  .ev-modal-date{font-size:13px;color:var(--card-muted)}
+  .ev-modal-img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;margin-bottom:6px}
+  .ev-modal-desc{font-size:13px;color:var(--card-text);line-height:1.5;margin-top:12px;text-align:left;white-space:pre-wrap}
+
+  .empty{text-align:center;color:var(--card-muted);font-size:13px;padding:14px 0}
   .state{text-align:center;padding:60px 20px;color:var(--muted)}
   .spinner{width:40px;height:40px;border:2px solid rgba(39,227,255,.2);border-top-color:var(--cyan);border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .err{background:rgba(255,45,75,.12);border:1px solid rgba(255,45,75,.4);border-radius:14px;padding:20px;color:#ffd0d8;font-size:14px;line-height:1.6}
+  .powered-badge{position:fixed;bottom:10px;right:12px;z-index:60;font-size:11px;color:var(--card-muted);
+    background:var(--chip-bg);border:1px solid var(--card-border);border-radius:8px;padding:4px 9px;display:none;pointer-events:none}
+
+  @media(prefers-color-scheme:light){
+    body{background:radial-gradient(120% 70% at 50% -10%,rgba(224,18,58,.10),#f4f1fb 45%,#eef1f7 100%);background-attachment:fixed}
+    .panel,.past-item{box-shadow:0 4px 14px rgba(22,28,44,.07)}
+    .evt.past{color:rgba(22,28,44,.4)}
+    .err{color:#9a2030}
+    .feat-card{background:linear-gradient(135deg,rgba(0,152,187,.06),rgba(0,152,187,.01));border-color:rgba(0,152,187,.25)}
+    .feat-card::before{background:radial-gradient(circle,rgba(0,152,187,.06),transparent 70%)}
+    .rsvp-btn{color:#fff}
+    .cal-btn-i{color:var(--text)}
+  }
 </style>
 </head>
 <body>
+<div class="powered-badge" id="powered-badge" onclick="window.open('https://whop.com/apps/app_YI4gVdrJb3il0W/','_blank')" style="cursor:pointer">⚡ Powered by GTVăn</div>
 <div class="wrap">
   <div class="nav">
-    <a href="/">🏆 Bảng xếp hạng</a>
-    <a href="/daily.html">📅 Hằng ngày</a>
-    <a href="/store.html">🎁 Cửa hàng</a>
-    <a href="/events.html" class="on">🗓 Lịch sự kiện</a>
+    <a href="/">🏆 Leaderboard</a>
+    <a href="/daily.html">📅 Daily</a>
+    <a href="/store.html">🎁 Store</a>
+    <a href="/events.html" class="on">🗓 Events</a>
+    <a href="/mailbox.html">📬 Mailbox</a>
+    <a href="/milestones.html">🎯 Milestones</a>
   </div>
-  <div class="top"><span class="s">♦</span> Lịch <b>Sự Kiện</b></div>
-  <div id="content"><div class="state"><div class="spinner"></div>Đang tải...</div></div>
+  <div class="top"><span class="s">♦</span> <b>Events</b></div>
+  <div id="featured-box"></div>
+  <div id="content"><div class="state"><div class="spinner"></div>Loading...</div></div>
+  <div id="past-box"></div>
 </div>
 
 <script>
@@ -69,80 +156,311 @@ const $=id=>document.getElementById(id);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 function tenantQS(){
-  const u = new URL(location.href);
-  const exp = u.searchParams.get('experienceId') || '';
-  const co  = u.searchParams.get('companyId') || '';
-  const p = new URLSearchParams();
-  if (exp) p.set('experienceId', exp);
-  if (co)  p.set('companyId', co);
-  const s = p.toString();
-  return s ? '?' + s : '';
+  const u=new URL(location.href);
+  let exp=u.searchParams.get('experienceId')||'';
+  let co=u.searchParams.get('companyId')||'';
+  if(!exp){const m=location.pathname.match(/\/experiences\/([^/]+)/);if(m)exp=m[1];}
+  if(!co){const m=location.pathname.match(/\/dashboard\/([^/]+)/);if(m)co=m[1];}
+  const p=new URLSearchParams();
+  if(exp)p.set('experienceId',exp);
+  if(co)p.set('companyId',co);
+  const s=p.toString();
+  return s?'?'+s:'';
 }
-function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
-
-async function load(){
-  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Đang tải...</div>`;
+function tenantFetch(path,opts){return fetch(path+tenantQS(),opts);}
+(function propagateTenantQS(){
+  const qs=tenantQS();if(!qs)return;
+  document.querySelectorAll('a[href^="/"]').forEach(a=>{if(!a.getAttribute('href').includes('?'))a.href=a.getAttribute('href')+qs;});
+})();
+(async function applyNavVisibility(){
   try{
-    const r=await tenantFetch('/.netlify/functions/events');
-    const j=await r.json();
-    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
-    render(j);
-  }catch(e){
-    $('content').innerHTML=`<div class="err"><b>⚠ Không tải được dữ liệu:</b> ${e.message}<br><br>Hãy mở trang này bên trong Whop.</div>`;
+    const r=await tenantFetch('/.netlify/functions/nav-flags');
+    const j=await r.json();if(!r.ok)return;
+    const map={'/events.html':j.eventsEnabled,'/milestones.html':j.milestonesEnabled,
+      '/daily.html':j.dailyEnabled,'/store.html':j.storeEnabled,'/mailbox.html':j.mailboxEnabled};
+    document.querySelectorAll('.nav a').forEach(a=>{const href=a.getAttribute('href').split('?')[0];if(href in map&&!map[href])a.remove();});
+  }catch(_){}
+})();
+
+/* ── Helpers ── */
+function addDays(dk,n){
+  try{const d=new Date(dk+'T00:00:00Z');if(isNaN(d))return dk;d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}catch(_){return dk;}
+}
+function fmtDate(dk){
+  if(!dk)return'';
+  const[y,m,d]=dk.split('-');
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[+m-1]} ${+d}, ${y}`;
+}
+function fmtDateShort(dk){
+  if(!dk)return'';const[,m,d]=dk.split('-');return`${+d}/${+m}`;
+}
+function fmtRange(item){
+  const end=item.endDate||item.date;
+  return end===item.date?fmtDate(item.date):`${fmtDate(item.date)} – ${fmtDate(end)}`;
+}
+function daysUntil(dk){
+  const today=new Date().toISOString().slice(0,10);
+  if(dk===today)return 0;
+  const d=new Date(dk+'T00:00:00Z'),t=new Date(today+'T00:00:00Z');
+  return Math.round((d-t)/(86400000));
+}
+function eventEmoji(item){
+  const n=(item.name||'').toLowerCase();
+  if(n.includes('ama'))return'🎙️';
+  if(n.includes('trade')||n.includes('market'))return'📊';
+  if(n.includes('leader')||n.includes('rank'))return'🏆';
+  if(n.includes('vip'))return'⭐';
+  if(n.includes('live'))return'🔴';
+  return'📅';
+}
+
+/* ── Calendar helpers ── */
+function weekDates(todayKey){
+  const today=new Date(todayKey+'T00:00:00Z');
+  const dow=today.getUTCDay();
+  const start=new Date(today);start.setUTCDate(today.getUTCDate()-dow);
+  const days=[];
+  for(let i=0;i<7;i++){const d=new Date(start);d.setUTCDate(start.getUTCDate()+i);days.push(d.toISOString().slice(0,10));}
+  return days;
+}
+function weekOverlapCols(item,week){
+  const start=item.date,end=item.endDate||item.date;
+  if(!start)return null;
+  const ws=week[0],we=week[6];
+  if(end<ws||start>we)return null;
+  const cs=start<ws?ws:start,ce=end>we?we:end;
+  return{startCol:week.indexOf(cs),endCol:week.indexOf(ce)};
+}
+
+/* ── Expand recurring ── */
+function expandByRepeatCount(list){
+  const result=[];
+  for(const e of list){
+    if(!e.date)continue;
+    const count=Math.min(Math.max(0,Number(e.repeatCount)||0),364);
+    const end=e.endDate||e.date;
+    for(let i=0;i<=count;i++){result.push({...e,date:addDays(e.date,i*7),endDate:addDays(end,i*7)});}
+  }
+  return result;
+}
+
+/* ── Calendar helpers ── */
+function makeGCalUrl(item){
+  try{
+    const start=(item.date||'').replace(/-/g,'');if(!start)return'#';
+    const end=addDays(item.endDate||item.date,1).replace(/-/g,'');
+    let details=item.desc||'';
+    if(item.link)details=(details?details+'\n\n':'')+'🔗 Join: '+item.link;
+    const p=new URLSearchParams({action:'TEMPLATE',text:item.name||'',dates:start+'/'+end,details,location:item.link||''});
+    return'https://calendar.google.com/calendar/render?'+p.toString();
+  }catch(_){return'#';}
+}
+function addToIcs(item){
+  try{
+    const start=(item.date||'').replace(/-/g,'');if(!start)return;
+    const end=addDays(item.endDate||item.date,1).replace(/-/g,'');
+    const lines=['BEGIN:VCALENDAR','VERSION:2.0','CALSCALE:GREGORIAN','METHOD:PUBLISH',
+      'BEGIN:VEVENT','DTSTART;VALUE=DATE:'+start,'DTEND;VALUE=DATE:'+end,
+      'SUMMARY:'+(item.name||'').replace(/[\\;,]/g,'\\$&')];
+    let desc=item.desc||'';
+    if(item.link)desc=(desc?desc+'\n\n':'')+'Join: '+item.link;
+    if(desc)lines.push('DESCRIPTION:'+desc.replace(/[\\;,]/g,'\\$&').replace(/\n/g,'\\n'));
+    if(item.link)lines.push('URL:'+item.link,'LOCATION:'+item.link);
+    lines.push('END:VEVENT','END:VCALENDAR');
+    const blob=new Blob([lines.join('\r\n')],{type:'text/calendar'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='event.ics';a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }catch(err){console.error('ICS error:',err);}
+}
+
+let CURRENT_EVENTS=[];
+let PAST_EVENTS=[];
+let MODAL_EVENT=null;
+let weekOffset=0;
+let RENDER_DATA=null;
+let rsvpDone=false;
+let FEATURED_EVENT=null;
+
+/* ── Featured card ── */
+function renderFeatured(item){
+  if(!item){$('featured-box').innerHTML='';return;}
+  FEATURED_EVENT=item;
+  const d=daysUntil(item.date);
+  const daysTxt=d===0?'Today!':d===1?'Tomorrow':`In ${d} days`;
+  const isTodayClass=d===0?'days-today':'';
+  const gcUrl=esc(makeGCalUrl(item));
+  $('featured-box').innerHTML=`
+  <div class="feat-card">
+    <div class="feat-tag">▶ Up next</div>
+    <div class="feat-name">${esc(item.name)}</div>
+    <div class="feat-date">📅 ${fmtRange(item)}</div>
+    <div class="feat-row">
+      <div class="days-badge ${isTodayClass}">🗓 ${esc(daysTxt)}</div>
+      ${item.link?`<a href="${esc(item.link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;background:rgba(244,196,65,.15);border:1px solid rgba(244,196,65,.35);color:var(--gold);font-size:13px;font-weight:700;text-decoration:none">🔗 Join Event</a>`:''}
+      <button class="rsvp-btn" id="rsvp-btn" onclick="toggleRsvp()">✓ I'll attend</button>
+    </div>
+    <div class="feat-att" id="feat-att"></div>
+    <div class="cal-row" id="cal-row">
+      <div class="cal-hint">📆 Add to your calendar so you don't forget:</div>
+      <a class="cal-btn-g" href="${gcUrl}" target="_blank" rel="noopener">📅 Google Calendar</a>
+      <button class="cal-btn-i" onclick="addToIcs(FEATURED_EVENT)">📆 Apple / Outlook</button>
+    </div>
+  </div>`;
+}
+
+function toggleRsvp(){
+  rsvpDone=!rsvpDone;
+  const btn=$('rsvp-btn');const cal=$('cal-row');
+  if(!btn)return;
+  if(rsvpDone){
+    btn.classList.add('attending');btn.textContent='✓ Attending!';
+    if(cal)cal.classList.add('show');
+  }else{
+    btn.classList.remove('attending');btn.textContent='✓ I\'ll attend';
+    if(cal)cal.classList.remove('show');
   }
 }
 
-// Tuần hiện tại (Chủ Nhật -> Thứ Bảy, theo ngày UTC để khớp utcDayKey() backend)
-function weekDates(todayKey){
-  const today = new Date(todayKey + 'T00:00:00Z');
-  const dow = today.getUTCDay(); // 0=CN
-  const start = new Date(today); start.setUTCDate(today.getUTCDate() - dow);
-  const days = [];
-  for(let i=0;i<7;i++){ const d=new Date(start); d.setUTCDate(start.getUTCDate()+i); days.push(d.toISOString().slice(0,10)); }
-  return days;
+/* ── Event modal ── */
+function openEventModal(idx,listName){
+  const list=listName==='past'?PAST_EVENTS:CURRENT_EVENTS;
+  const item=list[idx];if(!item)return;
+  MODAL_EVENT=item;
+  const today=new Date().toISOString().slice(0,10);
+  const isUpcoming=(item.endDate||item.date)>=today;
+  const imgHtml=item.image?`<img class="ev-modal-img" src="${esc(item.image)}"/>`:'';
+  const descHtml=item.desc?`<div class="ev-modal-desc">${esc(item.desc)}</div>`:'';
+  const joinBtn=item.link?`<a href="${esc(item.link)}" target="_blank" rel="noopener"
+      style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:10px;
+        background:rgba(244,196,65,.15);border:1px solid rgba(244,196,65,.35);color:var(--gold);
+        font-size:13px;font-weight:700;text-decoration:none;margin-top:14px">
+      🔗 Join Event
+    </a>`:'';
+  const calHtml=isUpcoming?`
+    <div style="margin-top:16px;border-top:1px solid var(--card-border);padding-top:14px">
+      ${joinBtn}
+      <div style="font-size:11px;color:var(--card-muted);margin-bottom:8px;text-align:center;${item.link?'margin-top:12px':''}">📆 Add to your calendar so you don't forget</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <a class="cal-btn-g" href="${esc(makeGCalUrl(item))}" target="_blank" rel="noopener">📅 Google Calendar</a>
+        <button class="cal-btn-i" onclick="addToIcs(MODAL_EVENT)">📆 Apple / Outlook</button>
+      </div>
+    </div>`:(item.link?`<div style="margin-top:14px;text-align:center"><a href="${esc(item.link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:10px;background:rgba(244,196,65,.12);border:1px solid rgba(244,196,65,.3);color:var(--gold);font-size:13px;font-weight:700;text-decoration:none">🔗 View recording</a></div>`:'');
+
+  const wrap=document.createElement('div');
+  wrap.className='event-modal-overlay';wrap.id='event-modal-overlay';
+  wrap.innerHTML=`
+    <div class="event-modal">
+      <span class="x" onclick="closeEventModal()">✕</span>
+      ${imgHtml}
+      <div class="ev-modal-name">${esc(item.name)}</div>
+      <div class="ev-modal-date">📅 ${fmtRange(item)}</div>
+      ${descHtml}${calHtml}
+    </div>`;
+  wrap.addEventListener('click',ev=>{if(ev.target===wrap)closeEventModal();});
+  document.body.appendChild(wrap);
 }
-function dayCol(dateKey, week){ return week.indexOf(dateKey); } // -1 nếu ngoài tuần
+function closeEventModal(){const el=$('event-modal-overlay');if(el)el.remove();}
 
-function evtRow(item, cls, label){
-  const week = item.__week;
-  let startCol = dayCol(item.startDate, week);
-  let endCol = dayCol(item.endDate, week);
-  // clip vào tuần hiện tại: nếu mốc nằm ngoài tuần ở 1 phía, kéo về biên tuần
-  if(startCol===-1) startCol = item.startDate < week[0] ? 0 : 7;
-  if(endCol===-1) endCol = item.endDate > week[6] ? 6 : -1;
-  if(startCol>6 || endCol<0 || startCol>endCol) return ''; // hoàn toàn ngoài tuần này
-  // grid-column đặt rõ vị trí, không cần ô lấp đầy ở các cột còn lại trong .track
-  return `<div class="track"><div class="evt ${cls}" style="grid-column:${startCol+1} / ${endCol+2}">${label}</div></div>`;
+/* ── Week calendar ── */
+function evtRow(item,week,idx){
+  const overlap=weekOverlapCols(item,week);if(!overlap)return'';
+  const{startCol,endCol}=overlap;
+  const today=new Date().toISOString().slice(0,10);
+  const end=item.endDate||item.date;
+  const isLive=item.date<=today&&end>=today;
+  const isPast=end<today;
+  const cls=isLive?'live':isPast?'past':'upcoming';
+  const liveDot=isLive?'<span class="live-dot"></span>':'';
+  return`<div class="track"><div class="evt ${cls}" style="grid-column:${startCol+1} / ${endCol+2}" onclick="openEventModal(${idx},'week')">
+    ${liveDot}<span class="nm">${esc(item.name)}</span>
+  </div></div>`;
 }
 
-function render(d){
-  const today = d.today;
-  const week = weekDates(today);
-  const dowLabel=['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
-
-  const headCells = week.map((dk,i)=>{
-    const isToday = dk===today;
-    const [,m,dd] = dk.split('-');
-    return `<div class="head-cell ${isToday?'today':''}">${dowLabel[i]}<div class="dd">${dd}/${m}</div></div>`;
+function renderWeekSection(d,offset){
+  const events=expandByRepeatCount(d.events||[]);
+  CURRENT_EVENTS=events;
+  const today=new Date().toISOString().slice(0,10);
+  const target=new Date(today+'T00:00:00Z');
+  target.setUTCDate(target.getUTCDate()+offset*7);
+  const targetKey=target.toISOString().slice(0,10);
+  const week=weekDates(targetKey);
+  const dowLabel=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const wLbl=offset===0?'This week':offset===1?'Next week':offset===-1?'Last week':offset>0?`+${offset} weeks`:`${Math.abs(offset)} weeks ago`;
+  const headCells=week.map((dk,i)=>{
+    const isToday=dk===today;const[,m,dd]=dk.split('-');
+    return`<div class="head-cell ${isToday?'today':''}">${dowLabel[i]}<div class="dd">${dd}/${m}</div></div>`;
   }).join('');
-
-  const seasonRow = evtRow({...d.season, __week:week}, 'season', `🏆 ${esc(d.season.label||'Mùa giải')}`);
-  const codeRows = (d.codes||[]).map(c=>evtRow({...c, __week:week}, 'code', `🔑 Code "${esc(c.code)}" <small>+${c.xu} xu</small>`)).filter(Boolean).join('');
-  const questRows = (d.quests||[]).map(q=>evtRow({...q, __week:week}, 'quest', `${esc(q.icon||'⭐')} ${esc(q.name)} <small>+${q.reward} xu</small>`)).filter(Boolean).join('');
-
-  const html = `
-    <div class="legend">
-      <div class="lg season"><div class="n">1</div><div class="l">🏆 Nổi bật</div></div>
-      <div class="lg code"><div class="n">${(d.codes||[]).length}</div><div class="l">🔑 Lễ hội</div></div>
-      <div class="lg quest"><div class="n">${(d.quests||[]).length}</div><div class="l">✅ Hằng ngày</div></div>
+  const rowsArr=events.map((e,idx)=>evtRow(e,week,idx)).filter(Boolean);
+  const rows=rowsArr.join('');
+  const navStyle='background:none;border:1px solid rgba(255,255,255,.2);color:var(--text);border-radius:8px;padding:5px 14px;cursor:pointer;font-size:18px;line-height:1;font-family:inherit';
+  $('content').innerHTML=`
+    <div class="sect-lbl">📅 Schedule</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <button onclick="changeWeek(-1)" style="${navStyle}">&#8249;</button>
+      <span style="font-size:13px;font-weight:600;color:rgba(255,255,255,.75)">${wLbl}</span>
+      <button onclick="changeWeek(1)" style="${navStyle}">&#8250;</button>
     </div>
+    <div class="counter">📅 <b>${rowsArr.length}</b> event${rowsArr.length!==1?'s':''} this week</div>
     <div class="panel">
       <div class="head-row">${headCells}</div>
-      ${seasonRow || '<div class="empty">Không có sự kiện nổi bật trong tuần này.</div>'}
-      ${codeRows || '<div class="empty">Không có code khuyến mãi nào trong tuần này.</div>'}
-      ${questRows || '<div class="empty">Không có nhiệm vụ giới hạn thời gian nào trong tuần này.</div>'}
+      ${rows||'<div class="empty">No events scheduled this week.</div>'}
     </div>`;
-  $('content').innerHTML = html;
+}
+
+/* ── Past events ── */
+function renderPastSection(pastList){
+  if(!pastList.length){$('past-box').innerHTML='';return;}
+  PAST_EVENTS=pastList;
+  const items=pastList.map((e,idx)=>{
+    const imgEl=e.image
+      ?`<div class="past-img"><img src="${esc(e.image)}" loading="lazy"/></div>`
+      :`<div class="past-img">${eventEmoji(e)}</div>`;
+    return`<div class="past-item" onclick="openEventModal(${idx},'past')">${imgEl}
+      <div class="past-info">
+        <div class="past-name">${esc(e.name)}</div>
+        <div class="past-date-lbl">${fmtDate(e.date)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  $('past-box').innerHTML=`<div class="sect-lbl">🕐 Past events</div><div class="past-list">${items}</div>`;
+}
+
+/* ── Main render ── */
+function render(d){
+  RENDER_DATA=d;
+  $('powered-badge').style.display=(d.isPaid&&d.branding?.logoUrl)?'none':'block';
+  const allEvents=expandByRepeatCount(d.events||[]);
+  const today=new Date().toISOString().slice(0,10);
+  const upcoming=allEvents.filter(e=>(e.endDate||e.date)>=today).sort((a,b)=>a.date.localeCompare(b.date));
+  const past=allEvents.filter(e=>(e.endDate||e.date)<today).sort((a,b)=>b.date.localeCompare(a.date));
+  renderFeatured(upcoming[0]||null);
+  renderWeekSection(d,weekOffset);
+  renderPastSection(past.slice(0,6));
+}
+
+function changeWeek(delta){
+  weekOffset+=delta;
+  if(RENDER_DATA)renderWeekSection(RENDER_DATA,weekOffset);
+}
+
+async function load(){
+  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading...</div>`;
+  $('featured-box').innerHTML='';$('past-box').innerHTML='';
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),12000);
+  try{
+    const r=await tenantFetch('/.netlify/functions/events',{signal:ctrl.signal});
+    clearTimeout(timer);
+    let j;
+    try{j=await r.json();}catch(_){throw new Error('HTTP '+r.status);}
+    if(!r.ok)throw new Error(j.error||('HTTP '+r.status));
+    render(j);
+  }catch(e){
+    clearTimeout(timer);
+    const msg=e.name==='AbortError'?'Request timed out. Please reload.':e.message;
+    $('content').innerHTML=`<div class="err"><b>⚠ Could not load data:</b> ${esc(msg)}<br><br>Please open this page inside Whop.</div>`;
+  }
 }
 
 load();
