@@ -447,13 +447,19 @@ function changeWeek(delta){
 async function load(){
   $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading...</div>`;
   $('featured-box').innerHTML='';$('past-box').innerHTML='';
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),12000);
   try{
-    const r=await tenantFetch('/.netlify/functions/events');
-    const j=await r.json();
+    const r=await tenantFetch('/.netlify/functions/events',{signal:ctrl.signal});
+    clearTimeout(timer);
+    let j;
+    try{j=await r.json();}catch(_){throw new Error('HTTP '+r.status);}
     if(!r.ok)throw new Error(j.error||('HTTP '+r.status));
     render(j);
   }catch(e){
-    $('content').innerHTML=`<div class="err"><b>⚠ Could not load data:</b> ${esc(e.message)}<br><br>Please open this page inside Whop.</div>`;
+    clearTimeout(timer);
+    const msg=e.name==='AbortError'?'Request timed out. Please reload.':e.message;
+    $('content').innerHTML=`<div class="err"><b>⚠ Could not load data:</b> ${esc(msg)}<br><br>Please open this page inside Whop.</div>`;
   }
 }
 
