@@ -1434,7 +1434,7 @@ const BADGE_LABEL={hot:'🔥 Hot',new:'⚡ New',vip:'👑 VIP',bestseller:'⭐ B
 // (text/number/textarea) ghi trực tiếp vào STATE qua setPath() KHÔNG render
 // lại — tránh mất focus/con trỏ khi đang gõ. Hành động cấu trúc (thêm/xoá
 // dòng, đổi loại payload, upload ảnh xong) mới gọi renderAll().
-let STATE = null;let CONFIGURED = false;let IS_PAID = false;let TIER_LEVEL = 0;let activeTab = (location.hash||'#conn').slice(1);function setPath(obj, path, value){  const parts = path.split('.');  let cur = obj;  for (let i=0;i<parts.length-1;i++) cur = cur[parts[i]];  cur[parts[parts.length-1]] = value;}async function loadOnce(){  const r = await tenantFetch('/.netlify/functions/admin-config');  const j = await r.json();  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));  return j;}async function load(){  const maxTries = 6;  let lastErr = null;  for (let i = 0; i < maxTries; i++) {    try{      const j = await loadOnce();      CONFIGURED = j.configured;      IS_PAID = !!j.isPaid; TIER_LEVEL = j.tierLevel ?? 0;      STATE = {        whopCompanyId: j.whopCompanyId || '',        seasonVipTopRewards: j.seasonVipTopRewards || [],        seasonRefTopRewards: j.seasonRefTopRewards || [],        checkinRewards: j.checkinRewards || [],        rewards: j.rewards || [],        redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>          typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),        codesEnabled: j.codesEnabled !== false,        dailyEnabled: j.dailyEnabled !== false,        storeEnabled: j.storeEnabled !== false,        mailboxEnabled: j.mailboxEnabled !== false,        chestRules: j.chestRules || {enabled:true,thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},        events: normalizeEvents(j.events, [3,10,9999,9999][TIER_LEVEL]??3),        eventsEnabled: j.eventsEnabled !== false,        milestoneRules: j.milestoneRules || {enabled:false,tiers:[]},        branding: j.branding || {displayName:'',primaryColor:'#7c3aed',logoUrl:''},        onboardingCompleted: !!j.onboardingCompleted,        referralLinkEnabled: !!j.referralLinkEnabled,        referralDestUrl: j.referralDestUrl || '',        promoRewards: j.promoRewards || {enabled:false,milestones:[{streakDays:7,discountPct:10},{streakDays:14,discountPct:15},{streakDays:30,discountPct:20}]},      };      renderAll();      if(!STATE.onboardingCompleted&&STATE.branding?.displayName==='Your Community'&&(!STATE.rewards||STATE.rewards.length===0)) showWizard();      return;    }catch(e){      lastErr = e;      $('content').innerHTML = `<div class="state">Waiting for Whop authentication... (${i+1}/${maxTries})</div>`;      await new Promise(res=>setTimeout(res,1200));    }  }  $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${lastErr.message}</div></div>`;}// ===== Referral helpers =====
+let STATE = null;let CONFIGURED = false;let IS_PAID = false;let TIER_LEVEL = 0;let activeTab = (location.hash||'#conn').slice(1);function setPath(obj, path, value){  const parts = path.split('.');  let cur = obj;  for (let i=0;i<parts.length-1;i++) cur = cur[parts[i]];  cur[parts[parts.length-1]] = value;}async function loadOnce(){  const r = await tenantFetch('/.netlify/functions/admin-config');  const j = await r.json();  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));  return j;}async function load(){  const maxTries = 6;  let lastErr = null;  for (let i = 0; i < maxTries; i++) {    try{      const j = await loadOnce();      CONFIGURED = j.configured;      IS_PAID = !!j.isPaid; TIER_LEVEL = j.tierLevel ?? 0;      STATE = {        whopCompanyId: j.whopCompanyId || '',        seasonVipTopRewards: j.seasonVipTopRewards || [],        seasonRefTopRewards: j.seasonRefTopRewards || [],        checkinRewards: j.checkinRewards || [],        rewards: j.rewards || [],        redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>          typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),        codesEnabled: j.codesEnabled !== false,        dailyEnabled: j.dailyEnabled !== false,        storeEnabled: j.storeEnabled !== false,        mailboxEnabled: j.mailboxEnabled !== false,        chestRules: j.chestRules || {enabled:true,thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},        events: normalizeEvents(j.events, [3,10,9999,9999][TIER_LEVEL]??3),        eventsEnabled: j.eventsEnabled !== false,        milestoneRules: j.milestoneRules || {enabled:false,tiers:[]},        branding: j.branding || {displayName:'',primaryColor:'#7c3aed',logoUrl:''},        onboardingCompleted: !!j.onboardingCompleted,        promoRewards: j.promoRewards || {enabled:false,milestones:[{streakDays:7,discountPct:10},{streakDays:14,discountPct:15},{streakDays:30,discountPct:20}]},      };      renderAll();      if(!STATE.onboardingCompleted&&STATE.branding?.displayName==='Your Community'&&(!STATE.rewards||STATE.rewards.length===0)) showWizard();      return;    }catch(e){      lastErr = e;      $('content').innerHTML = `<div class="state">Waiting for Whop authentication... (${i+1}/${maxTries})</div>`;      await new Promise(res=>setTimeout(res,1200));    }  }  $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${lastErr.message}</div></div>`;}// ===== Referral helpers =====
 // ===== Onboarding Wizard =====
 let WIZARD_STATE={};let wizardStep=1;const WIZARD_STEPS=4;function showWizard(){  WIZARD_STATE={displayName:'',primaryColor:'#7c3aed',dailyEnabled:true,eventsEnabled:true,codesEnabled:true,milestoneRules:{enabled:true,tiers:[]}};  wizardStep=1;  renderWizard();}function closeWizard(){const el=$('wizard-overlay');if(el)el.remove();}async function skipWizard(){  try{    await tenantFetch('/.netlify/functions/admin-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({onboardingCompleted:true})});    STATE.onboardingCompleted=true;  }catch(_){}  closeWizard();}function goWizardStep(n){wizardStep=n;const el=$('wizard-body');if(el)el.innerHTML=wizardStepHtml(n);}function wizardStepDots(){  let o='';  for(let i=1;i<=WIZARD_STEPS;i++) o+=`<div class="wz-step-dot ${i<wizardStep?'done':i===wizardStep?'active':''}"></div>`;  return o;}function wizardStepHtml(step){  if(step===1) return `<div class="wz-title">👋 Welcome!</div><div class="wz-subtitle">EngageXU turns your Whop into a points-based community — daily check-ins, a reward store, events, and more. Let's get you set up in a few quick steps.</div><div class="wz-actions"><button class="btn big" style="margin-top:0" onclick="goWizardStep(2)">Let's go →</button></div>`;  if(step===2) return `<div class="wz-title">🎨 Name & Color</div><div class="wz-subtitle">This shows on the leaderboard your members see.</div><label>Community name</label><input id="wz-name" value="${esc(WIZARD_STATE.displayName)}" placeholder="e.g. Trading Legends" oninput="WIZARD_STATE.displayName=this.value"/><label>Accent color</label><input type="color" value="${esc(WIZARD_STATE.primaryColor)}" style="width:60px;height:36px;padding:2px;border-radius:6px;cursor:pointer" oninput="WIZARD_STATE.primaryColor=this.value"/><div class="wz-actions"><button class="btn" style="margin-top:0" onclick="goWizardStep(1)">← Back</button><button class="btn" style="margin-top:0" onclick="WIZARD_STATE.displayName=$('wz-name')?.value||WIZARD_STATE.displayName;goWizardStep(3)">Next →</button></div>`;  if(step===3) return `<div class="wz-title">⚙️ Features</div><div class="wz-subtitle">Turn on what you want — you can always change these later.</div>${[['📅 Daily Check-in (members earn XU every day)','wz-daily',WIZARD_STATE.dailyEnabled,'WIZARD_STATE.dailyEnabled=this.checked'],['🗓 Events Calendar','wz-events',WIZARD_STATE.eventsEnabled,'WIZARD_STATE.eventsEnabled=this.checked'],['🔑 Special Codes (secret codes for XU)','wz-codes',WIZARD_STATE.codesEnabled,'WIZARD_STATE.codesEnabled=this.checked'],['🎯 Referral Milestones','wz-miles',WIZARD_STATE.milestoneRules.enabled,'WIZARD_STATE.milestoneRules.enabled=this.checked']].map(([lbl,id,chk,onch])=>`<label style="display:flex;align-items:center;gap:10px;margin:10px 0;cursor:pointer;text-transform:none;font-family:inherit;font-size:13px;color:var(--card-text)"><input id="${id}" type="checkbox" style="width:auto" ${chk?'checked':''} onchange="${esc(onch)}"/>${esc(lbl)}</label>`).join('')}<div class="wz-actions"><button class="btn" style="margin-top:0" onclick="goWizardStep(2)">← Back</button><button class="btn" style="margin-top:0" onclick="goWizardStep(4)">Next →</button></div>`;  if(step===4) return `<div class="wz-title">🚀 Ready to launch!</div><div class="wz-subtitle">Review your choices and click Launch to save and go live.</div><ul style="font-size:13px;line-height:2.2;color:var(--card-text)"><li>🏷 Name: <b>${esc(WIZARD_STATE.displayName||'(not set)')}</b></li><li>📅 Daily check-in: <b>${WIZARD_STATE.dailyEnabled?'ON':'OFF'}</b></li><li>🗓 Events: <b>${WIZARD_STATE.eventsEnabled?'ON':'OFF'}</b></li><li>🔑 Codes: <b>${WIZARD_STATE.codesEnabled?'ON':'OFF'}</b></li><li>🎯 Referral milestones: <b>${WIZARD_STATE.milestoneRules.enabled?'ON':'OFF'}</b></li></ul><div id="wz-err" class="msg err" style="min-height:0"></div><div class="wz-actions"><button class="btn" style="margin-top:0" onclick="goWizardStep(3)">← Back</button><button class="btn" id="wz-launch" style="margin-top:0;background:linear-gradient(135deg,var(--gold),#d39a11);color:#1a1200;border-color:transparent" onclick="submitWizard()">🚀 Launch!</button></div>`;  return '';}function renderWizard(){  let wrap=$('wizard-overlay');  if(!wrap){wrap=document.createElement('div');wrap.className='wizard-overlay';wrap.id='wizard-overlay';document.body.appendChild(wrap);}  wrap.innerHTML=`<div class="wizard-modal"><span class="wz-skip" onclick="skipWizard()">Skip setup ×</span><div class="wz-steps">${wizardStepDots()}</div><div id="wizard-body">${wizardStepHtml(wizardStep)}</div></div>`;}async function submitWizard(){  const btn=$('wz-launch');const errEl=$('wz-err');  if(btn){btn.disabled=true;btn.textContent='Saving…';}  try{    const payload={branding:{displayName:WIZARD_STATE.displayName,primaryColor:WIZARD_STATE.primaryColor,logoUrl:STATE.branding?.logoUrl||''},dailyEnabled:WIZARD_STATE.dailyEnabled,eventsEnabled:WIZARD_STATE.eventsEnabled,codesEnabled:WIZARD_STATE.codesEnabled,milestoneRules:WIZARD_STATE.milestoneRules,onboardingCompleted:true};    const r=await tenantFetch('/.netlify/functions/admin-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});    const j=await r.json();    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));    STATE.onboardingCompleted=true;    closeWizard();    load();  }catch(e){    if(errEl) errEl.textContent='⚠ '+e.message;    if(btn){btn.disabled=false;btn.textContent='🚀 Launch!';}  }}const TAB_RENDERERS = {  conn: renderConn, billing: renderBilling,  season: renderSeason, daily: renderDaily, store: renderStore,  codes: renderCodes, events: renderEvents, chests: renderChests,  milestones: renderMilestones, automations: renderAutomations, insights: renderInsights,};function toggleRow(checked, onchange, labelOn, labelOff){  return `<label class="hint-small" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px">    <input type="checkbox" style="width:auto" ${checked?'checked':''} onchange="${esc(onchange)}"/>    <span>${checked ? '✅ '+labelOn : '⛔ '+labelOff}</span>  </label>`;}// Khối "cái này là gì + làm theo mấy bước" — đặt ngay đầu mỗi tab, viết bằng
 // câu đơn giản cho người chưa từng dùng app này, không dùng thuật ngữ trần trụi.
@@ -1535,54 +1535,7 @@ function startDragResize(e, idx){  e.preventDefault();  const track = e.currentT
 // trống chưa có event) vẫn tính đúng cột/ngày theo vị trí X — bọc cả khối lịch
 // (.ev-calendar) thành 1 vùng nhận thả lớn, không chỉ riêng ô tiêu đề nhỏ.
 function onEvCalendarDrop(e){  e.preventDefault();  if(dragChip == null) return;  const rect = e.currentTarget.getBoundingClientRect();  const col = Math.min(6, Math.max(0, Math.floor((e.clientX - rect.left) / (rect.width / 7))));  const week = evWeekDates(eventsWeekOffset);  onEvDrop(e, week[col]);}// ===== Lưu tất cả =====
-function buildSavePayload(){  const redeemCodes = {};  (STATE.redeemCodesList||[]).forEach(c=>{    const code = (c.code||'').trim().toLowerCase();    if (!code) return;    const entry = { xu: Number(c.xu)||0 };    if (c.title) entry.title = c.title;    if (c.image) entry.image = c.image;    if (c.startDate) entry.startDate = c.startDate;    if (c.endDate) entry.endDate = c.endDate;    if (c.repeatDays) entry.repeatDays = Number(c.repeatDays);    redeemCodes[code] = entry;  });  return {    seasonVipTopRewards: (STATE.seasonVipTopRewards||[]).map((r,i)=>({rank:(['🥇','🥈','🥉'][i]||'🏅')+' Top '+(i+1),prize:Number(r.xu).toLocaleString()+' XU',xu:Number(r.xu)||0})),    seasonRefTopRewards: (STATE.seasonRefTopRewards||[]).map((r,i)=>({rank:(['🥇','🥈','🥉'][i]||'🏅')+' Top '+(i+1),prize:Number(r.xu).toLocaleString()+' XU',xu:Number(r.xu)||0})),    checkinRewards: STATE.checkinRewards,    rewards: STATE.rewards,    redeemCodes,    codesEnabled: STATE.codesEnabled,    dailyEnabled: STATE.dailyEnabled,    storeEnabled: STATE.storeEnabled,    mailboxEnabled: STATE.mailboxEnabled,    chestRules: STATE.chestRules,    events: STATE.events,    eventsEnabled: STATE.eventsEnabled,    milestoneRules: STATE.milestoneRules,    branding: STATE.branding,    onboardingCompleted: STATE.onboardingCompleted,    referralLinkEnabled: STATE.referralLinkEnabled,    referralDestUrl: STATE.referralDestUrl,    promoRewards: STATE.promoRewards,  };}async function saveConfig(){  const r = await tenantFetch('/.netlify/functions/admin-config', {    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(buildSavePayload())  });  const j = await r.json();  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));}async function saveAll(){  const btn = $('save-all');  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Saving...';  try{    await saveConfig();    btn.textContent = '✅ Saved!';    setTimeout(load, 700);  }catch(e){    alert('⚠ Save failed: '+e.message);    btn.disabled = false; btn.textContent = old;  }}// ===== #automations — Referral Links + Auto Promo Codes =====
-let _products = null; // cached product list for this session
-let _productsLoading = false;
-
-async function loadWhopProducts(){
-  if (_products !== null || _productsLoading) return;
-  _productsLoading = true;
-  const el = $('product-picker-wrap');
-  if (el) el.innerHTML = '<span style="font-size:12px;color:var(--card-muted)">Loading your products...</span>';
-  try {
-    const r = await tenantFetch('/.netlify/functions/whop-products');
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
-    _products = j.products || [];
-    renderProductPicker();
-  } catch (e) {
-    _products = [];
-    const el2 = $('product-picker-wrap');
-    if (el2) el2.innerHTML = `<span style="font-size:12px;color:#ff6b6b">⚠ Could not load products: ${esc(e.message)}</span>`;
-  } finally {
-    _productsLoading = false;
-  }
-}
-
-function renderProductPicker(){
-  const el = $('product-picker-wrap');
-  if (!el) return;
-  if (!_products || _products.length === 0) {
-    el.innerHTML = `<div style="font-size:12px;color:var(--card-muted)">No products found automatically. Paste your Whop product URL manually below.</div>
-      <input type="url" id="dest-url-manual" value="${esc(STATE.referralDestUrl||'')}" placeholder="https://whop.com/your-product/" style="margin-top:8px" oninput="setPath(STATE,'referralDestUrl',this.value.trim())"/>`;
-    return;
-  }
-  const current = STATE.referralDestUrl || '';
-  const options = _products.map((p, i) => {
-    const checked = current && current === p.url ? 'checked' : (!current && i === 0 ? 'checked' : '');
-    return `<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;background:${checked?'rgba(39,227,255,.08)':'var(--chip-bg)'};border:1px solid ${checked?'rgba(39,227,255,.35)':'var(--card-border)'};margin-bottom:6px;cursor:pointer">
-      <input type="radio" name="dest-product" value="${esc(p.url)}" ${checked} style="width:auto;margin-top:2px;flex-shrink:0" onchange="setPath(STATE,'referralDestUrl',this.value);renderProductPicker()"/>
-      <span>
-        <span style="font-size:13px;font-weight:600;color:var(--card-text);display:block">${esc(p.name)}</span>
-        <span style="font-size:11px;color:var(--card-muted)">${esc(p.url)}</span>
-      </span>
-    </label>`;
-  }).join('');
-  // Set default if nothing selected yet
-  if (!current && _products[0]) setPath(STATE, 'referralDestUrl', _products[0].url);
-  el.innerHTML = options;
-}
-
+function buildSavePayload(){  const redeemCodes = {};  (STATE.redeemCodesList||[]).forEach(c=>{    const code = (c.code||'').trim().toLowerCase();    if (!code) return;    const entry = { xu: Number(c.xu)||0 };    if (c.title) entry.title = c.title;    if (c.image) entry.image = c.image;    if (c.startDate) entry.startDate = c.startDate;    if (c.endDate) entry.endDate = c.endDate;    if (c.repeatDays) entry.repeatDays = Number(c.repeatDays);    redeemCodes[code] = entry;  });  return {    seasonVipTopRewards: (STATE.seasonVipTopRewards||[]).map((r,i)=>({rank:(['🥇','🥈','🥉'][i]||'🏅')+' Top '+(i+1),prize:Number(r.xu).toLocaleString()+' XU',xu:Number(r.xu)||0})),    seasonRefTopRewards: (STATE.seasonRefTopRewards||[]).map((r,i)=>({rank:(['🥇','🥈','🥉'][i]||'🏅')+' Top '+(i+1),prize:Number(r.xu).toLocaleString()+' XU',xu:Number(r.xu)||0})),    checkinRewards: STATE.checkinRewards,    rewards: STATE.rewards,    redeemCodes,    codesEnabled: STATE.codesEnabled,    dailyEnabled: STATE.dailyEnabled,    storeEnabled: STATE.storeEnabled,    mailboxEnabled: STATE.mailboxEnabled,    chestRules: STATE.chestRules,    events: STATE.events,    eventsEnabled: STATE.eventsEnabled,    milestoneRules: STATE.milestoneRules,    branding: STATE.branding,    onboardingCompleted: STATE.onboardingCompleted,    promoRewards: STATE.promoRewards,  };}async function saveConfig(){  const r = await tenantFetch('/.netlify/functions/admin-config', {    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(buildSavePayload())  });  const j = await r.json();  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));}async function saveAll(){  const btn = $('save-all');  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Saving...';  try{    await saveConfig();    btn.textContent = '✅ Saved!';    setTimeout(load, 700);  }catch(e){    alert('⚠ Save failed: '+e.message);    btn.disabled = false; btn.textContent = old;  }}// ===== #automations — Auto Promo Codes on Streak =====
 function renderAutomations(){
   const pr = STATE.promoRewards || {enabled:false,milestones:[]};
   const msRows = (pr.milestones||[]).map((m,i)=>`
@@ -1594,34 +1547,15 @@ function renderAutomations(){
       <button onclick="STATE.promoRewards.milestones.splice(${i},1);renderAll()" style="margin-left:auto;background:none;border:1px solid rgba(255,80,80,.35);color:#ff6b6b;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:12px">✕</button>
     </div>`).join('');
 
-  // Trigger product load/render after DOM updates (non-blocking)
-  if (STATE.referralLinkEnabled) {
-    if (_products === null && !_productsLoading) {
-      setTimeout(loadWhopProducts, 50);
-    } else if (_products !== null) {
-      setTimeout(renderProductPicker, 50);
-    }
-  }
-
   return `<div class="sect" id="automations">⚡ Automations</div>
   <div class="panel">
     ${introBlock(
-      "These features work automatically — members get a personal referral link to share, and earn a discount code when they hit a streak milestone. Everything is created directly on Whop.",
-      ["Turn on the feature below","Pick which product your referral link points to (loaded automatically)","Save — done"]
+      "When a member hits a streak milestone, they automatically receive a personal discount code in their Mailbox — created live on Whop. No manual work needed.",
+      ["Add the promo_code:create permission in Whop Developer console","Turn on the feature below","Set your streak milestones and discount %","Save — done"]
     )}
 
-    <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin:18px 0 8px">📣 Referral Links</div>
-    <div class="hint-small" style="margin-bottom:10px">Each member gets a unique referral link. When someone joins through it, the referral is tracked automatically on Whop.</div>
-    ${toggleRow(STATE.referralLinkEnabled,"setPath(STATE,'referralLinkEnabled',this.checked);renderAll()",'Enabled — members see their referral link on the Leaderboard.','Disabled — referral links are hidden from members.')}
-    ${STATE.referralLinkEnabled ? `
-      <label style="margin-top:14px">Which product should the referral link point to?</label>
-      <div id="product-picker-wrap" style="margin-top:6px">
-        <span style="font-size:12px;color:var(--card-muted)">Loading your products...</span>
-      </div>
-    ` : ''}
-
-    <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin:22px 0 8px">🏷️ Auto Promo Codes on Streak</div>
-    <div class="hint-small" style="margin-bottom:10px">When a member reaches a streak milestone, they automatically receive a personal discount code in their Mailbox — created live on Whop.</div>
+    <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin:18px 0 8px">🏷️ Auto Promo Codes on Streak</div>
+    <div class="hint-small" style="margin-bottom:10px">Member checks in X days in a row → they get a personal % discount coupon code on Whop automatically.</div>
     ${toggleRow(pr.enabled,"setPath(STATE,'promoRewards.enabled',this.checked);renderAll()",'Enabled — streak milestones auto-create a coupon on Whop.','Disabled — no automatic coupon codes are created.')}
     ${pr.enabled ? `
       <div style="margin-top:12px">${msRows||'<p class="hint-small">No milestones yet.</p>'}</div>
@@ -1638,16 +1572,92 @@ function renderInsights(){
     ? '<div class="state">Loading member data...</div>'
     : insightsData
       ? renderInsightsData(insightsData)
-      : '<button class="btn" onclick="loadInsights()">🔄 Load Member Insights</button>';
+      : '<button class="btn" onclick="loadInsights()">🔄 Load At-risk / VIP data</button>';
 
-  return `<div class="sect" id="insights">👥 Member Insights</div>
+  return `<div class="sect" id="insights">👥 Members</div>
+
   <div class="panel">
-    ${introBlock(
-      "See which members are about to lose their streak (at-risk), who your most engaged members are (VIP), and who joined recently — so you can take action at the right moment.",
-      ["Click Load Member Insights","Send a win-back message to at-risk members so they don't lose their streak","Results are cached for 10 minutes — click Refresh to update"]
-    )}
+    <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">📢 Broadcast Message</div>
+    <div class="hint-small" style="margin-bottom:14px">Gửi tin nhắn đến toàn bộ member — họ sẽ thấy trong Mailbox. Có thể mất 10–30 giây nếu cộng đồng đông.</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div id="broadcast-warm" onclick="selectBroadcastTarget('warm')" style="padding:14px;border-radius:10px;border:2px solid rgba(244,196,65,.4);background:rgba(244,196,65,.07);cursor:pointer;transition:all .15s">
+        <div style="font-size:18px;margin-bottom:4px">🔥</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;color:var(--gold);letter-spacing:.04em">Member Ấm</div>
+        <div style="font-size:11px;color:var(--card-muted);margin-top:3px">Đã trả tiền (paid members)</div>
+      </div>
+      <div id="broadcast-cold" onclick="selectBroadcastTarget('cold')" style="padding:14px;border-radius:10px;border:2px solid rgba(39,227,255,.3);background:rgba(39,227,255,.05);cursor:pointer;transition:all .15s">
+        <div style="font-size:18px;margin-bottom:4px">❄️</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;color:var(--cyan);letter-spacing:.04em">Member Lạnh</div>
+        <div style="font-size:11px;color:var(--card-muted);margin-top:3px">Chưa trả tiền (free members)</div>
+      </div>
+    </div>
+    <div id="broadcast-all-wrap" style="margin-bottom:12px">
+      <div id="broadcast-all" onclick="selectBroadcastTarget('all')" style="padding:12px 14px;border-radius:10px;border:2px solid rgba(178,102,255,.3);background:rgba(178,102,255,.05);cursor:pointer;display:flex;align-items:center;gap:10px">
+        <span style="font-size:16px">📣</span>
+        <div>
+          <div style="font-family:'Oswald',sans-serif;font-size:13px;color:#b680ff;letter-spacing:.04em">Tất cả Member</div>
+          <div style="font-size:11px;color:var(--card-muted)">Gửi cho cả paid lẫn free</div>
+        </div>
+      </div>
+    </div>
+
+    <textarea id="broadcast-msg" rows="4" placeholder="Nhập tin nhắn gửi cho member..." style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;resize:vertical;font-family:inherit"></textarea>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+      <button class="btn" id="broadcast-btn" onclick="sendBroadcast()" style="background:linear-gradient(135deg,var(--gold),#d39a11);color:#1a1200;border-color:transparent">📢 Gửi tin nhắn</button>
+      <span id="broadcast-status" style="font-size:12px;color:var(--card-muted)">Chọn nhóm và nhập tin nhắn</span>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">🎯 At-risk / VIP</div>
     <div id="insights-content">${dataHtml}</div>
   </div>`;
+}
+
+let _broadcastTarget = null;
+function selectBroadcastTarget(t){
+  _broadcastTarget = t;
+  ['warm','cold','all'].forEach(k => {
+    const el = $('broadcast-' + k);
+    if (!el) return;
+    el.style.opacity = k === t ? '1' : '0.45';
+    el.style.transform = k === t ? 'scale(1.02)' : 'scale(1)';
+  });
+  const labels = { warm:'Member Ấm (paid)', cold:'Member Lạnh (free)', all:'Tất cả member' };
+  const status = $('broadcast-status');
+  if (status) status.textContent = 'Đang chọn: ' + (labels[t] || t);
+}
+
+async function sendBroadcast(){
+  if (!_broadcastTarget) { alert('Chọn nhóm trước (Ấm / Lạnh / Tất cả).'); return; }
+  const msgEl = $('broadcast-msg');
+  const msg = (msgEl && msgEl.value || '').trim();
+  if (!msg) { alert('Nhập tin nhắn trước.'); return; }
+
+  const labels = { warm:'Member Ấm', cold:'Member Lạnh', all:'Tất cả member' };
+  if (!confirm(`Gửi tin nhắn này đến ${labels[_broadcastTarget]}?\n\n"${msg.slice(0,120)}${msg.length>120?'…':''}"`)) return;
+
+  const btn = $('broadcast-btn');
+  const status = $('broadcast-status');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang gửi...'; }
+  if (status) status.textContent = 'Đang gửi, vui lòng chờ...';
+
+  try {
+    const r = await tenantFetch('/.netlify/functions/admin-broadcast', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, target: _broadcastTarget }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    if (status) status.textContent = `✅ Đã gửi đến ${j.sent} member!`;
+    if (msgEl) msgEl.value = '';
+  } catch(e) {
+    if (status) status.textContent = '⚠ ' + e.message;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📢 Gửi tin nhắn'; }
+  }
 }
 
 async function loadInsights(){
@@ -1685,14 +1695,14 @@ function renderInsightsData(d){
   const newJHtml = (d.newJoiners||[]).map(fmtNew).join('') || '<span style="font-size:12px;color:var(--card-muted)">No recent joiners.</span>';
   const cached = d.cachedAt ? new Date(d.cachedAt).toLocaleTimeString() : '';
   return `
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px">
       <div style="background:rgba(255,150,50,.07);border:1px solid rgba(255,150,50,.3);border-radius:10px;padding:12px">
-        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:#f59e0b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">⚠ At-risk (5+ days inactive)</div>
-        <div style="font-size:11px;color:var(--card-muted);margin-bottom:8px">Click 💬 Nudge to send them a message</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:#f59e0b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">⚠ At-risk (5+ days)</div>
+        <div style="font-size:11px;color:var(--card-muted);margin-bottom:8px">Click 💬 Nudge để gửi tin nhắn</div>
         ${atRiskHtml}
       </div>
       <div style="background:rgba(39,227,255,.06);border:1px solid rgba(39,227,255,.2);border-radius:10px;padding:12px">
-        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">⭐ VIP (streak ≥ 14 days)</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">⭐ VIP (streak ≥ 14)</div>
         ${vipHtml}
       </div>
       <div style="background:rgba(178,102,255,.07);border:1px solid rgba(178,102,255,.25);border-radius:10px;padding:12px">
