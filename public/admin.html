@@ -1576,12 +1576,12 @@ function renderInsights(){
       <div id="broadcast-warm" onclick="selectBroadcastTarget('warm')" style="padding:14px;border-radius:10px;border:2px solid rgba(244,196,65,.4);background:rgba(244,196,65,.07);cursor:pointer;transition:all .15s">
         <div style="font-size:18px;margin-bottom:4px">🔥</div>
         <div style="font-family:'Oswald',sans-serif;font-size:13px;color:var(--gold);letter-spacing:.04em">Warm Members</div>
-        <div id="warm-count" style="font-size:11px;color:var(--card-muted);margin-top:3px">Paid members</div>
+        <div id="warm-count" style="font-size:11px;color:var(--card-muted);margin-top:3px">Paid · with email</div>
       </div>
       <div id="broadcast-cold" onclick="selectBroadcastTarget('cold')" style="padding:14px;border-radius:10px;border:2px solid rgba(39,227,255,.3);background:rgba(39,227,255,.05);cursor:pointer;transition:all .15s">
         <div style="font-size:18px;margin-bottom:4px">❄️</div>
         <div style="font-family:'Oswald',sans-serif;font-size:13px;color:var(--cyan);letter-spacing:.04em">Cold Members</div>
-        <div id="cold-count" style="font-size:11px;color:var(--card-muted);margin-top:3px">Free members</div>
+        <div id="cold-count" style="font-size:11px;color:var(--card-muted);margin-top:3px">Free · with email</div>
       </div>
     </div>
     <div id="broadcast-all" onclick="selectBroadcastTarget('all')" style="padding:12px 14px;border-radius:10px;border:2px solid rgba(178,102,255,.3);background:rgba(178,102,255,.05);cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:10px">
@@ -1598,6 +1598,16 @@ function renderInsights(){
     </div>
 
     <textarea id="broadcast-msg" rows="4" placeholder="Type your message here..." style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;resize:vertical;font-family:inherit"></textarea>
+
+    <div style="margin-top:12px;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--card-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Send via</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn broadcast-ch-btn" id="ch-whop" onclick="selectBroadcastChannel('whop')" style="font-size:12px;opacity:1;transform:scale(1.02)">💬 Whop Support Chat</button>
+        <button class="btn broadcast-ch-btn" id="ch-mailbox" onclick="selectBroadcastChannel('mailbox')" style="font-size:12px;opacity:0.45">📬 In-app Mailbox</button>
+        <button class="btn broadcast-ch-btn" id="ch-both" onclick="selectBroadcastChannel('both')" style="font-size:12px;opacity:0.45">📤 Both</button>
+      </div>
+    </div>
+
     <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
       <button class="btn" id="broadcast-btn" onclick="sendBroadcast()" style="background:linear-gradient(135deg,var(--gold),#d39a11);color:#1a1200;border-color:transparent">📢 Send message</button>
       <span id="broadcast-status" style="font-size:12px;color:var(--card-muted)">Select a group, then type your message</span>
@@ -1606,6 +1616,7 @@ function renderInsights(){
 }
 
 let _broadcastTarget = null;
+let _broadcastChannel = 'whop';
 let _memberStats = null;
 function selectBroadcastTarget(t){
   _broadcastTarget = t;
@@ -1621,6 +1632,16 @@ function selectBroadcastTarget(t){
   renderMemberStatsList(t);
 }
 
+function selectBroadcastChannel(ch){
+  _broadcastChannel = ch;
+  ['whop','mailbox','both'].forEach(k => {
+    const el = $('ch-' + k);
+    if (!el) return;
+    el.style.opacity = k === ch ? '1' : '0.45';
+    el.style.transform = k === ch ? 'scale(1.02)' : 'scale(1)';
+  });
+}
+
 async function loadMemberStats(){
   const btn = $('member-stats-btn');
   const list = $('member-stats-list');
@@ -1631,9 +1652,9 @@ async function loadMemberStats(){
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
     _memberStats = j;
-    const wc = $('warm-count'); if (wc) wc.textContent = `${j.warmCount} paid members`;
-    const cc = $('cold-count'); if (cc) cc.textContent = `${j.coldCount} free members`;
-    const ac = $('all-count');  if (ac) ac.textContent = `${j.warmCount + j.coldCount} members total`;
+    const wc = $('warm-count'); if (wc) wc.textContent = `${j.warmCount} paid · with email`;
+    const cc = $('cold-count'); if (cc) cc.textContent = `${j.coldCount} free · with email`;
+    const ac = $('all-count');  if (ac) ac.textContent = `${j.warmCount + j.coldCount} members with email`;
     renderMemberStatsList(_broadcastTarget);
   } catch(e) {
     if (list) list.innerHTML = `<span style="font-size:12px;color:#ff6b6b">⚠ ${esc(e.message)}</span>`;
@@ -1653,33 +1674,35 @@ function renderMemberStatsList(target){
 }
 
 async function sendBroadcast(){
-  if (!_broadcastTarget) { alert('Chọn nhóm trước (Ấm / Lạnh / Tất cả).'); return; }
+  if (!_broadcastTarget) { alert('Select a group first (Warm / Cold / All).'); return; }
   const msgEl = $('broadcast-msg');
   const msg = (msgEl && msgEl.value || '').trim();
-  if (!msg) { alert('Nhập tin nhắn trước.'); return; }
+  if (!msg) { alert('Type your message first.'); return; }
 
-  const labels = { warm:'Member Ấm', cold:'Member Lạnh', all:'Tất cả member' };
-  if (!confirm(`Gửi tin nhắn này đến ${labels[_broadcastTarget]}?\n\n"${msg.slice(0,120)}${msg.length>120?'…':''}"`)) return;
+  const labels = { warm:'Warm members', cold:'Cold members', all:'All members' };
+  const chLabels = { whop:'Whop Support Chat', mailbox:'In-app Mailbox', both:'Whop + Mailbox' };
+  if (!confirm(`Send this message to ${labels[_broadcastTarget]} via ${chLabels[_broadcastChannel]}?\n\n"${msg.slice(0,120)}${msg.length>120?'…':''}"`)) return;
 
   const btn = $('broadcast-btn');
   const status = $('broadcast-status');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang gửi...'; }
-  if (status) status.textContent = 'Đang gửi, vui lòng chờ...';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sending...'; }
+  if (status) status.textContent = 'Sending, please wait...';
 
   try {
     const r = await tenantFetch('/.netlify/functions/admin-broadcast', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: msg, target: _broadcastTarget }),
+      body: JSON.stringify({ message: msg, target: _broadcastTarget, channel: _broadcastChannel }),
     });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
-    if (status) status.textContent = `✅ Đã gửi đến ${j.sent} member!`;
+    const failTxt = j.failed ? ` (${j.failed} failed)` : '';
+    if (status) status.textContent = `✅ Sent to ${j.sent} member${j.sent !== 1 ? 's' : ''}${failTxt}`;
     if (msgEl) msgEl.value = '';
   } catch(e) {
     if (status) status.textContent = '⚠ ' + e.message;
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '📢 Gửi tin nhắn'; }
+    if (btn) { btn.disabled = false; btn.textContent = '📢 Send message'; }
   }
 }
 
