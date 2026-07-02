@@ -112,6 +112,7 @@ export const handler = async (event) => {
       seasonVip: { ...seasonInfo(), topRewards: cfg.seasonVipTopRewards },
       seasonRef: { ...seasonInfo(), topRewards: cfg.seasonRefTopRewards },
       branding: cfg.branding,
+      referralLinkEnabled: !!cfg.referralLinkEnabled,
       referralLink: (cfg.referralLinkEnabled && referralLinkRaw && referralLinkRaw.linkUrl) ? referralLinkRaw.linkUrl : null,
     });
   } catch (err) {
