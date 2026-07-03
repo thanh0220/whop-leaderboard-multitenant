@@ -18,6 +18,7 @@ const isWarm = (m) => {
   if (m.plan && typeof m.plan === "object") {
     if (Number(m.plan.price) > 0) return true;
     if (m.plan.billing_period && m.plan.billing_period !== "free") return true;
+    if (m.plan.base_currency_price && Number(m.plan.base_currency_price) > 0) return true;
   }
   return false;
 };
@@ -25,12 +26,16 @@ const isWarm = (m) => {
 async function fetchTargetUserIds(realCompanyId, apiKey, target) {
   const ids = [];
   const seen = new Set();
-  for (let page = 1; page <= 5; page++) {
+  let apiFailed = false;
+  for (let page = 1; page <= 10; page++) {
     const r = await fetch(
       `https://api.whop.com/api/v1/memberships?company_id=${encodeURIComponent(realCompanyId)}&page=${page}&per_page=100&expand[]=user&status[]=active&status[]=trialing`,
       { headers: { Authorization: `Bearer ${apiKey}` } }
     );
-    if (!r.ok) break;
+    if (!r.ok) {
+      apiFailed = true;
+      break;
+    }
     const j = await r.json().catch(() => ({}));
     const data = j.data || [];
     if (!data.length) break;
@@ -44,7 +49,25 @@ async function fetchTargetUserIds(realCompanyId, apiKey, target) {
     }
     if (!j.next_page && !j.pagination?.next) break;
   }
-  return ids;
+  return { ids, apiFailed };
+}
+
+const ENROLL_CHUNK = 15;
+
+// Enroll 1 user vào 1 sequence — dùng từ webhook khi member mới join
+export async function enrollSingleUser(store, companyId, userId, sequenceId) {
+  const key = tenantKey("drip-enroll", companyId, userId, sequenceId);
+  const existing = await store.get(key, { type: "json" }).catch(() => null);
+  if (existing && !existing.completed) return "skipped";
+  await store.setJSON(key, {
+    userId,
+    sequenceId,
+    step: 0,
+    enrolledAt: new Date().toISOString(),
+    nextSendAt: new Date().toISOString(),
+    completed: false,
+  });
+  return "enrolled";
 }
 
 // POST — enroll or unenroll users in a drip sequence
@@ -71,44 +94,61 @@ export const handler = async (event) => {
     const seq = (cfg.dripSequences || []).find(s => s.id === sequenceId);
     if (!seq) return json(404, { error: `Sequence "${sequenceId}" not found in config.` });
 
-    const apiKey = await getCompanyAccessToken(companyId);
-    const realCompanyId = await getRealCompanyId(companyId, cfg);
+    const hasContent = (seq.steps || []).some(s => s.message && s.message.trim());
+    if (!hasContent) return json(400, { error: "Sequence has no steps with content." });
+
     const store = pointsStore();
     const now = new Date().toISOString();
 
-    const userIds = target === "single"
-      ? [singleId]
-      : await fetchTargetUserIds(realCompanyId, apiKey, target);
+    let userIds = [];
+    let apiFailed = false;
+
+    if (target === "single") {
+      userIds = [singleId];
+    } else {
+      const apiKey = await getCompanyAccessToken(companyId);
+      const realCompanyId = await getRealCompanyId(companyId, cfg);
+      const result = await fetchTargetUserIds(realCompanyId, apiKey, target);
+      userIds = result.ids;
+      apiFailed = result.apiFailed;
+    }
 
     let enrolled = 0, unenrolled = 0, skipped = 0;
 
-    for (const uid of userIds) {
-      // Key includes sequenceId so a user can be in multiple sequences simultaneously
-      const key = tenantKey("drip-enroll", companyId, uid, sequenceId);
+    for (let i = 0; i < userIds.length; i += ENROLL_CHUNK) {
+      const chunk = userIds.slice(i, i + ENROLL_CHUNK);
+      await Promise.all(chunk.map(async (uid) => {
+        const key = tenantKey("drip-enroll", companyId, uid, sequenceId);
 
-      if (unenroll) {
-        await store.delete(key).catch(() => {});
-        unenrolled++;
-        continue;
-      }
+        if (unenroll) {
+          await store.delete(key).catch(() => {});
+          unenrolled++;
+          return;
+        }
 
-      // Skip if already enrolled and not completed
-      const existing = await store.get(key, { type: "json" }).catch(() => null);
-      if (existing && !existing.completed) { skipped++; continue; }
+        const existing = await store.get(key, { type: "json" }).catch(() => null);
+        if (existing && !existing.completed) { skipped++; return; }
 
-      // step 0 with nextSendAt = now so drip.mjs picks it up immediately
-      await store.setJSON(key, {
-        userId: uid,
-        sequenceId,
-        step: 0,
-        enrolledAt: now,
-        nextSendAt: now,
-        completed: false,
-      });
-      enrolled++;
+        await store.setJSON(key, {
+          userId: uid,
+          sequenceId,
+          step: 0,
+          enrolledAt: now,
+          nextSendAt: now,
+          completed: false,
+        });
+        enrolled++;
+      }));
     }
 
-    return json(200, { ok: true, enrolled, unenrolled, skipped, total: userIds.length });
+    return json(200, {
+      ok: true,
+      enrolled,
+      unenrolled,
+      skipped,
+      total: userIds.length,
+      warning: apiFailed ? "Whop API returned an error — member list may be incomplete." : undefined,
+    });
   } catch (err) {
     return json(500, { error: err.message });
   }
