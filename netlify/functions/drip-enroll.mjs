@@ -68,8 +68,6 @@ export const handler = async (event) => {
 
   try {
     const cfg = await getTenantConfig(companyId);
-    if (!cfg.dripEnabled) return json(400, { error: "Drip sequences are disabled. Enable dripEnabled in settings." });
-
     const seq = (cfg.dripSequences || []).find(s => s.id === sequenceId);
     if (!seq) return json(404, { error: `Sequence "${sequenceId}" not found in config.` });
 

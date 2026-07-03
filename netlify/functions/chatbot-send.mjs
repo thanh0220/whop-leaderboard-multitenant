@@ -40,8 +40,6 @@ export async function sendChatbotMessage(realCompanyId, apiKey, userId, companyI
   }
 
   const msgBody = { channel_id: chan.id, content };
-  if (botName) msgBody.agent_name = botName; // set chatbot display name
-
   const msgR = await fetch("https://api.whop.com/api/v1/messages", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
