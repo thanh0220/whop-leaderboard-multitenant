@@ -1434,7 +1434,7 @@ const BADGE_LABEL={hot:'🔥 Hot',new:'⚡ New',vip:'👑 VIP',bestseller:'⭐ B
 // (text/number/textarea) ghi trực tiếp vào STATE qua setPath() KHÔNG render
 // lại — tránh mất focus/con trỏ khi đang gõ. Hành động cấu trúc (thêm/xoá
 // dòng, đổi loại payload, upload ảnh xong) mới gọi renderAll().
-let STATE = null;let CONFIGURED = false;let IS_PAID = false;let TIER_LEVEL = 0;let activeTab = (location.hash||'#conn').slice(1);function setPath(obj, path, value){  const parts = path.split('.');  let cur = obj;  for (let i=0;i<parts.length-1;i++) cur = cur[parts[i]];  cur[parts[parts.length-1]] = value;}async function loadOnce(){  const r = await tenantFetch('/.netlify/functions/admin-config');  const j = await r.json();  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));  return j;}async function load(){  const maxTries = 6;  let lastErr = null;  for (let i = 0; i < maxTries; i++) {    try{      const j = await loadOnce();      CONFIGURED = j.configured;      IS_PAID = !!j.isPaid; TIER_LEVEL = j.tierLevel ?? 0;      STATE = {        whopCompanyId: j.whopCompanyId || '',        seasonVipTopRewards: j.seasonVipTopRewards || [],        seasonRefTopRewards: j.seasonRefTopRewards || [],        checkinRewards: j.checkinRewards || [],        rewards: j.rewards || [],        redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>          typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),        codesEnabled: j.codesEnabled !== false,        dailyEnabled: j.dailyEnabled !== false,        storeEnabled: j.storeEnabled !== false,        mailboxEnabled: j.mailboxEnabled !== false,        chestRules: j.chestRules || {enabled:true,thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},        events: normalizeEvents(j.events, [3,10,9999,9999][TIER_LEVEL]??3),        eventsEnabled: j.eventsEnabled !== false,        milestoneRules: j.milestoneRules || {enabled:false,tiers:[]},        branding: j.branding || {displayName:'',primaryColor:'#7c3aed',logoUrl:''},        onboardingCompleted: !!j.onboardingCompleted,        promoRewards: j.promoRewards || {enabled:false,milestones:[{streakDays:7,discountPct:10},{streakDays:14,discountPct:15},{streakDays:30,discountPct:20}]},      };      renderAll();      if(!STATE.onboardingCompleted&&STATE.branding?.displayName==='Your Community'&&(!STATE.rewards||STATE.rewards.length===0)) showWizard();      return;    }catch(e){      lastErr = e;      $('content').innerHTML = `<div class="state">Waiting for Whop authentication... (${i+1}/${maxTries})</div>`;      await new Promise(res=>setTimeout(res,1200));    }  }  $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${lastErr.message}</div></div>`;}// ===== Referral helpers =====
+let STATE = null;let CONFIGURED = false;let IS_PAID = false;let TIER_LEVEL = 0;let activeTab = (location.hash||'#conn').slice(1);function setPath(obj, path, value){  const parts = path.split('.');  let cur = obj;  for (let i=0;i<parts.length-1;i++) cur = cur[parts[i]];  cur[parts[parts.length-1]] = value;}async function loadOnce(){  const r = await tenantFetch('/.netlify/functions/admin-config');  const j = await r.json();  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));  return j;}async function load(){  const maxTries = 6;  let lastErr = null;  for (let i = 0; i < maxTries; i++) {    try{      const j = await loadOnce();      CONFIGURED = j.configured;      IS_PAID = !!j.isPaid; TIER_LEVEL = j.tierLevel ?? 0;      STATE = {        whopCompanyId: j.whopCompanyId || '',        seasonVipTopRewards: j.seasonVipTopRewards || [],        seasonRefTopRewards: j.seasonRefTopRewards || [],        checkinRewards: j.checkinRewards || [],        rewards: j.rewards || [],        redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>          typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),        codesEnabled: j.codesEnabled !== false,        dailyEnabled: j.dailyEnabled !== false,        storeEnabled: j.storeEnabled !== false,        mailboxEnabled: j.mailboxEnabled !== false,        chestRules: j.chestRules || {enabled:true,thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},        events: normalizeEvents(j.events, [3,10,9999,9999][TIER_LEVEL]??3),        eventsEnabled: j.eventsEnabled !== false,        milestoneRules: j.milestoneRules || {enabled:false,tiers:[]},        branding: j.branding || {displayName:'',primaryColor:'#7c3aed',logoUrl:''},        onboardingCompleted: !!j.onboardingCompleted,        promoRewards: j.promoRewards || {enabled:false,milestones:[{streakDays:7,discountPct:10},{streakDays:14,discountPct:15},{streakDays:30,discountPct:20}]},        chatbotName: j.chatbotName || 'Support Bot',        chatbotEnabled: !!j.chatbotEnabled,        dripEnabled: !!j.dripEnabled,        dripSequences: j.dripSequences || [],      };      renderAll();      if(!STATE.onboardingCompleted&&STATE.branding?.displayName==='Your Community'&&(!STATE.rewards||STATE.rewards.length===0)) showWizard();      return;    }catch(e){      lastErr = e;      $('content').innerHTML = `<div class="state">Waiting for Whop authentication... (${i+1}/${maxTries})</div>`;      await new Promise(res=>setTimeout(res,1200));    }  }  $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${lastErr.message}</div></div>`;}// ===== Referral helpers =====
 // ===== Onboarding Wizard =====
 let WIZARD_STATE={};let wizardStep=1;const WIZARD_STEPS=4;function showWizard(){  WIZARD_STATE={displayName:'',primaryColor:'#7c3aed',dailyEnabled:true,eventsEnabled:true,codesEnabled:true,milestoneRules:{enabled:true,tiers:[]}};  wizardStep=1;  renderWizard();}function closeWizard(){const el=$('wizard-overlay');if(el)el.remove();}async function skipWizard(){  try{    await tenantFetch('/.netlify/functions/admin-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({onboardingCompleted:true})});    STATE.onboardingCompleted=true;  }catch(_){}  closeWizard();}function goWizardStep(n){wizardStep=n;const el=$('wizard-body');if(el)el.innerHTML=wizardStepHtml(n);}function wizardStepDots(){  let o='';  for(let i=1;i<=WIZARD_STEPS;i++) o+=`<div class="wz-step-dot ${i<wizardStep?'done':i===wizardStep?'active':''}"></div>`;  return o;}function wizardStepHtml(step){  if(step===1) return `<div class="wz-title">👋 Welcome!</div><div class="wz-subtitle">EngageXU turns your Whop into a points-based community — daily check-ins, a reward store, events, and more. Let's get you set up in a few quick steps.</div><div class="wz-actions"><button class="btn big" style="margin-top:0" onclick="goWizardStep(2)">Let's go →</button></div>`;  if(step===2) return `<div class="wz-title">🎨 Name & Color</div><div class="wz-subtitle">This shows on the leaderboard your members see.</div><label>Community name</label><input id="wz-name" value="${esc(WIZARD_STATE.displayName)}" placeholder="e.g. Trading Legends" oninput="WIZARD_STATE.displayName=this.value"/><label>Accent color</label><input type="color" value="${esc(WIZARD_STATE.primaryColor)}" style="width:60px;height:36px;padding:2px;border-radius:6px;cursor:pointer" oninput="WIZARD_STATE.primaryColor=this.value"/><div class="wz-actions"><button class="btn" style="margin-top:0" onclick="goWizardStep(1)">← Back</button><button class="btn" style="margin-top:0" onclick="WIZARD_STATE.displayName=$('wz-name')?.value||WIZARD_STATE.displayName;goWizardStep(3)">Next →</button></div>`;  if(step===3) return `<div class="wz-title">⚙️ Features</div><div class="wz-subtitle">Turn on what you want — you can always change these later.</div>${[['📅 Daily Check-in (members earn XU every day)','wz-daily',WIZARD_STATE.dailyEnabled,'WIZARD_STATE.dailyEnabled=this.checked'],['🗓 Events Calendar','wz-events',WIZARD_STATE.eventsEnabled,'WIZARD_STATE.eventsEnabled=this.checked'],['🔑 Special Codes (secret codes for XU)','wz-codes',WIZARD_STATE.codesEnabled,'WIZARD_STATE.codesEnabled=this.checked'],['🎯 Referral Milestones','wz-miles',WIZARD_STATE.milestoneRules.enabled,'WIZARD_STATE.milestoneRules.enabled=this.checked']].map(([lbl,id,chk,onch])=>`<label style="display:flex;align-items:center;gap:10px;margin:10px 0;cursor:pointer;text-transform:none;font-family:inherit;font-size:13px;color:var(--card-text)"><input id="${id}" type="checkbox" style="width:auto" ${chk?'checked':''} onchange="${esc(onch)}"/>${esc(lbl)}</label>`).join('')}<div class="wz-actions"><button class="btn" style="margin-top:0" onclick="goWizardStep(2)">← Back</button><button class="btn" style="margin-top:0" onclick="goWizardStep(4)">Next →</button></div>`;  if(step===4) return `<div class="wz-title">🚀 Ready to launch!</div><div class="wz-subtitle">Review your choices and click Launch to save and go live.</div><ul style="font-size:13px;line-height:2.2;color:var(--card-text)"><li>🏷 Name: <b>${esc(WIZARD_STATE.displayName||'(not set)')}</b></li><li>📅 Daily check-in: <b>${WIZARD_STATE.dailyEnabled?'ON':'OFF'}</b></li><li>🗓 Events: <b>${WIZARD_STATE.eventsEnabled?'ON':'OFF'}</b></li><li>🔑 Codes: <b>${WIZARD_STATE.codesEnabled?'ON':'OFF'}</b></li><li>🎯 Referral milestones: <b>${WIZARD_STATE.milestoneRules.enabled?'ON':'OFF'}</b></li></ul><div id="wz-err" class="msg err" style="min-height:0"></div><div class="wz-actions"><button class="btn" style="margin-top:0" onclick="goWizardStep(3)">← Back</button><button class="btn" id="wz-launch" style="margin-top:0;background:linear-gradient(135deg,var(--gold),#d39a11);color:#1a1200;border-color:transparent" onclick="submitWizard()">🚀 Launch!</button></div>`;  return '';}function renderWizard(){  let wrap=$('wizard-overlay');  if(!wrap){wrap=document.createElement('div');wrap.className='wizard-overlay';wrap.id='wizard-overlay';document.body.appendChild(wrap);}  wrap.innerHTML=`<div class="wizard-modal"><span class="wz-skip" onclick="skipWizard()">Skip setup ×</span><div class="wz-steps">${wizardStepDots()}</div><div id="wizard-body">${wizardStepHtml(wizardStep)}</div></div>`;}async function submitWizard(){  const btn=$('wz-launch');const errEl=$('wz-err');  if(btn){btn.disabled=true;btn.textContent='Saving…';}  try{    const payload={branding:{displayName:WIZARD_STATE.displayName,primaryColor:WIZARD_STATE.primaryColor,logoUrl:STATE.branding?.logoUrl||''},dailyEnabled:WIZARD_STATE.dailyEnabled,eventsEnabled:WIZARD_STATE.eventsEnabled,codesEnabled:WIZARD_STATE.codesEnabled,milestoneRules:WIZARD_STATE.milestoneRules,onboardingCompleted:true};    const r=await tenantFetch('/.netlify/functions/admin-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});    const j=await r.json();    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));    STATE.onboardingCompleted=true;    closeWizard();    load();  }catch(e){    if(errEl) errEl.textContent='⚠ '+e.message;    if(btn){btn.disabled=false;btn.textContent='🚀 Launch!';}  }}const TAB_RENDERERS = {  conn: renderConn, billing: renderBilling,  season: renderSeason, daily: renderDaily, store: renderStore,  codes: renderCodes, events: renderEvents, chests: renderChests,  milestones: renderMilestones, automations: renderAutomations, insights: renderInsights,};function toggleRow(checked, onchange, labelOn, labelOff){  return `<label class="hint-small" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px">    <input type="checkbox" style="width:auto" ${checked?'checked':''} onchange="${esc(onchange)}"/>    <span>${checked ? '✅ '+labelOn : '⛔ '+labelOff}</span>  </label>`;}// Khối "cái này là gì + làm theo mấy bước" — đặt ngay đầu mỗi tab, viết bằng
 // câu đơn giản cho người chưa từng dùng app này, không dùng thuật ngữ trần trụi.
@@ -1535,7 +1535,7 @@ function startDragResize(e, idx){  e.preventDefault();  const track = e.currentT
 // trống chưa có event) vẫn tính đúng cột/ngày theo vị trí X — bọc cả khối lịch
 // (.ev-calendar) thành 1 vùng nhận thả lớn, không chỉ riêng ô tiêu đề nhỏ.
 function onEvCalendarDrop(e){  e.preventDefault();  if(dragChip == null) return;  const rect = e.currentTarget.getBoundingClientRect();  const col = Math.min(6, Math.max(0, Math.floor((e.clientX - rect.left) / (rect.width / 7))));  const week = evWeekDates(eventsWeekOffset);  onEvDrop(e, week[col]);}// ===== Lưu tất cả =====
-function buildSavePayload(){  const redeemCodes = {};  (STATE.redeemCodesList||[]).forEach(c=>{    const code = (c.code||'').trim().toLowerCase();    if (!code) return;    const entry = { xu: Number(c.xu)||0 };    if (c.title) entry.title = c.title;    if (c.image) entry.image = c.image;    if (c.startDate) entry.startDate = c.startDate;    if (c.endDate) entry.endDate = c.endDate;    if (c.repeatDays) entry.repeatDays = Number(c.repeatDays);    redeemCodes[code] = entry;  });  return {    seasonVipTopRewards: (STATE.seasonVipTopRewards||[]).map((r,i)=>({rank:(['🥇','🥈','🥉'][i]||'🏅')+' Top '+(i+1),prize:Number(r.xu).toLocaleString()+' XU',xu:Number(r.xu)||0})),    seasonRefTopRewards: (STATE.seasonRefTopRewards||[]).map((r,i)=>({rank:(['🥇','🥈','🥉'][i]||'🏅')+' Top '+(i+1),prize:Number(r.xu).toLocaleString()+' XU',xu:Number(r.xu)||0})),    checkinRewards: STATE.checkinRewards,    rewards: STATE.rewards,    redeemCodes,    codesEnabled: STATE.codesEnabled,    dailyEnabled: STATE.dailyEnabled,    storeEnabled: STATE.storeEnabled,    mailboxEnabled: STATE.mailboxEnabled,    chestRules: STATE.chestRules,    events: STATE.events,    eventsEnabled: STATE.eventsEnabled,    milestoneRules: STATE.milestoneRules,    branding: STATE.branding,    onboardingCompleted: STATE.onboardingCompleted,    promoRewards: STATE.promoRewards,  };}async function saveConfig(){  const r = await tenantFetch('/.netlify/functions/admin-config', {    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(buildSavePayload())  });  const j = await r.json();  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));}async function saveAll(){  const btn = $('save-all');  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Saving...';  try{    await saveConfig();    btn.textContent = '✅ Saved!';    setTimeout(load, 700);  }catch(e){    alert('⚠ Save failed: '+e.message);    btn.disabled = false; btn.textContent = old;  }}// ===== #automations — Auto Promo Codes on Streak =====
+function buildSavePayload(){  const redeemCodes = {};  (STATE.redeemCodesList||[]).forEach(c=>{    const code = (c.code||'').trim().toLowerCase();    if (!code) return;    const entry = { xu: Number(c.xu)||0 };    if (c.title) entry.title = c.title;    if (c.image) entry.image = c.image;    if (c.startDate) entry.startDate = c.startDate;    if (c.endDate) entry.endDate = c.endDate;    if (c.repeatDays) entry.repeatDays = Number(c.repeatDays);    redeemCodes[code] = entry;  });  return {    seasonVipTopRewards: (STATE.seasonVipTopRewards||[]).map((r,i)=>({rank:(['🥇','🥈','🥉'][i]||'🏅')+' Top '+(i+1),prize:Number(r.xu).toLocaleString()+' XU',xu:Number(r.xu)||0})),    seasonRefTopRewards: (STATE.seasonRefTopRewards||[]).map((r,i)=>({rank:(['🥇','🥈','🥉'][i]||'🏅')+' Top '+(i+1),prize:Number(r.xu).toLocaleString()+' XU',xu:Number(r.xu)||0})),    checkinRewards: STATE.checkinRewards,    rewards: STATE.rewards,    redeemCodes,    codesEnabled: STATE.codesEnabled,    dailyEnabled: STATE.dailyEnabled,    storeEnabled: STATE.storeEnabled,    mailboxEnabled: STATE.mailboxEnabled,    chestRules: STATE.chestRules,    events: STATE.events,    eventsEnabled: STATE.eventsEnabled,    milestoneRules: STATE.milestoneRules,    branding: STATE.branding,    onboardingCompleted: STATE.onboardingCompleted,    promoRewards: STATE.promoRewards,    chatbotName: STATE.chatbotName || 'Support Bot',    chatbotEnabled: !!STATE.chatbotEnabled,    dripEnabled: !!STATE.dripEnabled,    dripSequences: STATE.dripSequences || [],  };}async function saveConfig(){  const r = await tenantFetch('/.netlify/functions/admin-config', {    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(buildSavePayload())  });  const j = await r.json();  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));}async function saveAll(){  const btn = $('save-all');  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Saving...';  try{    await saveConfig();    btn.textContent = '✅ Saved!';    setTimeout(load, 700);  }catch(e){    alert('⚠ Save failed: '+e.message);    btn.disabled = false; btn.textContent = old;  }}// ===== #automations — Auto Promo Codes on Streak =====
 function renderAutomations(){
   const pr = STATE.promoRewards || {enabled:false,milestones:[]};
   const msRows = (pr.milestones||[]).map((m,i)=>`
@@ -1547,7 +1547,70 @@ function renderAutomations(){
       <button onclick="STATE.promoRewards.milestones.splice(${i},1);renderAll()" style="margin-left:auto;background:none;border:1px solid rgba(255,80,80,.35);color:#ff6b6b;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:12px">✕</button>
     </div>`).join('');
 
+  // ── Chatbot Settings ──
+  const botName = STATE.chatbotName || '';
+  const botEnabled = !!STATE.chatbotEnabled;
+
+  // ── Drip Sequences ──
+  const dripEnabled = !!STATE.dripEnabled;
+  const seqs = STATE.dripSequences || [];
+  const seqsHtml = seqs.map((seq, si) => {
+    const stepsHtml = (seq.steps||[]).map((step, ti) => `
+      <div style="background:rgba(0,0,0,.25);border-radius:8px;padding:10px 12px;margin-bottom:8px;border:1px solid rgba(255,255,255,.07)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-family:'Oswald',sans-serif;color:var(--cyan);font-size:12px;min-width:48px">Step ${ti+1}</span>
+          <input type="number" min="0" value="${step.delayDays||0}" style="width:52px;text-align:center;font-weight:700;font-family:'Oswald',sans-serif;border:none;border-bottom:2px solid rgba(244,196,65,.5);background:transparent;color:var(--gold);padding:2px 4px;outline:none" oninput="setPath(STATE,'dripSequences.${si}.steps.${ti}.delayDays',Number(this.value)||0)"/>
+          <span style="font-size:12px;color:var(--card-muted)">days delay</span>
+          <button onclick="STATE.dripSequences[${si}].steps.splice(${ti},1);renderAll()" style="margin-left:auto;background:none;border:1px solid rgba(255,80,80,.35);color:#ff6b6b;border-radius:5px;padding:2px 7px;cursor:pointer;font-size:11px">✕</button>
+        </div>
+        <textarea rows="2" placeholder="Message content..." style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:6px;color:var(--text);padding:7px;font-size:12px;resize:vertical;font-family:inherit;box-sizing:border-box" oninput="setPath(STATE,'dripSequences.${si}.steps.${ti}.message',this.value)">${esc(step.message||'')}</textarea>
+        <input value="${esc(step.imageUrl||'')}" placeholder="🖼 Image URL (optional)" style="margin-top:6px;background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:11px;width:100%;box-sizing:border-box" oninput="setPath(STATE,'dripSequences.${si}.steps.${ti}.imageUrl',this.value)"/>
+        <input value="${esc((step.options||[]).join(', '))}" placeholder="Quick reply options (comma separated, e.g. Yes, No, Later)" style="margin-top:6px;background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:11px;width:100%;box-sizing:border-box" oninput="setPath(STATE,'dripSequences.${si}.steps.${ti}.options',this.value.split(',').map(s=>s.trim()).filter(Boolean))"/>
+      </div>`).join('');
+    return `<details class="item" style="margin-bottom:10px">
+      <summary>${esc(seq.name||'(Unnamed sequence)')} <span style="font-size:11px;color:var(--card-muted);font-family:inherit;font-weight:400">${(seq.steps||[]).length} step${(seq.steps||[]).length!==1?'s':''}</span></summary>
+      <div style="margin-top:10px">
+        <label>Sequence name</label>
+        <input value="${esc(seq.name||'')}" placeholder="e.g. Welcome Sequence" oninput="setPath(STATE,'dripSequences.${si}.name',this.value)"/>
+        <label style="margin-top:12px">Steps</label>
+        <div id="drip-steps-${si}">${stepsHtml||'<p class="hint-small">No steps yet.</p>'}</div>
+        <button class="btn" style="margin-top:6px;font-size:12px" onclick="(STATE.dripSequences[${si}].steps=STATE.dripSequences[${si}].steps||[]).push({delayDays:${(seq.steps||[]).length===0?0:1},message:'',imageUrl:'',options:[]});renderAll()">+ Add step</button>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:14px 0 10px"/>
+        <div style="font-family:'Oswald',sans-serif;font-size:12px;color:var(--card-muted);letter-spacing:.06em;margin-bottom:8px">ENROLL MEMBERS</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <select id="drip-target-${si}" style="flex:1;min-width:120px;padding:7px 10px;border-radius:7px;border:1px solid var(--card-border);background:var(--chip-bg);color:var(--card-text);font-size:12px">
+            <option value="warm">🔥 Warm (paid)</option>
+            <option value="cold">❄️ Cold (free)</option>
+            <option value="all">📣 All members</option>
+          </select>
+          <button class="btn" style="font-size:12px;margin-top:0" onclick="enrollDrip(${si})">🎯 Enroll</button>
+          <span id="drip-enroll-status-${si}" style="font-size:11px;color:var(--card-muted)"></span>
+        </div>
+        <button class="btn del" style="margin-top:12px;font-size:12px" onclick="if(!confirm('Delete this sequence?'))return;STATE.dripSequences.splice(${si},1);renderAll()">🗑 Delete sequence</button>
+      </div>
+    </details>`;
+  }).join('');
+
   return `<div class="sect" id="automations">⚡ Automations</div>
+
+  <div class="panel">
+    <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">🤖 Chatbot Settings</div>
+    <div class="hint-small" style="margin-bottom:10px">Tên hiển thị khi bot gửi tin qua Whop Support Chat. Bật poller để bot tự phát hiện khi member reply.</div>
+    <label>Bot display name</label>
+    <input value="${esc(botName)}" placeholder="Support Bot" oninput="setPath(STATE,'chatbotName',this.value)"/>
+    ${toggleRow(botEnabled,"setPath(STATE,'chatbotEnabled',this.checked);renderAll()",'Enabled — bot poller runs every 2 min to detect replies.','Disabled — bot poller is off (saves resources).')}
+  </div>
+
+  <div class="panel">
+    <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">📬 Drip Sequences</div>
+    <div class="hint-small" style="margin-bottom:10px">Chuỗi tin tự động gửi theo lịch (Day 0, Day 3, Day 7…). Enroll members vào sequence — bot gửi từng bước đúng hạn.</div>
+    ${toggleRow(dripEnabled,"setPath(STATE,'dripEnabled',this.checked);renderAll()",'Enabled — drip engine runs daily.','Disabled — no drip messages are sent.')}
+    ${dripEnabled ? `
+      <div style="margin-top:12px">${seqsHtml||'<p class="hint-small">No sequences yet. Add one below.</p>'}</div>
+      <button class="btn" style="margin-top:8px" onclick="STATE.dripSequences.push({id:'seq_'+Date.now().toString(36),name:'New Sequence',steps:[]});renderAll()">+ Add sequence</button>
+    ` : ''}
+  </div>
+
   <div class="panel">
     ${introBlock(
       "When a member hits a streak milestone, they automatically receive a personal discount code in their Mailbox — created live on Whop. No manual work needed.",
@@ -1598,6 +1661,10 @@ function renderInsights(){
     </div>
 
     <textarea id="broadcast-msg" rows="4" placeholder="Type your message here..." style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;resize:vertical;font-family:inherit"></textarea>
+
+    <div style="margin-top:8px">
+      <input id="broadcast-img" placeholder="🖼 Image URL (optional) — paste a public image link" style="background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:12px;width:100%;box-sizing:border-box"/>
+    </div>
 
     <div style="margin-top:12px;margin-bottom:12px">
       <div style="font-size:11px;color:var(--card-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Send via</div>
@@ -1652,9 +1719,9 @@ async function loadMemberStats(){
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
     _memberStats = j;
-    const wc = $('warm-count'); if (wc) wc.textContent = `${j.warmCount} paid · with email`;
-    const cc = $('cold-count'); if (cc) cc.textContent = `${j.coldCount} free · with email`;
-    const ac = $('all-count');  if (ac) ac.textContent = `${j.warmCount + j.coldCount} members with email`;
+    const wc = $('warm-count'); if (wc) wc.textContent = `${j.warmCount} paid`;
+    const cc = $('cold-count'); if (cc) cc.textContent = `${j.coldCount} free`;
+    const ac = $('all-count');  if (ac) ac.textContent = `${j.warmCount + j.coldCount} members`;
     renderMemberStatsList(_broadcastTarget);
   } catch(e) {
     if (list) list.innerHTML = `<span style="font-size:12px;color:#ff6b6b">⚠ ${esc(e.message)}</span>`;
@@ -1692,7 +1759,7 @@ async function sendBroadcast(){
     const r = await tenantFetch('/.netlify/functions/admin-broadcast', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: msg, target: _broadcastTarget, channel: _broadcastChannel }),
+      body: JSON.stringify({ message: msg, target: _broadcastTarget, channel: _broadcastChannel, imageUrl: ($('broadcast-img')&&$('broadcast-img').value.trim())||undefined }),
     });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
@@ -1707,6 +1774,27 @@ async function sendBroadcast(){
   }
 }
 
+
+async function enrollDrip(si) {
+  const seq = STATE.dripSequences[si];
+  if (!seq) return;
+  if (!seq.id) { alert('Save first before enrolling.'); return; }
+  const target = ($('drip-target-' + si) && $('drip-target-' + si).value) || 'warm';
+  const status = $('drip-enroll-status-' + si);
+  if (status) status.textContent = '⏳ Enrolling...';
+  try {
+    const r = await tenantFetch('/.netlify/functions/drip-enroll', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sequenceId: seq.id, target }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    if (status) status.textContent = `✅ Enrolled ${j.enrolled} member${j.enrolled!==1?'s':''} (${j.skipped} already in).`;
+  } catch(e) {
+    if (status) status.textContent = '⚠ ' + e.message;
+  }
+}
 
 setTimeout(load, 300);
     </script>
