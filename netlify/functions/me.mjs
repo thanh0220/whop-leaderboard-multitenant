@@ -75,14 +75,24 @@ export const handler = async (event) => {
 
     // Các lệnh đọc Blobs dưới đây độc lập với nhau — chạy song song thay vì
     // tuần tự để giảm thời gian load trang.
-    const [{ earned, paidUsd, referrals, months, bonus, username }, spentRaw, historyRaw, checkinRaw, paid] =
+    const rewardsWithStock = cfg.rewards || [];
+    const stockReads = rewardsWithStock
+      .filter(r => r.stock != null)
+      .map(r => store.get(tenantKey("stock", companyId, r.id), { type: "text" }).catch(() => null)
+        .then(v => [r.id, v !== null ? Number(v) : r.stock]));
+
+    const [{ earned, paidUsd, referrals, months, bonus, username }, spentRaw, historyRaw, checkinRaw, paid, ...stockEntries] =
       await Promise.all([
         computeEarned(userId, apiKey, companyId, cfg),
         store.get(tenantKey("spent", companyId, userId)).catch(() => null),
         store.get(tenantKey("history", companyId, userId), { type: "json" }).catch(() => null),
         store.get(tenantKey("checkin", companyId, userId), { type: "json" }).catch(() => null),
         isPaidTier(companyId, cfg),
+        ...stockReads,
       ]);
+
+    const stockMap = Object.fromEntries(stockEntries);
+    const isVip = paidUsd > 0;
 
     const spent = Number(spentRaw) || 0;
     const history = Array.isArray(historyRaw) ? historyRaw : [];
@@ -104,8 +114,13 @@ export const handler = async (event) => {
       tier: paid ? "paid" : "free",
       earned, spent, available: Math.max(0, earned - spent),
       paidUsd, referrals, months, bonus, history,
+      isVip,
+      dailyDeal: cfg.dailyDeal || null,
       // Free 2 / Paid 10 — chỉ ẩn phần dư khỏi member nếu tenant downgrade, không xoá data thật.
-      rewards: paid ? cfg.rewards : cfg.rewards.slice(0, 2),
+      rewards: (paid ? cfg.rewards : cfg.rewards.slice(0, 2)).map(r => ({
+        ...r,
+        stockRemaining: r.stock != null ? (stockMap[r.id] ?? r.stock) : null,
+      })),
       points: cfg.points,
       checkin: { today, streak: ck.streak, canClaim: checkinCanClaim, nextStreak, nextReward, calendar: cfg.checkinRewards, shieldActive: !!(ck.shieldExpiresAt && ck.shieldExpiresAt >= today), shieldExpiresAt: ck.shieldExpiresAt || null },
       seasonVip: { ...seasonInfo(), topRewards: cfg.seasonVipTopRewards },

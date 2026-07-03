@@ -68,7 +68,7 @@ const ALLOWED_KEYS = [
   "onboardingCompleted",
   "digestEnabled",
   "digestEmail",
-  "promoRewards",
+  "dailyDeal",
 ];
 
 // GET: trả toàn bộ config tenant (trừ whopApiKey/setupSecret — không bao giờ
@@ -123,7 +123,7 @@ export const handler = async (event) => {
         onboardingCompleted: !!cfg.onboardingCompleted,
         digestEnabled: !!cfg.digestEnabled,
         digestEmail: cfg.digestEmail || "",
-        promoRewards: cfg.promoRewards || { enabled: false, milestones: [] },
+        dailyDeal: cfg.dailyDeal || null,
       });
     }
 
@@ -160,7 +160,7 @@ export const handler = async (event) => {
         }
         if (r.payload && typeof r.payload === "object") {
           const { kind } = r.payload;
-          if (kind && !["code", "link", "ea"].includes(kind)) {
+          if (kind && !["code", "link", "ea", "lucky-box"].includes(kind)) {
             return json(400, { error: `Invalid reward payload kind: ${kind}` });
           }
         }
