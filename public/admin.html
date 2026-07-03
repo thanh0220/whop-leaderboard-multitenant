@@ -1399,8 +1399,6 @@
         <a href="#chests" onclick="switchTab('chests');return false;">📬 Mailbox</a>
         <a href="#milestones" onclick="switchTab('milestones');return false;">🎯 Milestones</a>
         <a href="#season" onclick="switchTab('season');return false;">🏆 Season</a>
-        <a href="#automations" onclick="switchTab('automations');return false;">⚡ Automations</a>
-        <a href="#insights" onclick="switchTab('insights');return false;">👥 Insights</a>
       </div>
       <div id="content"><div class="state">Loading...</div></div>
     </div>
@@ -1434,9 +1432,9 @@ const BADGE_LABEL={hot:'🔥 Hot',new:'⚡ New',vip:'👑 VIP',bestseller:'⭐ B
 // (text/number/textarea) ghi trực tiếp vào STATE qua setPath() KHÔNG render
 // lại — tránh mất focus/con trỏ khi đang gõ. Hành động cấu trúc (thêm/xoá
 // dòng, đổi loại payload, upload ảnh xong) mới gọi renderAll().
-let STATE = null;let CONFIGURED = false;let IS_PAID = false;let TIER_LEVEL = 0;let activeTab = (location.hash||'#conn').slice(1);function setPath(obj, path, value){  const parts = path.split('.');  let cur = obj;  for (let i=0;i<parts.length-1;i++) cur = cur[parts[i]];  cur[parts[parts.length-1]] = value;}async function loadOnce(){  const r = await tenantFetch('/.netlify/functions/admin-config');  const j = await r.json();  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));  return j;}async function load(){  const maxTries = 6;  let lastErr = null;  for (let i = 0; i < maxTries; i++) {    try{      const j = await loadOnce();      CONFIGURED = j.configured;      IS_PAID = !!j.isPaid; TIER_LEVEL = j.tierLevel ?? 0;      STATE = {        whopCompanyId: j.whopCompanyId || '',        seasonVipTopRewards: j.seasonVipTopRewards || [],        seasonRefTopRewards: j.seasonRefTopRewards || [],        checkinRewards: j.checkinRewards || [],        rewards: j.rewards || [],        redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>          typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),        codesEnabled: j.codesEnabled !== false,        dailyEnabled: j.dailyEnabled !== false,        storeEnabled: j.storeEnabled !== false,        mailboxEnabled: j.mailboxEnabled !== false,        chestRules: j.chestRules || {enabled:true,thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},        events: normalizeEvents(j.events, [3,10,9999,9999][TIER_LEVEL]??3),        eventsEnabled: j.eventsEnabled !== false,        milestoneRules: j.milestoneRules || {enabled:false,tiers:[]},        branding: j.branding || {displayName:'',primaryColor:'#7c3aed',logoUrl:''},        onboardingCompleted: !!j.onboardingCompleted,        promoRewards: j.promoRewards || {enabled:false,milestones:[{streakDays:7,discountPct:10},{streakDays:14,discountPct:15},{streakDays:30,discountPct:20}]},        chatbotName: j.chatbotName || 'Support Bot',        chatbotEnabled: !!j.chatbotEnabled,        dripEnabled: !!j.dripEnabled,        dripSequences: j.dripSequences || [],      };      renderAll();      if(!STATE.onboardingCompleted&&STATE.branding?.displayName==='Your Community'&&(!STATE.rewards||STATE.rewards.length===0)) showWizard();      return;    }catch(e){      lastErr = e;      $('content').innerHTML = `<div class="state">Waiting for Whop authentication... (${i+1}/${maxTries})</div>`;      await new Promise(res=>setTimeout(res,1200));    }  }  $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${lastErr.message}</div></div>`;}// ===== Referral helpers =====
+let STATE = null;let CONFIGURED = false;let IS_PAID = false;let TIER_LEVEL = 0;let activeTab = (location.hash||'#conn').slice(1);function setPath(obj, path, value){  const parts = path.split('.');  let cur = obj;  for (let i=0;i<parts.length-1;i++) cur = cur[parts[i]];  cur[parts[parts.length-1]] = value;}async function loadOnce(){  const r = await tenantFetch('/.netlify/functions/admin-config');  const j = await r.json();  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));  return j;}async function load(){  const maxTries = 6;  let lastErr = null;  for (let i = 0; i < maxTries; i++) {    try{      const j = await loadOnce();      CONFIGURED = j.configured;      IS_PAID = !!j.isPaid; TIER_LEVEL = j.tierLevel ?? 0;      STATE = {        whopCompanyId: j.whopCompanyId || '',        seasonVipTopRewards: j.seasonVipTopRewards || [],        seasonRefTopRewards: j.seasonRefTopRewards || [],        checkinRewards: j.checkinRewards || [],        rewards: j.rewards || [],        redeemCodesList: Object.entries(j.redeemCodes || {}).map(([code,v])=>          typeof v === 'number' ? {code,xu:v} : {code,xu:v.xu,title:v.title||'',image:v.image||'',startDate:v.startDate||'',endDate:v.endDate||'',repeatDays:v.repeatDays||''}),        codesEnabled: j.codesEnabled !== false,        dailyEnabled: j.dailyEnabled !== false,        storeEnabled: j.storeEnabled !== false,        mailboxEnabled: j.mailboxEnabled !== false,        chestRules: j.chestRules || {enabled:true,thresholds:[],rewardRange:{},buyerReward:{min:0,max:0},expiryHours:48},        events: normalizeEvents(j.events, [3,10,9999,9999][TIER_LEVEL]??3),        eventsEnabled: j.eventsEnabled !== false,        milestoneRules: j.milestoneRules || {enabled:false,tiers:[]},        branding: j.branding || {displayName:'',primaryColor:'#7c3aed',logoUrl:''},        onboardingCompleted: !!j.onboardingCompleted,      };      renderAll();      if(!STATE.onboardingCompleted&&STATE.branding?.displayName==='Your Community'&&(!STATE.rewards||STATE.rewards.length===0)) showWizard();      return;    }catch(e){      lastErr = e;      $('content').innerHTML = `<div class="state">Waiting for Whop authentication... (${i+1}/${maxTries})</div>`;      await new Promise(res=>setTimeout(res,1200));    }  }  $('content').innerHTML = `<div class="panel"><div class="msg err">⚠ ${lastErr.message}</div></div>`;}// ===== Referral helpers =====
 // ===== Onboarding Wizard =====
-let WIZARD_STATE={};let wizardStep=1;const WIZARD_STEPS=4;function showWizard(){  WIZARD_STATE={displayName:'',primaryColor:'#7c3aed',dailyEnabled:true,eventsEnabled:true,codesEnabled:true,milestoneRules:{enabled:true,tiers:[]}};  wizardStep=1;  renderWizard();}function closeWizard(){const el=$('wizard-overlay');if(el)el.remove();}async function skipWizard(){  try{    await tenantFetch('/.netlify/functions/admin-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({onboardingCompleted:true})});    STATE.onboardingCompleted=true;  }catch(_){}  closeWizard();}function goWizardStep(n){wizardStep=n;const el=$('wizard-body');if(el)el.innerHTML=wizardStepHtml(n);}function wizardStepDots(){  let o='';  for(let i=1;i<=WIZARD_STEPS;i++) o+=`<div class="wz-step-dot ${i<wizardStep?'done':i===wizardStep?'active':''}"></div>`;  return o;}function wizardStepHtml(step){  if(step===1) return `<div class="wz-title">👋 Welcome!</div><div class="wz-subtitle">EngageXU turns your Whop into a points-based community — daily check-ins, a reward store, events, and more. Let's get you set up in a few quick steps.</div><div class="wz-actions"><button class="btn big" style="margin-top:0" onclick="goWizardStep(2)">Let's go →</button></div>`;  if(step===2) return `<div class="wz-title">🎨 Name & Color</div><div class="wz-subtitle">This shows on the leaderboard your members see.</div><label>Community name</label><input id="wz-name" value="${esc(WIZARD_STATE.displayName)}" placeholder="e.g. Trading Legends" oninput="WIZARD_STATE.displayName=this.value"/><label>Accent color</label><input type="color" value="${esc(WIZARD_STATE.primaryColor)}" style="width:60px;height:36px;padding:2px;border-radius:6px;cursor:pointer" oninput="WIZARD_STATE.primaryColor=this.value"/><div class="wz-actions"><button class="btn" style="margin-top:0" onclick="goWizardStep(1)">← Back</button><button class="btn" style="margin-top:0" onclick="WIZARD_STATE.displayName=$('wz-name')?.value||WIZARD_STATE.displayName;goWizardStep(3)">Next →</button></div>`;  if(step===3) return `<div class="wz-title">⚙️ Features</div><div class="wz-subtitle">Turn on what you want — you can always change these later.</div>${[['📅 Daily Check-in (members earn XU every day)','wz-daily',WIZARD_STATE.dailyEnabled,'WIZARD_STATE.dailyEnabled=this.checked'],['🗓 Events Calendar','wz-events',WIZARD_STATE.eventsEnabled,'WIZARD_STATE.eventsEnabled=this.checked'],['🔑 Special Codes (secret codes for XU)','wz-codes',WIZARD_STATE.codesEnabled,'WIZARD_STATE.codesEnabled=this.checked'],['🎯 Referral Milestones','wz-miles',WIZARD_STATE.milestoneRules.enabled,'WIZARD_STATE.milestoneRules.enabled=this.checked']].map(([lbl,id,chk,onch])=>`<label style="display:flex;align-items:center;gap:10px;margin:10px 0;cursor:pointer;text-transform:none;font-family:inherit;font-size:13px;color:var(--card-text)"><input id="${id}" type="checkbox" style="width:auto" ${chk?'checked':''} onchange="${esc(onch)}"/>${esc(lbl)}</label>`).join('')}<div class="wz-actions"><button class="btn" style="margin-top:0" onclick="goWizardStep(2)">← Back</button><button class="btn" style="margin-top:0" onclick="goWizardStep(4)">Next →</button></div>`;  if(step===4) return `<div class="wz-title">🚀 Ready to launch!</div><div class="wz-subtitle">Review your choices and click Launch to save and go live.</div><ul style="font-size:13px;line-height:2.2;color:var(--card-text)"><li>🏷 Name: <b>${esc(WIZARD_STATE.displayName||'(not set)')}</b></li><li>📅 Daily check-in: <b>${WIZARD_STATE.dailyEnabled?'ON':'OFF'}</b></li><li>🗓 Events: <b>${WIZARD_STATE.eventsEnabled?'ON':'OFF'}</b></li><li>🔑 Codes: <b>${WIZARD_STATE.codesEnabled?'ON':'OFF'}</b></li><li>🎯 Referral milestones: <b>${WIZARD_STATE.milestoneRules.enabled?'ON':'OFF'}</b></li></ul><div id="wz-err" class="msg err" style="min-height:0"></div><div class="wz-actions"><button class="btn" style="margin-top:0" onclick="goWizardStep(3)">← Back</button><button class="btn" id="wz-launch" style="margin-top:0;background:linear-gradient(135deg,var(--gold),#d39a11);color:#1a1200;border-color:transparent" onclick="submitWizard()">🚀 Launch!</button></div>`;  return '';}function renderWizard(){  let wrap=$('wizard-overlay');  if(!wrap){wrap=document.createElement('div');wrap.className='wizard-overlay';wrap.id='wizard-overlay';document.body.appendChild(wrap);}  wrap.innerHTML=`<div class="wizard-modal"><span class="wz-skip" onclick="skipWizard()">Skip setup ×</span><div class="wz-steps">${wizardStepDots()}</div><div id="wizard-body">${wizardStepHtml(wizardStep)}</div></div>`;}async function submitWizard(){  const btn=$('wz-launch');const errEl=$('wz-err');  if(btn){btn.disabled=true;btn.textContent='Saving…';}  try{    const payload={branding:{displayName:WIZARD_STATE.displayName,primaryColor:WIZARD_STATE.primaryColor,logoUrl:STATE.branding?.logoUrl||''},dailyEnabled:WIZARD_STATE.dailyEnabled,eventsEnabled:WIZARD_STATE.eventsEnabled,codesEnabled:WIZARD_STATE.codesEnabled,milestoneRules:WIZARD_STATE.milestoneRules,onboardingCompleted:true};    const r=await tenantFetch('/.netlify/functions/admin-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});    const j=await r.json();    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));    STATE.onboardingCompleted=true;    closeWizard();    load();  }catch(e){    if(errEl) errEl.textContent='⚠ '+e.message;    if(btn){btn.disabled=false;btn.textContent='🚀 Launch!';}  }}const TAB_RENDERERS = {  conn: renderConn, billing: renderBilling,  season: renderSeason, daily: renderDaily, store: renderStore,  codes: renderCodes, events: renderEvents, chests: renderChests,  milestones: renderMilestones, automations: renderAutomations, insights: renderInsights,};function toggleRow(checked, onchange, labelOn, labelOff){  return `<label class="hint-small" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px">    <input type="checkbox" style="width:auto" ${checked?'checked':''} onchange="${esc(onchange)}"/>    <span>${checked ? '✅ '+labelOn : '⛔ '+labelOff}</span>  </label>`;}// Khối "cái này là gì + làm theo mấy bước" — đặt ngay đầu mỗi tab, viết bằng
+let WIZARD_STATE={};let wizardStep=1;const WIZARD_STEPS=4;function showWizard(){  WIZARD_STATE={displayName:'',primaryColor:'#7c3aed',dailyEnabled:true,eventsEnabled:true,codesEnabled:true,milestoneRules:{enabled:true,tiers:[]}};  wizardStep=1;  renderWizard();}function closeWizard(){const el=$('wizard-overlay');if(el)el.remove();}async function skipWizard(){  try{    await tenantFetch('/.netlify/functions/admin-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({onboardingCompleted:true})});    STATE.onboardingCompleted=true;  }catch(_){}  closeWizard();}function goWizardStep(n){wizardStep=n;const el=$('wizard-body');if(el)el.innerHTML=wizardStepHtml(n);}function wizardStepDots(){  let o='';  for(let i=1;i<=WIZARD_STEPS;i++) o+=`<div class="wz-step-dot ${i<wizardStep?'done':i===wizardStep?'active':''}"></div>`;  return o;}function wizardStepHtml(step){  if(step===1) return `<div class="wz-title">👋 Welcome!</div><div class="wz-subtitle">EngageXU turns your Whop into a points-based community — daily check-ins, a reward store, events, and more. Let's get you set up in a few quick steps.</div><div class="wz-actions"><button class="btn big" style="margin-top:0" onclick="goWizardStep(2)">Let's go →</button></div>`;  if(step===2) return `<div class="wz-title">🎨 Name & Color</div><div class="wz-subtitle">This shows on the leaderboard your members see.</div><label>Community name</label><input id="wz-name" value="${esc(WIZARD_STATE.displayName)}" placeholder="e.g. Trading Legends" oninput="WIZARD_STATE.displayName=this.value"/><label>Accent color</label><input type="color" value="${esc(WIZARD_STATE.primaryColor)}" style="width:60px;height:36px;padding:2px;border-radius:6px;cursor:pointer" oninput="WIZARD_STATE.primaryColor=this.value"/><div class="wz-actions"><button class="btn" style="margin-top:0" onclick="goWizardStep(1)">← Back</button><button class="btn" style="margin-top:0" onclick="WIZARD_STATE.displayName=$('wz-name')?.value||WIZARD_STATE.displayName;goWizardStep(3)">Next →</button></div>`;  if(step===3) return `<div class="wz-title">⚙️ Features</div><div class="wz-subtitle">Turn on what you want — you can always change these later.</div>${[['📅 Daily Check-in (members earn XU every day)','wz-daily',WIZARD_STATE.dailyEnabled,'WIZARD_STATE.dailyEnabled=this.checked'],['🗓 Events Calendar','wz-events',WIZARD_STATE.eventsEnabled,'WIZARD_STATE.eventsEnabled=this.checked'],['🔑 Special Codes (secret codes for XU)','wz-codes',WIZARD_STATE.codesEnabled,'WIZARD_STATE.codesEnabled=this.checked'],['🎯 Referral Milestones','wz-miles',WIZARD_STATE.milestoneRules.enabled,'WIZARD_STATE.milestoneRules.enabled=this.checked']].map(([lbl,id,chk,onch])=>`<label style="display:flex;align-items:center;gap:10px;margin:10px 0;cursor:pointer;text-transform:none;font-family:inherit;font-size:13px;color:var(--card-text)"><input id="${id}" type="checkbox" style="width:auto" ${chk?'checked':''} onchange="${esc(onch)}"/>${esc(lbl)}</label>`).join('')}<div class="wz-actions"><button class="btn" style="margin-top:0" onclick="goWizardStep(2)">← Back</button><button class="btn" style="margin-top:0" onclick="goWizardStep(4)">Next →</button></div>`;  if(step===4) return `<div class="wz-title">🚀 Ready to launch!</div><div class="wz-subtitle">Review your choices and click Launch to save and go live.</div><ul style="font-size:13px;line-height:2.2;color:var(--card-text)"><li>🏷 Name: <b>${esc(WIZARD_STATE.displayName||'(not set)')}</b></li><li>📅 Daily check-in: <b>${WIZARD_STATE.dailyEnabled?'ON':'OFF'}</b></li><li>🗓 Events: <b>${WIZARD_STATE.eventsEnabled?'ON':'OFF'}</b></li><li>🔑 Codes: <b>${WIZARD_STATE.codesEnabled?'ON':'OFF'}</b></li><li>🎯 Referral milestones: <b>${WIZARD_STATE.milestoneRules.enabled?'ON':'OFF'}</b></li></ul><div id="wz-err" class="msg err" style="min-height:0"></div><div class="wz-actions"><button class="btn" style="margin-top:0" onclick="goWizardStep(3)">← Back</button><button class="btn" id="wz-launch" style="margin-top:0;background:linear-gradient(135deg,var(--gold),#d39a11);color:#1a1200;border-color:transparent" onclick="submitWizard()">🚀 Launch!</button></div>`;  return '';}function renderWizard(){  let wrap=$('wizard-overlay');  if(!wrap){wrap=document.createElement('div');wrap.className='wizard-overlay';wrap.id='wizard-overlay';document.body.appendChild(wrap);}  wrap.innerHTML=`<div class="wizard-modal"><span class="wz-skip" onclick="skipWizard()">Skip setup ×</span><div class="wz-steps">${wizardStepDots()}</div><div id="wizard-body">${wizardStepHtml(wizardStep)}</div></div>`;}async function submitWizard(){  const btn=$('wz-launch');const errEl=$('wz-err');  if(btn){btn.disabled=true;btn.textContent='Saving…';}  try{    const payload={branding:{displayName:WIZARD_STATE.displayName,primaryColor:WIZARD_STATE.primaryColor,logoUrl:STATE.branding?.logoUrl||''},dailyEnabled:WIZARD_STATE.dailyEnabled,eventsEnabled:WIZARD_STATE.eventsEnabled,codesEnabled:WIZARD_STATE.codesEnabled,milestoneRules:WIZARD_STATE.milestoneRules,onboardingCompleted:true};    const r=await tenantFetch('/.netlify/functions/admin-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});    const j=await r.json();    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));    STATE.onboardingCompleted=true;    closeWizard();    load();  }catch(e){    if(errEl) errEl.textContent='⚠ '+e.message;    if(btn){btn.disabled=false;btn.textContent='🚀 Launch!';}  }}const TAB_RENDERERS = {  conn: renderConn, billing: renderBilling,  season: renderSeason, daily: renderDaily, store: renderStore,  codes: renderCodes, events: renderEvents, chests: renderChests,  milestones: renderMilestones,};function toggleRow(checked, onchange, labelOn, labelOff){  return `<label class="hint-small" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px">    <input type="checkbox" style="width:auto" ${checked?'checked':''} onchange="${esc(onchange)}"/>    <span>${checked ? '✅ '+labelOn : '⛔ '+labelOff}</span>  </label>`;}// Khối "cái này là gì + làm theo mấy bước" — đặt ngay đầu mỗi tab, viết bằng
 // câu đơn giản cho người chưa từng dùng app này, không dùng thuật ngữ trần trụi.
 function introBlock(what, steps){  return `<div class="intro-card">    <p class="intro-what">${what}</p>    <ol class="intro-steps">${(steps||[]).map(s=>`<li>${s}</li>`).join('')}</ol>  </div>`;}// Cảnh báo khi chưa có reward nào trong Store — Milestones/Spin/Auction đều
 // có thể cần chọn 1 item Store làm quà; nút nhảy thẳng sang tab Store cho đỡ
@@ -1535,180 +1533,10 @@ function startDragResize(e, idx){  e.preventDefault();  const track = e.currentT
 // trống chưa có event) vẫn tính đúng cột/ngày theo vị trí X — bọc cả khối lịch
 // (.ev-calendar) thành 1 vùng nhận thả lớn, không chỉ riêng ô tiêu đề nhỏ.
 function onEvCalendarDrop(e){  e.preventDefault();  if(dragChip == null) return;  const rect = e.currentTarget.getBoundingClientRect();  const col = Math.min(6, Math.max(0, Math.floor((e.clientX - rect.left) / (rect.width / 7))));  const week = evWeekDates(eventsWeekOffset);  onEvDrop(e, week[col]);}// ===== Lưu tất cả =====
-function buildSavePayload(){  const redeemCodes = {};  (STATE.redeemCodesList||[]).forEach(c=>{    const code = (c.code||'').trim().toLowerCase();    if (!code) return;    const entry = { xu: Number(c.xu)||0 };    if (c.title) entry.title = c.title;    if (c.image) entry.image = c.image;    if (c.startDate) entry.startDate = c.startDate;    if (c.endDate) entry.endDate = c.endDate;    if (c.repeatDays) entry.repeatDays = Number(c.repeatDays);    redeemCodes[code] = entry;  });  return {    seasonVipTopRewards: (STATE.seasonVipTopRewards||[]).map((r,i)=>({rank:(['🥇','🥈','🥉'][i]||'🏅')+' Top '+(i+1),prize:Number(r.xu).toLocaleString()+' XU',xu:Number(r.xu)||0})),    seasonRefTopRewards: (STATE.seasonRefTopRewards||[]).map((r,i)=>({rank:(['🥇','🥈','🥉'][i]||'🏅')+' Top '+(i+1),prize:Number(r.xu).toLocaleString()+' XU',xu:Number(r.xu)||0})),    checkinRewards: STATE.checkinRewards,    rewards: STATE.rewards,    redeemCodes,    codesEnabled: STATE.codesEnabled,    dailyEnabled: STATE.dailyEnabled,    storeEnabled: STATE.storeEnabled,    mailboxEnabled: STATE.mailboxEnabled,    chestRules: STATE.chestRules,    events: STATE.events,    eventsEnabled: STATE.eventsEnabled,    milestoneRules: STATE.milestoneRules,    branding: STATE.branding,    onboardingCompleted: STATE.onboardingCompleted,    promoRewards: STATE.promoRewards,    chatbotName: STATE.chatbotName || 'Support Bot',    chatbotEnabled: !!STATE.chatbotEnabled,    dripEnabled: !!STATE.dripEnabled,    dripSequences: STATE.dripSequences || [],  };}async function saveConfig(){  const r = await tenantFetch('/.netlify/functions/admin-config', {    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(buildSavePayload())  });  const j = await r.json();  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));}async function saveAll(){  const btn = $('save-all');  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Saving...';  try{    await saveConfig();    btn.textContent = '✅ Saved!';    setTimeout(load, 700);  }catch(e){    alert('⚠ Save failed: '+e.message);    btn.disabled = false; btn.textContent = old;  }}// ===== #automations — Auto Promo Codes on Streak =====
-function renderAutomations(){
-  const pr = STATE.promoRewards || {enabled:false,milestones:[]};
-  const msRows = (pr.milestones||[]).map((m,i)=>`
-    <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
-      <span style="font-size:13px;color:var(--card-text);min-width:80px">Day&nbsp;<input type="number" min="1" max="365" value="${m.streakDays||0}" style="width:52px;text-align:center;font-weight:700;font-family:'Oswald',sans-serif;border:none;border-bottom:2px solid rgba(244,196,65,.5);background:transparent;color:var(--gold);padding:2px 4px;outline:none" oninput="setPath(STATE,'promoRewards.milestones.${i}.streakDays',Number(this.value)||1)"/></span>
-      <span style="font-size:13px;color:var(--card-muted)">→&nbsp;</span>
-      <input type="number" min="1" max="100" value="${m.discountPct||10}" style="width:52px;text-align:center;font-weight:700;font-family:'Oswald',sans-serif;border:none;border-bottom:2px solid rgba(39,227,255,.45);background:transparent;color:var(--cyan);padding:2px 4px;outline:none" oninput="setPath(STATE,'promoRewards.milestones.${i}.discountPct',Number(this.value)||10)"/>
-      <span style="font-size:13px;color:var(--card-muted)">% off coupon</span>
-      <button onclick="STATE.promoRewards.milestones.splice(${i},1);renderAll()" style="margin-left:auto;background:none;border:1px solid rgba(255,80,80,.35);color:#ff6b6b;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:12px">✕</button>
-    </div>`).join('');
-
-  return `<div class="sect" id="automations">⚡ Automations</div>
-
-  <div class="panel">
-    ${introBlock(
-      "When a member hits a streak milestone, they automatically receive a personal discount code in their Mailbox — created live on Whop. No manual work needed.",
-      ["Add the promo_code:create permission in Whop Developer console","Turn on the feature below","Set your streak milestones and discount %","Save — done"]
-    )}
-
-    <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase;margin:18px 0 8px">🏷️ Auto Promo Codes on Streak</div>
-    <div class="hint-small" style="margin-bottom:10px">Member checks in X days in a row → they get a personal % discount coupon code on Whop automatically.</div>
-    ${toggleRow(pr.enabled,"setPath(STATE,'promoRewards.enabled',this.checked);renderAll()",'Enabled — streak milestones auto-create a coupon on Whop.','Disabled — no automatic coupon codes are created.')}
-    ${pr.enabled ? `
-      <div style="margin-top:12px">${msRows||'<p class="hint-small">No milestones yet.</p>'}</div>
-      <button class="btn" style="margin-top:8px" onclick="STATE.promoRewards.milestones.push({streakDays:7,discountPct:10});renderAll()">+ Add streak milestone</button>
-    ` : ''}
-  </div>`;
+function buildSavePayload(){  const redeemCodes = {};  (STATE.redeemCodesList||[]).forEach(c=>{    const code = (c.code||'').trim().toLowerCase();    if (!code) return;    const entry = { xu: Number(c.xu)||0 };    if (c.title) entry.title = c.title;    if (c.image) entry.image = c.image;    if (c.startDate) entry.startDate = c.startDate;    if (c.endDate) entry.endDate = c.endDate;    if (c.repeatDays) entry.repeatDays = Number(c.repeatDays);    redeemCodes[code] = entry;  });  return {    seasonVipTopRewards: (STATE.seasonVipTopRewards||[]).map((r,i)=>({rank:(['🥇','🥈','🥉'][i]||'🏅')+' Top '+(i+1),prize:Number(r.xu).toLocaleString()+' XU',xu:Number(r.xu)||0})),    seasonRefTopRewards: (STATE.seasonRefTopRewards||[]).map((r,i)=>({rank:(['🥇','🥈','🥉'][i]||'🏅')+' Top '+(i+1),prize:Number(r.xu).toLocaleString()+' XU',xu:Number(r.xu)||0})),    checkinRewards: STATE.checkinRewards,    rewards: STATE.rewards,    redeemCodes,    codesEnabled: STATE.codesEnabled,    dailyEnabled: STATE.dailyEnabled,    storeEnabled: STATE.storeEnabled,    mailboxEnabled: STATE.mailboxEnabled,    chestRules: STATE.chestRules,    events: STATE.events,    eventsEnabled: STATE.eventsEnabled,    milestoneRules: STATE.milestoneRules,    branding: STATE.branding,    onboardingCompleted: STATE.onboardingCompleted,  };}async function saveConfig(){  const r = await tenantFetch('/.netlify/functions/admin-config', {    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(buildSavePayload())  });  const j = await r.json();  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));}async function saveAll(){  const btn = $('save-all');  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Saving...';  try{    await saveConfig();    btn.textContent = '✅ Saved!';    setTimeout(load, 700);  }catch(e){    alert('⚠ Save failed: '+e.message);    btn.disabled = false; btn.textContent = old;  }}// ===== #automations — Auto Promo Codes on Streak =====
 }
 
-// ===== #insights — Member Insights (admin-only, read-only) =====
-function renderInsights(){
-  return `<div class="sect" id="insights">👥 Members</div>
 
-  <div class="panel">
-    <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">📢 Broadcast Message</div>
-    <div class="hint-small" style="margin-bottom:14px">Send a message to all members — they'll see it in their Mailbox. May take 10–30 seconds for large communities.</div>
-
-    <div style="margin-bottom:12px">
-      <button class="btn" id="member-stats-btn" onclick="loadMemberStats()" style="font-size:12px">🔄 Load member stats</button>
-      <div id="member-stats-list" style="margin-top:10px"></div>
-    </div>
-
-    <textarea id="broadcast-msg" rows="4" placeholder="Type your message here..." style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;resize:vertical;font-family:inherit"></textarea>
-
-    <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
-      <button class="btn" id="broadcast-btn" onclick="sendBroadcast()" style="background:linear-gradient(135deg,var(--gold),#d39a11);color:#1a1200;border-color:transparent">📢 Send message</button>
-      <span id="broadcast-status" style="font-size:12px;color:var(--card-muted)"></span>
-    </div>
-    <div id="broadcast-debug" style="display:none"></div>
-  </div>`;
-}
-
-let _broadcastTarget = 'all';
-let _broadcastChannel = 'mailbox';
-
-async function loadMemberStats(){
-  const btn = $('member-stats-btn');
-  const list = $('member-stats-list');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Loading...'; }
-  if (list) list.innerHTML = '';
-  try {
-    const r = await tenantFetch('/.netlify/functions/admin-broadcast');
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
-    const total = (j.warmCount || 0) + (j.coldCount || 0);
-    const members = [...(j.warm||[]), ...(j.cold||[])];
-    if (list) list.innerHTML = `<div style="font-size:11px;color:var(--card-muted);margin-bottom:6px">${total} members will receive this message:</div>`
-      + members.map(m => `<span style="display:inline-block;font-size:11px;background:var(--chip-bg);border-radius:5px;padding:2px 7px;margin:2px 3px 2px 0;color:var(--card-text)">${esc(m.username)}</span>`).join('');
-  } catch(e) {
-    if (list) list.innerHTML = `<span style="font-size:12px;color:#ff6b6b">⚠ ${esc(e.message)}</span>`;
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🔄 Load member stats'; }
-  }
-}
-
-async function sendBroadcast(){
-  const msgEl = $('broadcast-msg');
-  const msg = (msgEl && msgEl.value || '').trim();
-  if (!msg) { alert('Type your message first.'); return; }
-  if (!confirm(`Send this message to ALL members via In-app Mailbox?\n\n"${msg.slice(0,120)}${msg.length>120?'…':''}"`)) return;
-  _broadcastTarget = 'all';
-  _broadcastChannel = 'mailbox';
-
-  const btn = $('broadcast-btn');
-  const status = $('broadcast-status');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sending...'; }
-
-  // Mailbox-only: fast blob writes, use sync function
-  if (_broadcastChannel === 'mailbox') {
-    if (status) status.textContent = 'Sending, please wait...';
-    try {
-      const r = await tenantFetch('/.netlify/functions/admin-broadcast', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg, target: _broadcastTarget, channel: 'mailbox' }),
-      });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
-      const failTxt = j.failed ? ` (${j.failed} failed)` : '';
-      if (status) status.textContent = `✅ Sent to ${j.sent} member${j.sent !== 1 ? 's' : ''}${failTxt}`;
-      if (msgEl) msgEl.value = '';
-    } catch(e) {
-      if (status) status.textContent = '⚠ ' + e.message;
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = '📢 Send message'; }
-    }
-    return;
-  }
-
-  // Whop Support Chat (or both): use background function — no timeout risk
-  const jobId = 'bcast_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
-  if (status) status.textContent = 'Starting broadcast...';
-  try {
-    const bgResp = await tenantFetch('/.netlify/functions/admin-broadcast-background', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jobId, message: msg, target: _broadcastTarget, channel: _broadcastChannel }),
-    });
-    // Background function returns 202 — anything else means it's not deployed
-    if (!bgResp.ok && bgResp.status !== 202) throw new Error(`Background function not available (HTTP ${bgResp.status}). Re-upload admin-broadcast-background.mjs to Netlify.`);
-    if (msgEl) msgEl.value = '';
-    if (status) status.textContent = 'Sending in background — checking progress...';
-
-    let polls = 0;
-    const timer = setInterval(async () => {
-      polls++;
-      if (polls > 90) { // 3 min max
-        clearInterval(timer);
-        if (status) status.textContent = '⚠ Still sending (taking longer than expected). Refresh to check again.';
-        if (btn) { btn.disabled = false; btn.textContent = '📢 Send message'; }
-        return;
-      }
-      try {
-        const baseQS = tenantQS(); // '?companyId=xxx' or ''
-        const pollUrl = '/.netlify/functions/admin-broadcast' + (baseQS ? baseQS + '&jobId=' + encodeURIComponent(jobId) : '?jobId=' + encodeURIComponent(jobId));
-        const pr = await fetch(pollUrl);
-        const pj = await pr.json();
-        if (pj.done) {
-          clearInterval(timer);
-          if (pj.error) {
-            if (status) status.textContent = `⚠ Error: ${pj.error}`;
-          } else {
-            const failTxt = pj.failed ? ` (${pj.failed} failed)` : '';
-            const errSample = pj.errors?.length ? ' — ' + pj.errors[0] : '';
-            if (status) status.textContent = `✅ Sent to ${pj.sent} of ${pj.total} member${pj.total !== 1 ? 's' : ''}${failTxt}${errSample}`;
-            // Log full debug info to console for diagnosis
-            if (pj.debugChanSuccess || pj.debugChanFail || pj.errors?.length) {
-              console.group('[Broadcast Debug]');
-              console.log('SUCCESS chan:', pj.debugChanSuccess);
-              console.log('FAIL sample:', pj.debugChanFail);
-              console.log('All errors:', pj.errors);
-              console.groupEnd();
-              // Show debug button
-              const debugEl = document.getElementById('broadcast-debug');
-              if (debugEl) {
-                debugEl.style.display = 'block';
-                debugEl.innerHTML = `<details style="margin-top:8px"><summary style="font-size:11px;color:var(--cyan);cursor:pointer">🔍 Debug info (open DevTools Console for full details)</summary><pre style="font-size:10px;background:rgba(0,0,0,.4);padding:8px;border-radius:6px;overflow:auto;max-height:200px;color:var(--text);margin-top:6px">${esc(JSON.stringify({successChan:pj.debugChanSuccess,failSample:pj.debugChanFail,errors:pj.errors},null,2))}</pre></details>`;
-              }
-            }
-          }
-          if (btn) { btn.disabled = false; btn.textContent = '📢 Send message'; }
-        } else {
-          const sofar = pj.sent || 0;
-          const tot = pj.total || '?';
-          if (status) status.textContent = `Sending... ${sofar}/${tot} done`;
-        }
-      } catch(_) {}
-    }, 2000);
-  } catch(e) {
-    if (status) status.textContent = '⚠ ' + e.message;
-    if (btn) { btn.disabled = false; btn.textContent = '📢 Send message'; }
-  }
-}
 
 
 setTimeout(load, 300);
