@@ -54,14 +54,14 @@ export const handler = async (event) => {
       const isCustomItem = !!t.customItem && !isSpin;
       const reward = !isCustomItem && t.rewardId && !isSpin ? cfg.rewards.find((r) => r.id === t.rewardId) : null;
       return {
-        thresholdReferrals: t.thresholdReferrals,
+        thresholdReferrals: Number(t.thresholdReferrals) || 0,
         label: isCustomItem ? (t.customItem.name || t.label) : (reward ? reward.name : t.label),
         icon: (isCustomItem || reward) ? "🎁" : (isSpin ? "🎰" : t.icon),
         xu: (!isCustomItem && !reward && !isSpin) ? t.xu : null,
         spinTickets: isSpin ? (t.spinTickets || 1) : null,
         image: isCustomItem ? (gdriveImg(t.customItem.image) || null) : (reward ? (reward.image || null) : null),
         customItem: isCustomItem,
-        unlocked: referrals >= t.thresholdReferrals,
+        unlocked: referrals >= (Number(t.thresholdReferrals) || 0),
         claimed: claimedTiers.includes(i),
       };
     });
