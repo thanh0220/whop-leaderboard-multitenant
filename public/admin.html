@@ -1857,7 +1857,9 @@ async function sendBroadcast(){
         return;
       }
       try {
-        const pr = await tenantFetch(`/.netlify/functions/admin-broadcast?jobId=${encodeURIComponent(jobId)}`);
+        const baseQS = tenantQS(); // '?companyId=xxx' or ''
+        const pollUrl = '/.netlify/functions/admin-broadcast' + (baseQS ? baseQS + '&jobId=' + encodeURIComponent(jobId) : '?jobId=' + encodeURIComponent(jobId));
+        const pr = await fetch(pollUrl);
         const pj = await pr.json();
         if (pj.done) {
           clearInterval(timer);
