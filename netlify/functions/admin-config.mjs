@@ -73,6 +73,7 @@ const ALLOWED_KEYS = [
   "chatbotEnabled",
   "dripEnabled",
   "dripSequences",
+  "dripSendHour",
 ];
 
 // GET: trả toàn bộ config tenant (trừ whopApiKey/setupSecret — không bao giờ
@@ -132,6 +133,7 @@ export const handler = async (event) => {
         chatbotEnabled: !!cfg.chatbotEnabled,
         dripEnabled: !!cfg.dripEnabled,
         dripSequences: cfg.dripSequences || [],
+        dripSendHour: cfg.dripSendHour ?? 9,
       });
     }
 

@@ -18,6 +18,10 @@ export const handler = async (event) => {
       const cfg = await getTenantConfig(companyId);
       if (!cfg.dripEnabled || !cfg.dripSequences?.length) { skipped++; continue; }
 
+      // Only run at the configured send hour (UTC). Default 9 = 9:00 UTC.
+      const sendHour = cfg.dripSendHour ?? 9;
+      if (new Date().getUTCHours() !== sendHour) { skipped++; continue; }
+
       const apiKey = await getCompanyAccessToken(companyId);
       const realCompanyId = await getRealCompanyId(companyId, cfg);
       const botName = cfg.chatbotName || null;
