@@ -5,11 +5,24 @@
 [functions."digest"]
   schedule = "0 8 * * 1"
 
+[functions."season-prize"]
+  schedule = "0 1 1 * *"
+
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "ALLOWALL"
     Content-Security-Policy = "frame-ancestors *"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
 
 # Whop nhúng app theo URL có chứa companyId/experienceId THẬT (xem Developer
 # dashboard -> Hosting -> Dashboard path/Experience path). Chuyển 2 dạng URL
