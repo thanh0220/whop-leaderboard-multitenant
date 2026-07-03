@@ -349,8 +349,10 @@ function render(j, selIdx){
     </div>`;
 
   const t = j.tiers[selIdx];
-  const ready = t.unlocked;
-  const need = Math.max(0, t.thresholdReferrals - j.referrals);
+  const thresh = Number(t.thresholdReferrals) || 0;
+  const refs = Number(j.referrals) || 0;
+  const ready = t.unlocked || refs >= thresh;
+  const need = Math.max(0, thresh - refs);
   const isCustomItem = t.xu === null && !t.spinTickets;
 
   let cta;
