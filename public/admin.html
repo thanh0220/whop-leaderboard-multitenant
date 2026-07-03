@@ -1837,11 +1837,13 @@ async function sendBroadcast(){
   const jobId = 'bcast_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
   if (status) status.textContent = 'Starting broadcast...';
   try {
-    await tenantFetch('/.netlify/functions/admin-broadcast-background', {
+    const bgResp = await tenantFetch('/.netlify/functions/admin-broadcast-background', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jobId, message: msg, target: _broadcastTarget, channel: _broadcastChannel }),
     });
+    // Background function returns 202 — anything else means it's not deployed
+    if (!bgResp.ok && bgResp.status !== 202) throw new Error(`Background function not available (HTTP ${bgResp.status}). Re-upload admin-broadcast-background.mjs to Netlify.`);
     if (msgEl) msgEl.value = '';
     if (status) status.textContent = 'Sending in background — checking progress...';
 
