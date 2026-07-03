@@ -117,7 +117,7 @@ export const handler = async (event) => {
       isVip,
       dailyDeal: cfg.dailyDeal || null,
       // Free 2 / Paid 10 — chỉ ẩn phần dư khỏi member nếu tenant downgrade, không xoá data thật.
-      rewards: (paid ? cfg.rewards : cfg.rewards.slice(0, 2)).map(r => ({
+      rewards: (paid ? cfg.rewards : cfg.rewards.slice(0, 3)).map(r => ({
         ...r,
         stockRemaining: r.stock != null ? (stockMap[r.id] ?? r.stock) : null,
       })),
