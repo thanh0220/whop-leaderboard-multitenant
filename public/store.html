@@ -210,10 +210,7 @@ let DATA=null;
 let storeTab='free';
 function setStoreTab(tab){
   storeTab=tab;
-  document.querySelectorAll('.vip-overlay').forEach(el=>el.classList.toggle('off',tab==='vip'));
-  const fb=document.getElementById('seg-free'), vb=document.getElementById('seg-vip');
-  if(fb){fb.className='seg-btn'+(tab==='free'?' on-free':'');}
-  if(vb){vb.className='seg-btn'+(tab==='vip'?' on-vip':'');}
+  render();
 }
 const $=id=>document.getElementById(id);
 function fmt(n){return Number(n||0).toLocaleString('en-US');}
@@ -394,7 +391,11 @@ function render(){
       btnDisabled = false;
       btnOnclick = `openWhopSignin(event)`;
     } else if (isVipLocked) {
-      btnClass = 'btn'; btnLabel = 'BUY'; btnDisabled = true; btnOnclick = '';
+      if (storeTab === 'vip') {
+        btnClass = 'btn'; btnLabel = 'JOIN VIP'; btnDisabled = false; btnOnclick = 'vipUpgradeCta()';
+      } else {
+        btnClass = 'btn'; btnLabel = 'BUY'; btnDisabled = true; btnOnclick = '';
+      }
     } else if (soldOut) {
       btnClass = 'btn'; btnLabel = '❌ Sold Out'; btnDisabled = true; btnOnclick = '';
     } else if (done) {
@@ -444,10 +445,33 @@ function render(){
     if (!done) return frontInner;
 
     // ===== Back face =====
-    const p = rw.payload || {kind:'code',code:''};
+    // Dùng payload snapshot lưu lúc redeem (histEntry.payload) để tránh
+    // việc admin sửa reward sau đó → member thấy nội dung mới thay vì thứ họ đã mua.
+    const histEntry = (d.history||[]).find(h => h.rewardId === rw.id);
+    const histPayload = histEntry?.payload
+      || (histEntry?.code ? {kind:'code', code: histEntry.code} : null);
+    // Rules:
+    // xu-prize / lucky-box / code → luôn dùng snapshot (bảo vệ member, tránh rug-pull)
+    // link / ea cùng type          → dùng config hiện tại (admin có thể update link/file)
+    // link / ea đổi type           → dùng snapshot (tránh double-claim exploit)
+    // Không có snapshot            → fallback config hiện tại (purchase cũ trước khi fix)
+    let p;
+    if (!histPayload) {
+      p = rw.payload || {kind:'code', code:''};
+    } else if (['xu-prize','lucky-box','code'].includes(histPayload.kind)) {
+      p = histPayload;
+    } else if (histPayload.kind === rw.payload?.kind) {
+      p = rw.payload;
+    } else {
+      p = histPayload;
+    }
     let backBody = '';
-    if (p.kind === 'lucky-box') {
-      const histEntry = (d.history||[]).find(h => h.rewardId === rw.id);
+    if (p.kind === 'xu-prize') {
+      backBody = `
+        <div style="text-align:center;font-size:44px;margin:8px 0;filter:drop-shadow(0 0 16px rgba(178,102,255,.8))">🎉</div>
+        <div class="fb-code" style="border-color:rgba(178,102,255,.7);text-shadow:0 0 12px rgba(178,102,255,.5)">${esc(p.label||'Prize Won!')}</div>
+        <div style="font-size:11.5px;color:var(--card-muted);text-align:center;margin-top:4px">XU added to your balance ✅</div>`;
+    } else if (p.kind === 'lucky-box') {
       const prizeLabel = histEntry?.reward || 'Prize Won!';
       backBody = `
         <div style="text-align:center;font-size:44px;margin:8px 0;filter:drop-shadow(0 0 16px rgba(178,102,255,.8))">🎉</div>
