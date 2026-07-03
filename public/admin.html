@@ -1613,6 +1613,7 @@ function renderInsights(){
       <button class="btn" id="broadcast-btn" onclick="sendBroadcast()" style="background:linear-gradient(135deg,var(--gold),#d39a11);color:#1a1200;border-color:transparent">📢 Send message</button>
       <span id="broadcast-status" style="font-size:12px;color:var(--card-muted)">Select a group, then type your message</span>
     </div>
+    <div id="broadcast-debug" style="display:none"></div>
   </div>`;
 }
 
@@ -1744,8 +1745,22 @@ async function sendBroadcast(){
             if (status) status.textContent = `⚠ Error: ${pj.error}`;
           } else {
             const failTxt = pj.failed ? ` (${pj.failed} failed)` : '';
-            const errTxt = pj.errors?.length ? ' — ' + pj.errors[0] : '';
-            if (status) status.textContent = `✅ Sent to ${pj.sent} of ${pj.total} member${pj.total !== 1 ? 's' : ''}${failTxt}${errTxt}`;
+            const errSample = pj.errors?.length ? ' — ' + pj.errors[0] : '';
+            if (status) status.textContent = `✅ Sent to ${pj.sent} of ${pj.total} member${pj.total !== 1 ? 's' : ''}${failTxt}${errSample}`;
+            // Log full debug info to console for diagnosis
+            if (pj.debugChanSuccess || pj.debugChanFail || pj.errors?.length) {
+              console.group('[Broadcast Debug]');
+              console.log('SUCCESS chan:', pj.debugChanSuccess);
+              console.log('FAIL sample:', pj.debugChanFail);
+              console.log('All errors:', pj.errors);
+              console.groupEnd();
+              // Show debug button
+              const debugEl = document.getElementById('broadcast-debug');
+              if (debugEl) {
+                debugEl.style.display = 'block';
+                debugEl.innerHTML = `<details style="margin-top:8px"><summary style="font-size:11px;color:var(--cyan);cursor:pointer">🔍 Debug info (open DevTools Console for full details)</summary><pre style="font-size:10px;background:rgba(0,0,0,.4);padding:8px;border-radius:6px;overflow:auto;max-height:200px;color:var(--text);margin-top:6px">${esc(JSON.stringify({successChan:pj.debugChanSuccess,failSample:pj.debugChanFail,errors:pj.errors},null,2))}</pre></details>`;
+              }
+            }
           }
           if (btn) { btn.disabled = false; btn.textContent = '📢 Send message'; }
         } else {
