@@ -135,11 +135,20 @@ export const handler = async (event) => {
     const CHUNK = 20;
     for (let i = 0; i < targets.length; i += CHUNK) {
       await Promise.all(targets.slice(i, i + CHUNK).map(async ({ userId: uid }) => {
-        try {
-          if (sendChannel === "whop" || sendChannel === "both") {
+        let userOk = false;
+        if (sendChannel === "whop" || sendChannel === "both") {
+          try {
             await sendViaWhopSupportChat(realCompanyId, apiKey, uid, text, botName);
+            userOk = true;
+          } catch (e) {
+            if (sendChannel === "whop") {
+              failed++;
+              if (errors.length < 3) errors.push(`${uid}: ${e.message}`);
+            }
           }
-          if (sendChannel === "mailbox" || sendChannel === "both") {
+        }
+        if (sendChannel === "mailbox" || sendChannel === "both") {
+          try {
             const key = tenantKey("mailbox", companyId, uid);
             let list = [];
             try { list = await store.get(key, { type: "json" }) || []; } catch (_) {}
@@ -156,12 +165,12 @@ export const handler = async (event) => {
               expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
             });
             await store.setJSON(key, list.slice(0, 50));
+            userOk = true;
+          } catch (e) {
+            if (!userOk) { failed++; if (errors.length < 3) errors.push(`${uid}: ${e.message}`); }
           }
-          sent++;
-        } catch (e) {
-          failed++;
-          if (errors.length < 3) errors.push(`${uid}: ${e.message}`);
         }
+        if (userOk) sent++;
       }));
     }
 

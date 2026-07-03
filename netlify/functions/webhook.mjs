@@ -2,7 +2,6 @@ import crypto from "node:crypto";
 import { pointsStore, tenantKey } from "./_store.mjs";
 import { getTenantConfig, getTenantIdByRealCompanyId, setTenantTier } from "./_tenant.mjs";
 import { getCompanyAccessToken } from "./_tokens.mjs";
-import { enrollSingleUser } from "./drip-enroll.mjs";
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -118,27 +117,8 @@ export const handler = async (event) => {
   // dạng để an toàn (phòng trường hợp version/nguồn khác dùng gạch dưới).
   const action = payload.action || payload.type;
 
-  // Auto-enroll new member into sequences with trigger:"join"
-  // Whop gửi event tên dạng "membership_activated" (gạch dưới) — không phải "membership.went_valid"
-  const isMemberJoin = action === "membership_activated" || action === "entry_approved";
-  if (isMemberJoin) {
-    const data = payload.data || {};
-    const realCompanyId = data.company_id || data.company?.id || null;
-    const newUserId = data.user_id || (typeof data.user === "string" ? data.user : data.user?.id) || null;
-    if (realCompanyId && newUserId) {
-      try {
-        const tenantId = (await getTenantIdByRealCompanyId(realCompanyId)) || realCompanyId;
-        const cfg = await getTenantConfig(tenantId);
-        if (cfg.dripEnabled) {
-          const autoSeqs = (cfg.dripSequences || []).filter(s => (s.trigger || "join") === "join" && (s.steps || []).some(st => st.message?.trim()));
-          if (autoSeqs.length) {
-            const store = pointsStore();
-            await Promise.allSettled(autoSeqs.map(seq => enrollSingleUser(store, tenantId, newUserId, seq.id)));
-          }
-        }
-      } catch (_) {}
-    }
-    return json(200, { ok: true, action });
+  if (action === "membership_activated" || action === "entry_approved") {
+    return json(200, { ok: true, skipped: action });
   }
 
   if (action !== "payment_succeeded" && action !== "payment.succeeded") {

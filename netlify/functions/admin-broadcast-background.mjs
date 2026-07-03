@@ -103,6 +103,7 @@ export const handler = async (event) => {
     const { warm, cold } = await fetchAllMembers(realCompanyId, apiKey);
 
     const targets = target === "warm" ? warm : target === "cold" ? cold : [...warm, ...cold];
+    console.log(`[broadcast] target=${target} warm=${warm.length} cold=${cold.length} → ${targets.length} recipients`);
     const rawText = (message || "").trim().slice(0, 500);
     const text = (typeof imageUrl === "string" && imageUrl.trim())
       ? `${imageUrl.trim()}\n\n${rawText}`
@@ -119,11 +120,21 @@ export const handler = async (event) => {
 
     for (let i = 0; i < targets.length; i += CHUNK) {
       await Promise.all(targets.slice(i, i + CHUNK).map(async ({ userId: uid }) => {
-        try {
-          if (channel === "whop" || channel === "both") {
+        let userOk = false;
+        if (channel === "whop" || channel === "both") {
+          try {
             await sendViaWhopSupportChat(realCompanyId, apiKey, uid, text);
+            userOk = true;
+          } catch (e) {
+            if (channel === "whop") {
+              failed++;
+              if (errors.length < 5) errors.push(`${uid}: ${e.message}`);
+            }
+            // "both": support chat failed but still write to mailbox below
           }
-          if (channel === "mailbox" || channel === "both") {
+        }
+        if (channel === "mailbox" || channel === "both") {
+          try {
             const key = tenantKey("mailbox", companyId, uid);
             let list = [];
             try { list = await store.get(key, { type: "json" }) || []; } catch (_) {}
@@ -140,20 +151,23 @@ export const handler = async (event) => {
               expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
             });
             await store.setJSON(key, list.slice(0, 50));
+            userOk = true;
+          } catch (e) {
+            if (!userOk) { failed++; if (errors.length < 5) errors.push(`${uid}: ${e.message}`); }
           }
-          sent++;
-        } catch (e) {
-          failed++;
-          if (errors.length < 5) errors.push(`${uid}: ${e.message}`);
         }
+        if (userOk) sent++;
       }));
       // Update progress + pause between batches (rate limit safety)
+      console.log(`[broadcast] chunk done: sent=${sent} failed=${failed}/${targets.length}`);
       await writeResult({ done: false, sent, failed, total: targets.length });
       await new Promise(r => setTimeout(r, 300));
     }
 
+    console.log(`[broadcast] DONE: sent=${sent} failed=${failed} errors=${JSON.stringify(errors)}`);
     await writeResult({ done: true, sent, failed, total: targets.length, errors });
   } catch (err) {
+    console.error(`[broadcast] FATAL:`, err.message);
     await writeResult({ done: true, error: err.message, sent: 0, failed: 0, total: 0 });
   }
 

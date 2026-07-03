@@ -69,11 +69,6 @@ const ALLOWED_KEYS = [
   "digestEnabled",
   "digestEmail",
   "promoRewards",
-  "chatbotName",
-  "chatbotEnabled",
-  "dripEnabled",
-  "dripSequences",
-  "dripSendHour",
 ];
 
 // GET: trả toàn bộ config tenant (trừ whopApiKey/setupSecret — không bao giờ
@@ -129,11 +124,6 @@ export const handler = async (event) => {
         digestEnabled: !!cfg.digestEnabled,
         digestEmail: cfg.digestEmail || "",
         promoRewards: cfg.promoRewards || { enabled: false, milestones: [] },
-        chatbotName: cfg.chatbotName || "Support Bot",
-        chatbotEnabled: !!cfg.chatbotEnabled,
-        dripEnabled: !!cfg.dripEnabled,
-        dripSequences: cfg.dripSequences || [],
-        dripSendHour: cfg.dripSendHour ?? 9,
       });
     }
 
