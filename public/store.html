@@ -89,6 +89,13 @@
   .btn:disabled{opacity:.5;cursor:not-allowed;border-color:var(--card-border);background:var(--chip-bg);color:var(--card-muted)}
   .btn.primary{background:linear-gradient(135deg,rgba(244,196,65,.18),rgba(39,227,255,.18));border-color:rgba(244,196,65,.5);color:var(--gold)}
   .btn.primary:hover:not(:disabled){background:linear-gradient(135deg,rgba(244,196,65,.3),rgba(39,227,255,.25));box-shadow:0 0 18px rgba(244,196,65,.35)}
+  .btn.upgrade-cta{background:linear-gradient(135deg,rgba(244,196,65,.22),rgba(255,45,75,.15));border-color:rgba(244,196,65,.6);color:var(--gold);font-size:11px;letter-spacing:.16em}
+  .btn.upgrade-cta:hover{background:linear-gradient(135deg,rgba(244,196,65,.38),rgba(255,45,75,.25));box-shadow:0 0 18px rgba(244,196,65,.4)}
+
+  /* ---- Store tabs FREE / VIP ---- */
+  .store-tabs{display:flex;gap:6px;margin-bottom:18px}
+  .store-tab{font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:8px 20px;border-radius:999px;border:1px solid var(--ctrl-border);background:var(--ctrl-bg);color:var(--muted);cursor:pointer;transition:.15s}
+  .store-tab.on{border-color:rgba(244,196,65,.5);background:rgba(244,196,65,.12);color:var(--gold);box-shadow:0 0 14px rgba(244,196,65,.2)}
   /* Flip card (đã đổi) — gắn hiệu ứng lật bài vào chính ô quà */
   .flip-card{position:relative;perspective:1400px;border-radius:16px}
   .flip-inner{position:relative;width:100%;transform-style:preserve-3d;transition:transform .85s cubic-bezier(.2,.9,.25,1)}
@@ -193,6 +200,7 @@
 
 <script>
 let DATA=null;
+let storeTab='free';
 const $=id=>document.getElementById(id);
 function fmt(n){return Number(n||0).toLocaleString('en-US');}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -325,7 +333,12 @@ function render(){
 
   // sort: affordable first, then closest-to-affordable, then by tier desc
   const redeemedIds=new Set((d.history||[]).map(h=>h.rewardId).filter(Boolean));
-  const sorted=[...d.rewards].sort((a,b)=>{
+  const allRewards = d.rewards || [];
+  // VIP tab: hide vipOnly items; FREE tab: show all
+  const tabFiltered = storeTab === 'vip'
+    ? allRewards.filter(r => !r.vipOnly)
+    : allRewards;
+  const sorted=[...tabFiltered].sort((a,b)=>{
     const aDone=redeemedIds.has(a.id), bDone=redeemedIds.has(b.id);
     if(aDone!==bDone) return aDone?1:-1;
     const aCan=d.available>=a.cost, bCan=d.available>=b.cost;
@@ -371,7 +384,7 @@ function render(){
       btnDisabled = false;
       btnOnclick = `openWhopSignin(event)`;
     } else if (isVipLocked) {
-      btnClass = 'btn'; btnLabel = '👑 VIP Only'; btnDisabled = true; btnOnclick = '';
+      btnClass = 'btn upgrade-cta'; btnLabel = 'JOIN VIP'; btnDisabled = false; btnOnclick = 'vipUpgradeCta()';
     } else if (soldOut) {
       btnClass = 'btn'; btnLabel = '❌ Sold Out'; btnDisabled = true; btnOnclick = '';
     } else if (done) {
@@ -381,7 +394,7 @@ function render(){
       btnOnclick = `flipCard('${esc(rw.id)}',event)`;
     } else if (can) {
       if (isLucky) { btnClass='btn lucky-btn'; btnLabel='🎲 Shake & Reveal!'; btnOnclick=`luckyRedeem('${esc(rw.id)}',this)`; }
-      else { btnClass=rw.tier>=4?'btn primary':'btn'; btnLabel=esc(rw.buttonLabel||'GET'); btnOnclick=`redeem('${esc(rw.id)}',this)`; }
+      else { btnClass=rw.tier>=4?'btn primary':'btn'; btnLabel=esc(rw.buttonLabel||'BUY'); btnOnclick=`redeem('${esc(rw.id)}',this)`; }
       btnDisabled = false;
     } else {
       btnClass='btn'; btnLabel='Not enough XU'; btnDisabled=true; btnOnclick='';
@@ -392,7 +405,7 @@ function render(){
          <div class="price-anchor done"><s>${fmt(rw.cost)} XU</s> · <b>redeemed</b></div>`
       : isDeal && !soldOut
         ? `<span class="cost" style="color:var(--red)">${fmt(effectiveCost)} XU</span>
-           <div class="price-anchor"><s>${fmt(rw.cost)} XU</s> · <b style="color:#ff8097">-${dealPct}% hôm nay!</b></div>`
+           <div class="price-anchor"><s>${fmt(rw.cost)} XU</s> · <b style="color:#ff8097">-${dealPct}% today!</b></div>`
         : `<span class="cost">${fmt(effectiveCost)} XU</span>`;
 
     const cardClass = `card${scarce?' scarce':''}${isLucky?' lucky-card':''}`;
@@ -409,17 +422,7 @@ function render(){
         </div>
       </div>`;
 
-    if (isVipLocked) return `
-      <div class="vip-locked-wrap">
-        ${frontInner}
-        <div class="vip-lock-overlay">
-          <div class="lock-icon">🔒</div>
-          <div class="lock-label">VIP Only</div>
-          <div class="lock-sub">Upgrade to a paid plan to unlock this reward</div>
-        </div>
-      </div>`;
-
-    if (!done) return frontInner;
+    if (!done || isVipLocked) return frontInner;
 
     // ===== Back face =====
     const p = rw.payload || {kind:'code',code:''};
@@ -502,7 +505,10 @@ function render(){
     </div>
     <div class="hi">Hi <b>${esc(d.username)}</b> 👋 — you have <b>🪙 ${fmt(d.available)}</b> XU. (Spent ~$${fmt(d.paidUsd)}, ${fmt(d.referrals)} referrals)</div>
     ${dealStripHtml}
-    <div class="sect">🎁 Available rewards (${d.rewards.length})</div>
+    <div class="store-tabs">
+      <button class="store-tab ${storeTab==='free'?'on':''}" onclick="storeTab='free';render()">FREE</button>
+      <button class="store-tab ${storeTab==='vip'?'on':''}" onclick="storeTab='vip';render()">👑 VIP</button>
+    </div>
     <div class="rewards">${rewards}</div>
     <div style="text-align:center;margin-top:20px"><a class="lb" href="/index.html">← Back to leaderboard</a></div>`;
 
@@ -570,6 +576,10 @@ async function luckyRedeem(rewardId, btn) {
     toast('⚠ Failed: '+e.message);
     if (btn) { btn.disabled = false; btn.textContent = '🎲 Shake & Reveal!'; }
   }
+}
+
+function vipUpgradeCta() {
+  toast('👑 Buy any paid plan (>$1) to unlock VIP rewards and redeem with XU!');
 }
 
 function startDealCountdown() {
