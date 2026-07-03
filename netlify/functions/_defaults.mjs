@@ -126,6 +126,15 @@ export const DEFAULT_TENANT = {
       { thresholdReferrals: 20, rewardId: null, xu: 2000, label: "Diamond Reward", icon: "🎁" },
     ],
   },
+  // Chatbot display name — shown as sender in Whop Support Chat (agent_name field)
+  chatbotName: "Support Bot",
+  // Enable chatbot-poller scheduled function (polls every 2 min for button replies)
+  chatbotEnabled: false,
+  // Enable drip sequence engine (runs daily via drip.mjs scheduled function)
+  dripEnabled: false,
+  // Drip sequences config — array of sequences, each with steps
+  // Each step: { message, delayDays, options?, imageUrl? }
+  dripSequences: [],
   // Auto promo code on streak milestone (requires promo_code:create permission in Whop)
   promoRewards: {
     enabled: false,

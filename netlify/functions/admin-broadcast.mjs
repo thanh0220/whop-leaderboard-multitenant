@@ -44,14 +44,12 @@ async function fetchAllMembers(realCompanyId, apiKey) {
       const uid = u ? u.id : (typeof m.user === "string" ? m.user : m.user_id || "");
       if (!uid) continue;
       const username = u ? (u.username || u.name || uid) : uid;
-      const email = u ? (u.email || "") : "";
-      if (!email) continue; // skip members with no email
       // If already warm, keep warm regardless of other memberships
       if (isWarm(m)) {
-        warmMap.set(uid, { userId: uid, username, email });
+        warmMap.set(uid, { userId: uid, username });
         coldMap.delete(uid);
       } else if (!warmMap.has(uid)) {
-        coldMap.set(uid, { userId: uid, username, email });
+        coldMap.set(uid, { userId: uid, username });
       }
     }
     if (!j.next_page && !j.pagination?.next) break;
@@ -59,7 +57,7 @@ async function fetchAllMembers(realCompanyId, apiKey) {
   return { warm: [...warmMap.values()], cold: [...coldMap.values()] };
 }
 
-async function sendViaWhopSupportChat(realCompanyId, apiKey, userId, content) {
+async function sendViaWhopSupportChat(realCompanyId, apiKey, userId, content, botName = null) {
   // Step 1: get or create support channel for this user
   const chanR = await fetch("https://api.whop.com/api/v1/support_channels", {
     method: "POST",
@@ -73,10 +71,12 @@ async function sendViaWhopSupportChat(realCompanyId, apiKey, userId, content) {
   const chan = await chanR.json();
 
   // Step 2: send message into that channel
+  const msgBody = { channel_id: chan.id, content };
+  if (botName) msgBody.agent_name = botName; // custom chatbot display name
   const msgR = await fetch("https://api.whop.com/api/v1/messages", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ channel_id: chan.id, content }),
+    body: JSON.stringify(msgBody),
   });
   if (!msgR.ok) {
     const t = await msgR.text().catch(() => "");
@@ -105,12 +105,17 @@ export const handler = async (event) => {
     // POST — send broadcast
     let body = {};
     try { body = JSON.parse(event.body || "{}"); } catch (_) {}
-    const { message, target, channel } = body;
+    const { message, target, channel, imageUrl } = body;
     if (!message || typeof message !== "string" || !message.trim()) return json(400, { error: "message required." });
     if (!["warm", "cold", "all"].includes(target)) return json(400, { error: "target must be warm, cold, or all." });
 
     const sendChannel = ["whop", "mailbox", "both"].includes(channel) ? channel : "whop";
-    const text = message.trim().slice(0, 500);
+    const rawText = message.trim().slice(0, 500);
+    // Prepend image URL if provided — Whop renders URLs in support chat
+    const text = (typeof imageUrl === "string" && imageUrl.trim())
+      ? `${imageUrl.trim()}\n\n${rawText}`
+      : rawText;
+    const botName = cfg.chatbotName || null;
     const targets = target === "warm" ? warm : target === "cold" ? cold : [...warm, ...cold];
     if (targets.length === 0) return json(200, { sent: 0, failed: 0 });
 
@@ -122,7 +127,7 @@ export const handler = async (event) => {
       await Promise.all(targets.slice(i, i + CHUNK).map(async ({ userId: uid }) => {
         try {
           if (sendChannel === "whop" || sendChannel === "both") {
-            await sendViaWhopSupportChat(realCompanyId, apiKey, uid, text);
+            await sendViaWhopSupportChat(realCompanyId, apiKey, uid, text, botName);
           }
           if (sendChannel === "mailbox" || sendChannel === "both") {
             const key = tenantKey("mailbox", companyId, uid);

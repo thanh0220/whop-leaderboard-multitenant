@@ -69,6 +69,10 @@ const ALLOWED_KEYS = [
   "digestEnabled",
   "digestEmail",
   "promoRewards",
+  "chatbotName",
+  "chatbotEnabled",
+  "dripEnabled",
+  "dripSequences",
 ];
 
 // GET: trả toàn bộ config tenant (trừ whopApiKey/setupSecret — không bao giờ
