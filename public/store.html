@@ -144,6 +144,39 @@
     .err{color:#9a2030}
     .badge.hot,.badge.limited{color:#9a2030}
   }
+
+  /* ---- Daily Deal strip ---- */
+  .deal-strip{background:linear-gradient(135deg,rgba(255,45,75,.14),rgba(244,196,65,.14));border:1.5px solid rgba(255,45,75,.45);border-radius:14px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .deal-strip .deal-icon{font-size:28px;flex-shrink:0}
+  .deal-strip .deal-info{flex:1;min-width:160px}
+  .deal-strip .deal-name{font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;color:var(--text);letter-spacing:.04em}
+  .deal-strip .deal-price{display:flex;align-items:baseline;gap:8px;margin-top:3px;flex-wrap:wrap}
+  .deal-strip .deal-now{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;color:var(--red);letter-spacing:.04em}
+  .deal-strip .deal-was{font-size:12px;color:var(--card-muted)}
+  .deal-strip .deal-was s{color:rgba(128,128,128,.6)}
+  .deal-strip .deal-pct{font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;padding:3px 8px;border-radius:5px;background:rgba(255,45,75,.18);color:#ffb0bd;border:1px solid rgba(255,45,75,.45)}
+  .deal-strip .deal-cd{font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;letter-spacing:.06em;color:var(--gold);text-align:right;flex-shrink:0}
+  .deal-strip .deal-cd small{display:block;font-size:10px;color:var(--card-muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:2px}
+
+  /* ---- Scarce / low-stock pulsing border ---- */
+  @keyframes scarce-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,45,75,.5),0 14px 34px rgba(0,0,0,.5)}50%{box-shadow:0 0 0 3px rgba(255,45,75,.3),0 14px 34px rgba(0,0,0,.5)}}
+  .card.scarce{border-color:rgba(255,45,75,.65)!important;animation:scarce-pulse 1.6s ease-in-out infinite}
+
+  /* ---- VIP lock overlay ---- */
+  .vip-locked-wrap{position:relative;border-radius:16px;overflow:hidden}
+  .vip-lock-overlay{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(10,15,24,.78);backdrop-filter:blur(3px);border-radius:16px;cursor:default}
+  .vip-lock-overlay .lock-icon{font-size:32px}
+  .vip-lock-overlay .lock-label{font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+  .vip-lock-overlay .lock-sub{font-size:11px;color:var(--card-muted);text-align:center;max-width:160px;line-height:1.5}
+
+  /* ---- Lucky Box ---- */
+  @keyframes lb-shake{0%,100%{transform:rotate(0)}15%{transform:rotate(-7deg)}30%{transform:rotate(7deg)}45%{transform:rotate(-4deg)}60%{transform:rotate(4deg)}75%{transform:rotate(-2deg)}90%{transform:rotate(2deg)}}
+  .lb-shake{animation:lb-shake .55s ease}
+  .badge.lucky{background:rgba(178,102,255,.22);color:#d5b8ff;border:1px solid rgba(178,102,255,.55)}
+  .card.lucky-card{border-color:rgba(178,102,255,.45);box-shadow:0 0 22px rgba(178,102,255,.18)}
+  .card.lucky-card:hover{border-color:rgba(178,102,255,.75);box-shadow:0 14px 34px rgba(0,0,0,.55),0 0 28px rgba(178,102,255,.3)}
+  .btn.lucky-btn{background:linear-gradient(135deg,rgba(178,102,255,.2),rgba(244,196,65,.15));border-color:rgba(178,102,255,.6);color:#d5b8ff}
+  .btn.lucky-btn:hover:not(:disabled){background:linear-gradient(135deg,rgba(178,102,255,.35),rgba(244,196,65,.25));box-shadow:0 0 18px rgba(178,102,255,.4)}
 </style>
 </head>
 <body>
@@ -272,6 +305,10 @@ const BADGE_LABEL={hot:'🔥 Hot',new:'⚡ New',vip:'👑 VIP',bestseller:'⭐ B
 
 function render(){
   const d=DATA;
+  const isVip = !!d.isVip;
+  const dailyDeal = d.dailyDeal || null;
+  const dealId = dailyDeal?.rewardId || null;
+  const dealPct = dailyDeal?.discountPct || 0;
   $('powered-badge').style.display=(d.tier==='paid'&&d.branding?.logoUrl)?'none':'block';
 
   if(!d.rewards || d.rewards.length===0){
@@ -298,37 +335,71 @@ function render(){
   });
 
   const rewards=sorted.map(rw=>{
-    const done=redeemedIds.has(rw.id);
-    const can=d.available>=rw.cost;
-    const gap=rw.cost-d.available;
-    const pct=Math.min(100,Math.round((d.available/rw.cost)*100));
-    const thumb=rw.image
+    const done = redeemedIds.has(rw.id);
+    const isLucky = rw.payload?.kind === 'lucky-box';
+    const isDeal = rw.id === dealId && dealPct > 0;
+    const effectiveCost = isDeal ? Math.max(1, Math.round(rw.cost * (1 - dealPct/100))) : rw.cost;
+    const isVipLocked = !!(rw.vipOnly && !isVip && !done && !d.demo);
+    const stockLeft = rw.stockRemaining;
+    const soldOut = stockLeft !== null && stockLeft === 0;
+    const scarce = stockLeft !== null && stockLeft > 0 && stockLeft < 3;
+    const can = !soldOut && !isVipLocked && d.available >= effectiveCost;
+    const gap = effectiveCost - d.available;
+    const pct = Math.min(100, Math.round((d.available/effectiveCost)*100));
+
+    const thumb = rw.image
       ? `<div class="thumb" style="background-image:url('${esc(rw.image)}')"></div>`
       : `<div class="thumb" style="background:linear-gradient(135deg,var(--card1),var(--card2))"></div>`;
-    const progress=(!can && !done)
+
+    const badgeKey = isLucky ? 'lucky' : (rw.badge||'');
+    const badgeText = badgeKey==='lucky' ? '🎲 Lucky Box' : (BADGE_LABEL[badgeKey]||'');
+    const badgeHtml = badgeText ? `<span class="badge ${badgeKey}">${badgeText}</span>` : '';
+    const stockHtml = (stockLeft !== null && !done)
+      ? `<span class="stock-pill">${soldOut ? '❌ SOLD OUT' : `📦 ${stockLeft} left`}</span>` : '';
+    const doneBadge = done ? `<span class="done-badge">✅ Redeemed</span>` : '';
+
+    const progress = (!can && !done && !soldOut && !isVipLocked)
       ? `<div class="progress"><i style="width:${pct}%"></i></div>
          <div class="progress-label"><span>Need <b>${fmt(gap)} more XU</b></span><span>${pct}%</span></div>
          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px">💡 Check in daily or refer members to earn XU</div>`
       : '';
+
     let btnClass, btnLabel, btnDisabled, btnOnclick;
-    if(d.demo){
+    if (d.demo) {
       btnClass = rw.tier>=4 ? 'btn primary' : 'btn';
       btnLabel = '🔐 Sign in to redeem';
       btnDisabled = false;
       btnOnclick = `openWhopSignin(event)`;
-    } else if(done){ btnClass='btn done'; btnLabel='🔄 Flip to view reward'; btnDisabled=false; btnOnclick=`flipCard('${esc(rw.id)}',event)`; }
-    else if(can){ btnClass=rw.tier>=4?'btn primary':'btn'; btnLabel=esc(rw.buttonLabel||'GET'); btnDisabled=false; btnOnclick=`redeem('${esc(rw.id)}',this)`; }
-    else { btnClass='btn'; btnLabel='Not enough XU'; btnDisabled=true; btnOnclick=''; }
+    } else if (isVipLocked) {
+      btnClass = 'btn'; btnLabel = '👑 VIP Only'; btnDisabled = true; btnOnclick = '';
+    } else if (soldOut) {
+      btnClass = 'btn'; btnLabel = '❌ Sold Out'; btnDisabled = true; btnOnclick = '';
+    } else if (done) {
+      btnClass = 'btn done';
+      btnLabel = isLucky ? '🎲 See your prize' : '🔄 Flip to view reward';
+      btnDisabled = false;
+      btnOnclick = `flipCard('${esc(rw.id)}',event)`;
+    } else if (can) {
+      if (isLucky) { btnClass='btn lucky-btn'; btnLabel='🎲 Shake & Reveal!'; btnOnclick=`luckyRedeem('${esc(rw.id)}',this)`; }
+      else { btnClass=rw.tier>=4?'btn primary':'btn'; btnLabel=esc(rw.buttonLabel||'GET'); btnOnclick=`redeem('${esc(rw.id)}',this)`; }
+      btnDisabled = false;
+    } else {
+      btnClass='btn'; btnLabel='Not enough XU'; btnDisabled=true; btnOnclick='';
+    }
 
     const costHtml = done
       ? `<span class="cost" style="color:#86efac">0 XU</span>
          <div class="price-anchor done"><s>${fmt(rw.cost)} XU</s> · <b>redeemed</b></div>`
-      : `<span class="cost">${fmt(rw.cost)} XU</span>`;
-    const doneBadge = done ? `<span class="done-badge">✅ Redeemed</span>` : '';
+      : isDeal && !soldOut
+        ? `<span class="cost" style="color:var(--red)">${fmt(effectiveCost)} XU</span>
+           <div class="price-anchor"><s>${fmt(rw.cost)} XU</s> · <b style="color:#ff8097">-${dealPct}% hôm nay!</b></div>`
+        : `<span class="cost">${fmt(effectiveCost)} XU</span>`;
+
+    const cardClass = `card${scarce?' scarce':''}${isLucky?' lucky-card':''}`;
 
     const frontInner = `
-      <div class="card flip-face flip-front">
-        ${thumb}${doneBadge}
+      <div class="${cardClass} flip-face flip-front" id="card-${esc(rw.id)}">
+        ${thumb}${badgeHtml}${stockHtml}${doneBadge}
         <div class="body">
           <h3>${esc(rw.name)}</h3>
           <p>${esc(rw.desc)}</p>
@@ -338,12 +409,29 @@ function render(){
         </div>
       </div>`;
 
-    if(!done) return frontInner;
+    if (isVipLocked) return `
+      <div class="vip-locked-wrap">
+        ${frontInner}
+        <div class="vip-lock-overlay">
+          <div class="lock-icon">🔒</div>
+          <div class="lock-label">VIP Only</div>
+          <div class="lock-sub">Upgrade to a paid plan to unlock this reward</div>
+        </div>
+      </div>`;
 
-    // ===== Back face: gắn nội dung "lật bài nhận thưởng" lên chính ô quà =====
+    if (!done) return frontInner;
+
+    // ===== Back face =====
     const p = rw.payload || {kind:'code',code:''};
-    let backBody='';
-    if(p.kind==='ea'){
+    let backBody = '';
+    if (p.kind === 'lucky-box') {
+      const histEntry = (d.history||[]).find(h => h.rewardId === rw.id);
+      const prizeLabel = histEntry?.reward || 'Prize Won!';
+      backBody = `
+        <div style="text-align:center;font-size:44px;margin:8px 0;filter:drop-shadow(0 0 16px rgba(178,102,255,.8))">🎉</div>
+        <div class="fb-code" style="border-color:rgba(178,102,255,.7);text-shadow:0 0 12px rgba(178,102,255,.5)">${esc(prizeLabel)}</div>
+        <div style="font-size:11.5px;color:var(--card-muted);text-align:center;margin-top:4px">XU added to your balance ✅</div>`;
+    } else if (p.kind === 'ea') {
       backBody = `
         <a class="fb-link" href="${esc(p.ea)}" target="_blank" rel="noopener">
           <span style="font-size:18px">📥</span><span>Download file<small>${esc(p.label||'')}</small></span>
@@ -351,7 +439,7 @@ function render(){
         <a class="fb-link" href="${esc(p.setup)}" target="_blank" rel="noopener">
           <span style="font-size:18px">🛠</span><span>Setup guide<small>Install &amp; activate</small></span>
         </a>`;
-    } else if(p.kind==='link'){
+    } else if (p.kind === 'link') {
       backBody = `<a class="fb-link" href="${esc(p.url)}" target="_blank" rel="noopener">
           <span style="font-size:18px">🔗</span><span>Open reward<small>${esc(p.label||'')}</small></span>
         </a>`;
@@ -363,7 +451,7 @@ function render(){
     const back = `
       <div class="flip-face flip-back">
         <div class="fb-hdr">
-          <span class="fb-tag">🎉 Redeemed</span>
+          <span class="fb-tag">${p.kind==='lucky-box'?'🎲 Lucky Prize':'🎉 Redeemed'}</span>
           <div class="fb-title">${esc(rw.name)}</div>
         </div>
         <div class="fb-body">${backBody}</div>
@@ -380,6 +468,31 @@ function render(){
       <button onclick="openWhopSignin(event)" style="font-family:'Oswald',sans-serif;letter-spacing:.1em;text-transform:uppercase;font-size:12px;font-weight:700;padding:9px 16px;border-radius:9px;border:1px solid rgba(244,196,65,.6);background:linear-gradient(135deg,rgba(244,196,65,.25),rgba(178,102,255,.2));color:#fff;cursor:pointer">🔐 Sign in with Whop</button>
     </div>` : '';
 
+  // Daily deal strip
+  let dealStripHtml = '';
+  if (dailyDeal && !d.demo) {
+    const dr = d.rewards.find(r => r.id === dailyDeal.rewardId);
+    if (dr) {
+      const ep = dealPct > 0 ? Math.max(1, Math.round(dr.cost * (1 - dealPct/100))) : dr.cost;
+      dealStripHtml = `
+        <div class="deal-strip">
+          <div class="deal-icon">🔥</div>
+          <div class="deal-info">
+            <div class="deal-name">Daily Deal — ${esc(dr.name)}</div>
+            <div class="deal-price">
+              <span class="deal-now">${fmt(ep)} XU</span>
+              <span class="deal-was"><s>${fmt(dr.cost)} XU</s></span>
+              <span class="deal-pct">-${dealPct}%</span>
+            </div>
+          </div>
+          <div class="deal-cd">
+            <small>Resets in</small>
+            <span id="deal-timer">--:--:--</span>
+          </div>
+        </div>`;
+    }
+  }
+
   $('content').innerHTML=`
     ${demoBanner}
     <div class="bal">
@@ -388,9 +501,12 @@ function render(){
       <div class="b"><div class="v">${fmt(d.spent)}</div><div class="l">Spent</div></div>
     </div>
     <div class="hi">Hi <b>${esc(d.username)}</b> 👋 — you have <b>🪙 ${fmt(d.available)}</b> XU. (Spent ~$${fmt(d.paidUsd)}, ${fmt(d.referrals)} referrals)</div>
+    ${dealStripHtml}
     <div class="sect">🎁 Available rewards (${d.rewards.length})</div>
     <div class="rewards">${rewards}</div>
     <div style="text-align:center;margin-top:20px"><a class="lb" href="/index.html">← Back to leaderboard</a></div>`;
+
+  startDealCountdown();
 }
 
 
@@ -429,6 +545,49 @@ function copyCode(code,btn){
   }).catch(()=>{
     btn.textContent='Copy failed';
   });
+}
+
+async function luckyRedeem(rewardId, btn) {
+  // Shake the card first, then reveal
+  const card = document.getElementById('card-'+rewardId);
+  if (card) {
+    card.classList.add('lb-shake');
+    await new Promise(r => setTimeout(r, 580));
+    card.classList.remove('lb-shake');
+  }
+  btn.disabled = true; btn.textContent = '🎲 Revealing...';
+  try {
+    const r = await tenantFetch('/.netlify/functions/redeem', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({rewardId})});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || ('HTTP '+r.status));
+    toast('🎉 ' + (j.reward || 'Prize revealed!'));
+    await load();
+    requestAnimationFrame(()=>{
+      const el = document.getElementById('fc-'+rewardId);
+      if (el) { el.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>el.classList.add('flipped'),250); }
+    });
+  } catch(e) {
+    toast('⚠ Failed: '+e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '🎲 Shake & Reveal!'; }
+  }
+}
+
+function startDealCountdown() {
+  const el = document.getElementById('deal-timer');
+  if (!el) return;
+  if (window._dealCdInterval) clearInterval(window._dealCdInterval);
+  function tick() {
+    const now = new Date();
+    const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()+1));
+    const diff = midnight - now;
+    if (diff <= 0) { if (el) el.textContent = '00:00:00'; return; }
+    const h = String(Math.floor(diff/3600000)).padStart(2,'0');
+    const m = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+    const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+    if (el) el.textContent = `${h}:${m}:${s}`;
+  }
+  tick();
+  window._dealCdInterval = setInterval(tick, 1000);
 }
 
 load();
