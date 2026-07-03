@@ -129,7 +129,7 @@ export const handler = async (event) => {
     const store = (sendChannel === "mailbox" || sendChannel === "both") ? pointsStore() : null;
     let sent = 0, failed = 0;
     const errors = [];
-    const CHUNK = 5;
+    const CHUNK = 20;
     for (let i = 0; i < targets.length; i += CHUNK) {
       await Promise.all(targets.slice(i, i + CHUNK).map(async ({ userId: uid }) => {
         try {

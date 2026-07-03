@@ -110,7 +110,9 @@ export const handler = async (event) => {
 
     let sent = 0, failed = 0;
     const errors = [];
-    const CHUNK = 10;
+    // Small chunk + 300ms pause between batches to avoid Whop API rate limits.
+    // Background function has no timeout so sequential is fine.
+    const CHUNK = 3;
 
     // Write initial progress so client knows we started
     await writeResult(companyId, { done: false, sent: 0, failed: 0, total: targets.length });
@@ -145,8 +147,9 @@ export const handler = async (event) => {
           if (errors.length < 5) errors.push(`${uid}: ${e.message}`);
         }
       }));
-      // Update progress after each chunk
+      // Update progress + pause between batches (rate limit safety)
       await writeResult(companyId, { done: false, sent, failed, total: targets.length });
+      await new Promise(r => setTimeout(r, 300));
     }
 
     await writeResult(companyId, { done: true, sent, failed, total: targets.length, errors });
