@@ -42,6 +42,25 @@ export const handler = async (event) => {
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (_) {}
 
+  // Delete all messages and promos — never touch XU chests
+  if (body.action === "deleteRead") {
+    const kept = list.filter(e => e.type !== "message" && e.type !== "promo");
+    const deleted = list.length - kept.length;
+    if (deleted > 0) await store.setJSON(key, kept);
+    return json(200, { ok: true, deleted });
+  }
+
+  // Delete a single entry — only messages and promos allowed
+  if (body.action === "deleteOne") {
+    const entry = list.find(e => e.id === body.entryId);
+    if (!entry) return json(404, { error: "Entry not found." });
+    if (entry.type !== "message" && entry.type !== "promo") {
+      return json(403, { error: "XU chests cannot be deleted manually." });
+    }
+    await store.setJSON(key, list.filter(e => e.id !== body.entryId));
+    return json(200, { ok: true });
+  }
+
   // Khoá claim bằng casUpdate trên đúng list mailbox của user — chống 2
   // request claim CÙNG 1 rương song song đều pass kiểm tra "chưa claim".
   // Cả 2 lần casUpdate bọc trong 1 try/catch DUY NHẤT — lỗi tạm thời (vd hết
