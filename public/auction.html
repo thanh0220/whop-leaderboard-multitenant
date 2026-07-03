@@ -14,9 +14,10 @@
     background:radial-gradient(60% 50% at 50% 0%,rgba(168,85,247,.18),transparent 60%),#05050a;background-attachment:fixed}
   .wrap{max-width:560px;margin:0 auto;padding:18px 16px}
   .nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-  .nav a{font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:10.5px;
+  .nav a{position:relative;font-family:'Oswald',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:10.5px;
     padding:7px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.15);
     background:rgba(255,255,255,.04);color:var(--muted);text-decoration:none;transition:.15s}
+  .nav-badge{position:absolute;top:-5px;right:-5px;background:#e53935;color:#fff;border-radius:999px;font-size:9px;font-family:'Oswald',sans-serif;font-weight:700;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;line-height:1}
   .nav a.on{border-color:var(--violet);background:rgba(168,85,247,.18);color:#e9d5ff;box-shadow:0 0 14px rgba(168,85,247,.4)}
 
   .stage{position:relative;border-radius:20px;overflow:hidden;background:#0a0712;border:1px solid rgba(168,85,247,.3);
@@ -123,14 +124,8 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="nav">
-    <a href="/">🏆 Leaderboard</a>
-    <a href="/daily.html">📅 Daily</a>
-    <a href="/store.html">🎁 Store</a>
-    <a href="/events.html">🗓 Events</a>
-    <a href="/mailbox.html">📬 Mailbox</a>
-    <a href="/milestones.html">🎯 Milestones</a>
-  </div>
+  <div class="nav" data-shared></div>
+  <script src="/_nav.js"></script>
   <div id="content"><div class="state"><div class="spinner"></div>Loading...</div></div>
 </div>
 
@@ -172,7 +167,10 @@ function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
       '/daily.html': j.dailyEnabled, '/store.html': j.storeEnabled, '/mailbox.html': j.mailboxEnabled };
     document.querySelectorAll('.nav a').forEach(a=>{
       const href = a.getAttribute('href').split('?')[0];
-      if(href in map && !map[href]) a.remove();
+      if(href in map && !map[href]) { a.remove(); return; }
+      const badge = href === '/daily.html' && j.dailyPending ? 1
+                  : href === '/mailbox.html' && j.mailboxCount > 0 ? j.mailboxCount : 0;
+      if (badge) { const b = document.createElement('span'); b.className = 'nav-badge'; b.textContent = badge > 99 ? '99+' : String(badge); a.appendChild(b); }
     });
     if(!j.codesEnabled){ const fab=document.querySelector('.code-fab'); if(fab) fab.remove(); }
   }catch(_){}

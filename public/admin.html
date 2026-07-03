@@ -1573,26 +1573,6 @@ function renderInsights(){
     <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">📢 Broadcast Message</div>
     <div class="hint-small" style="margin-bottom:14px">Send a message to all members — they'll see it in their Mailbox. May take 10–30 seconds for large communities.</div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-      <div id="broadcast-warm" onclick="selectBroadcastTarget('warm')" style="padding:14px;border-radius:10px;border:2px solid rgba(244,196,65,.4);background:rgba(244,196,65,.07);cursor:pointer;transition:all .15s">
-        <div style="font-size:18px;margin-bottom:4px">🔥</div>
-        <div style="font-family:'Oswald',sans-serif;font-size:13px;color:var(--gold);letter-spacing:.04em">Warm Members</div>
-        <div id="warm-count" style="font-size:11px;color:var(--card-muted);margin-top:3px">Paid · with email</div>
-      </div>
-      <div id="broadcast-cold" onclick="selectBroadcastTarget('cold')" style="padding:14px;border-radius:10px;border:2px solid rgba(39,227,255,.3);background:rgba(39,227,255,.05);cursor:pointer;transition:all .15s">
-        <div style="font-size:18px;margin-bottom:4px">❄️</div>
-        <div style="font-family:'Oswald',sans-serif;font-size:13px;color:var(--cyan);letter-spacing:.04em">Cold Members</div>
-        <div id="cold-count" style="font-size:11px;color:var(--card-muted);margin-top:3px">Free · with email</div>
-      </div>
-    </div>
-    <div id="broadcast-all" onclick="selectBroadcastTarget('all')" style="padding:12px 14px;border-radius:10px;border:2px solid rgba(178,102,255,.3);background:rgba(178,102,255,.05);cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <span style="font-size:16px">📣</span>
-      <div>
-        <div style="font-family:'Oswald',sans-serif;font-size:13px;color:#b680ff;letter-spacing:.04em">All Members</div>
-        <div id="all-count" style="font-size:11px;color:var(--card-muted)">Paid + free</div>
-      </div>
-    </div>
-
     <div style="margin-bottom:12px">
       <button class="btn" id="member-stats-btn" onclick="loadMemberStats()" style="font-size:12px">🔄 Load member stats</button>
       <div id="member-stats-list" style="margin-top:10px"></div>
@@ -1600,49 +1580,16 @@ function renderInsights(){
 
     <textarea id="broadcast-msg" rows="4" placeholder="Type your message here..." style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;resize:vertical;font-family:inherit"></textarea>
 
-    <div style="margin-top:12px;margin-bottom:12px">
-      <div style="font-size:11px;color:var(--card-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Send via</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn broadcast-ch-btn" id="ch-whop" onclick="selectBroadcastChannel('whop')" style="font-size:12px;opacity:1;transform:scale(1.02)">💬 Whop Support Chat</button>
-        <button class="btn broadcast-ch-btn" id="ch-mailbox" onclick="selectBroadcastChannel('mailbox')" style="font-size:12px;opacity:0.45">📬 In-app Mailbox</button>
-        <button class="btn broadcast-ch-btn" id="ch-both" onclick="selectBroadcastChannel('both')" style="font-size:12px;opacity:0.45">📤 Both</button>
-      </div>
-    </div>
-
-    <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+    <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
       <button class="btn" id="broadcast-btn" onclick="sendBroadcast()" style="background:linear-gradient(135deg,var(--gold),#d39a11);color:#1a1200;border-color:transparent">📢 Send message</button>
-      <span id="broadcast-status" style="font-size:12px;color:var(--card-muted)">Select a group, then type your message</span>
+      <span id="broadcast-status" style="font-size:12px;color:var(--card-muted)"></span>
     </div>
     <div id="broadcast-debug" style="display:none"></div>
   </div>`;
 }
 
-let _broadcastTarget = null;
-let _broadcastChannel = 'whop';
-let _memberStats = null;
-function selectBroadcastTarget(t){
-  _broadcastTarget = t;
-  ['warm','cold','all'].forEach(k => {
-    const el = $('broadcast-' + k);
-    if (!el) return;
-    el.style.opacity = k === t ? '1' : '0.45';
-    el.style.transform = k === t ? 'scale(1.02)' : 'scale(1)';
-  });
-  const labels = { warm:'Warm members (paid)', cold:'Cold members (free)', all:'All members' };
-  const status = $('broadcast-status');
-  if (status) status.textContent = 'Selected: ' + (labels[t] || t);
-  renderMemberStatsList(t);
-}
-
-function selectBroadcastChannel(ch){
-  _broadcastChannel = ch;
-  ['whop','mailbox','both'].forEach(k => {
-    const el = $('ch-' + k);
-    if (!el) return;
-    el.style.opacity = k === ch ? '1' : '0.45';
-    el.style.transform = k === ch ? 'scale(1.02)' : 'scale(1)';
-  });
-}
+let _broadcastTarget = 'all';
+let _broadcastChannel = 'mailbox';
 
 async function loadMemberStats(){
   const btn = $('member-stats-btn');
@@ -1653,11 +1600,10 @@ async function loadMemberStats(){
     const r = await tenantFetch('/.netlify/functions/admin-broadcast');
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
-    _memberStats = j;
-    const wc = $('warm-count'); if (wc) wc.textContent = `${j.warmCount} paid`;
-    const cc = $('cold-count'); if (cc) cc.textContent = `${j.coldCount} free`;
-    const ac = $('all-count');  if (ac) ac.textContent = `${j.warmCount + j.coldCount} members`;
-    renderMemberStatsList(_broadcastTarget);
+    const total = (j.warmCount || 0) + (j.coldCount || 0);
+    const members = [...(j.warm||[]), ...(j.cold||[])];
+    if (list) list.innerHTML = `<div style="font-size:11px;color:var(--card-muted);margin-bottom:6px">${total} members will receive this message:</div>`
+      + members.map(m => `<span style="display:inline-block;font-size:11px;background:var(--chip-bg);border-radius:5px;padding:2px 7px;margin:2px 3px 2px 0;color:var(--card-text)">${esc(m.username)}</span>`).join('');
   } catch(e) {
     if (list) list.innerHTML = `<span style="font-size:12px;color:#ff6b6b">⚠ ${esc(e.message)}</span>`;
   } finally {
@@ -1665,25 +1611,13 @@ async function loadMemberStats(){
   }
 }
 
-function renderMemberStatsList(target){
-  const list = $('member-stats-list');
-  if (!list || !_memberStats) return;
-  if (!target) { list.innerHTML = ''; return; }
-  const members = target === 'warm' ? _memberStats.warm : target === 'cold' ? _memberStats.cold : [...(_memberStats.warm||[]), ...(_memberStats.cold||[])];
-  if (!members.length) { list.innerHTML = '<span style="font-size:12px;color:var(--card-muted)">No members in this group.</span>'; return; }
-  list.innerHTML = `<div style="font-size:11px;color:var(--card-muted);margin-bottom:6px">${members.length} member${members.length!==1?'s':''} will receive this message:</div>`
-    + members.map(m => `<span style="display:inline-block;font-size:11px;background:var(--chip-bg);border-radius:5px;padding:2px 7px;margin:2px 3px 2px 0;color:var(--card-text)">${esc(m.username)}</span>`).join('');
-}
-
 async function sendBroadcast(){
-  if (!_broadcastTarget) { alert('Select a group first (Warm / Cold / All).'); return; }
   const msgEl = $('broadcast-msg');
   const msg = (msgEl && msgEl.value || '').trim();
   if (!msg) { alert('Type your message first.'); return; }
-
-  const labels = { warm:'Warm members', cold:'Cold members', all:'All members' };
-  const chLabels = { whop:'Whop Support Chat', mailbox:'In-app Mailbox', both:'Whop + Mailbox' };
-  if (!confirm(`Send this message to ${labels[_broadcastTarget]} via ${chLabels[_broadcastChannel]}?\n\n"${msg.slice(0,120)}${msg.length>120?'…':''}"`)) return;
+  if (!confirm(`Send this message to ALL members via In-app Mailbox?\n\n"${msg.slice(0,120)}${msg.length>120?'…':''}"`)) return;
+  _broadcastTarget = 'all';
+  _broadcastChannel = 'mailbox';
 
   const btn = $('broadcast-btn');
   const status = $('broadcast-status');

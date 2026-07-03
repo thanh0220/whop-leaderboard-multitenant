@@ -67,6 +67,8 @@
     font-size:16px;color:var(--text2);display:flex;align-items:center;gap:10px}
   .brand .suit{color:var(--red);text-shadow:0 0 12px rgba(255,45,75,.7);font-size:18px}
   .topbar-right{display:flex;align-items:center;gap:9px}
+  .topbar-right a{position:relative}
+  .nav-badge{position:absolute;top:-5px;right:-5px;background:#e53935;color:#fff;border-radius:999px;font-size:9px;font-family:'Oswald',sans-serif;font-weight:700;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;line-height:1}
   .updated{font-size:11px;letter-spacing:.04em;color:var(--muted)}
   .refresh{font-family:'Oswald',sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:7px 14px;
     border-radius:999px;border:1px solid var(--line2);background:transparent;color:var(--cyan);
@@ -386,7 +388,10 @@ function tenantFetch(path, opts){
       '/daily.html': j.dailyEnabled, '/store.html': j.storeEnabled, '/mailbox.html': j.mailboxEnabled };
     document.querySelectorAll('.nav a, .topbar-right a').forEach(a=>{
       const href = a.getAttribute('href').split('?')[0];
-      if(href in map && !map[href]) a.remove();
+      if(href in map && !map[href]) { a.remove(); return; }
+      const badge = href === '/daily.html' && j.dailyPending ? 1
+                  : href === '/mailbox.html' && j.mailboxCount > 0 ? j.mailboxCount : 0;
+      if (badge) { const b = document.createElement('span'); b.className = 'nav-badge'; b.textContent = badge > 99 ? '99+' : String(badge); a.appendChild(b); }
     });
     if(!j.codesEnabled){ const fab=document.querySelector('.code-fab'); if(fab) fab.remove(); }
   }catch(_){}
