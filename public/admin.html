@@ -1577,7 +1577,6 @@ function renderAutomations(){
             <span style="font-size:12px;color:var(--card-muted)">after enrollment</span>
           </div>
           <textarea rows="3" placeholder="Message content…" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:6px;color:var(--text);padding:8px;font-size:12px;resize:vertical;font-family:inherit;box-sizing:border-box" oninput="setPath(STATE,'dripSequences.${si}.steps.${ti}.message',this.value)">${esc(step.message||'')}</textarea>
-          <input value="${esc((step.options||[]).join(', '))}" placeholder="Quick reply buttons (comma-separated, e.g. Yes, No, Later)" style="margin-top:6px;background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:11px;width:100%;box-sizing:border-box" oninput="setPath(STATE,'dripSequences.${si}.steps.${ti}.options',this.value.split(',').map(s=>s.trim()).filter(Boolean))"/>
         </div>
       </details>
       ${nextDelay !== null ? `<div style="display:flex;align-items:center;gap:8px;padding:4px 0 4px 18px">
@@ -1795,10 +1794,23 @@ async function sendBroadcast(){
 async function enrollDrip(si) {
   const seq = STATE.dripSequences[si];
   if (!seq) return;
-  if (!seq.id) { alert('Save first before enrolling.'); return; }
-  const target = ($('drip-target-' + si) && $('drip-target-' + si).value) || 'warm';
   const status = $('drip-enroll-status-' + si);
-  if (status) status.textContent = '⏳ Enrolling...';
+  // Validate: at least 1 step with a message
+  const hasContent = (seq.steps||[]).some(s => s.message && s.message.trim());
+  if (!hasContent) {
+    if (status) status.textContent = '⚠ Add at least one step with a message first.';
+    return;
+  }
+  const target = ($('drip-target-' + si) && $('drip-target-' + si).value) || 'warm';
+  if (status) status.textContent = '💾 Saving settings...';
+  try {
+    // Auto-save config first so server has the latest sequence
+    await saveConfig();
+  } catch(e) {
+    if (status) status.textContent = '⚠ Save failed: ' + e.message;
+    return;
+  }
+  if (status) status.textContent = '⏳ Enrolling members...';
   try {
     const r = await tenantFetch('/.netlify/functions/drip-enroll', {
       method: 'POST',

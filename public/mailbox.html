@@ -137,7 +137,10 @@
     <a href="/mailbox.html" class="on">📬 Mailbox</a>
     <a href="/milestones.html">🎯 Milestones</a>
   </div>
-  <div class="top"><span class="s">♦</span> <b>Mailbox</b></div>
+  <div class="top" style="display:flex;align-items:center;justify-content:space-between">
+    <div><span class="s">♦</span> <b>Mailbox</b></div>
+    <button id="clear-read-btn" onclick="deleteRead()" style="display:none;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:7px;border:1px solid rgba(255,80,80,.35);background:rgba(255,80,80,.08);color:#ff6b6b;cursor:pointer">🗑 Clear Read</button>
+  </div>
   <div id="content"><div class="state"><div class="spinner"></div>Loading...</div></div>
 </div>
 
@@ -257,14 +260,15 @@ function render(entries){
   }
   const sparkAngles = [[-26,-10,-22],[24,-8,18],[-10,-34,-14],[12,-30,26],[-34,-22,-30],[30,-20,32]];
   $('content').innerHTML = entries.map(e => {
-    // Admin message entries (no XU, no claim)
+    // Admin message entries (no XU, no claim) — always deletable
     if (e.type === 'message') {
-      return `<div class="promo-card" id="chest-${esc(e.id)}" style="background:rgba(39,227,255,.06);border-color:rgba(39,227,255,.25)">
+      return `<div class="promo-card" id="chest-${esc(e.id)}" style="background:rgba(39,227,255,.06);border-color:rgba(39,227,255,.25);position:relative">
         <div class="promo-icon">💬</div>
         <div class="promo-info">
           <div class="promo-lbl" style="color:var(--cyan)">${esc(e.label||'Message from Admin')}</div>
           <div class="promo-sub" style="white-space:pre-wrap;color:var(--card-text)">${esc(e.message||'')}</div>
         </div>
+        <button onclick="deleteOne('${esc(e.id)}')" title="Delete" style="position:absolute;top:8px;right:8px;background:none;border:1px solid rgba(255,80,80,.3);color:#ff6b6b;border-radius:5px;padding:2px 7px;cursor:pointer;font-size:11px;line-height:1.4">✕</button>
       </div>`;
     }
     // Promo code entries get a special card (not a chest)
@@ -297,7 +301,10 @@ function render(entries){
         ${e.buyerName ? `<div class="desc"><b>${esc(e.buyerName)}</b> made a purchase on Whop</div>` : (e.desc ? `<div class="desc">${esc(e.desc)}</div>` : '')}
         ${e.claimed ? '<div class="claimed-tag">✅ Claimed +'+e.xu+' XU</div>' : `<div style="font-size:12px;color:#fcd34d;font-weight:600;margin-bottom:2px">+${e.xu} XU</div><div class="exp" data-exp="${esc(e.expiresAt)}">${fmtCountdown(e.expiresAt)}</div>`}
       </div>
-      ${e.claimed ? '' : `<button class="btn" onclick="claim('${esc(e.id)}',this)">Claim</button>`}
+      ${e.claimed
+        ? `<button onclick="deleteOne('${esc(e.id)}')" title="Delete" style="background:none;border:1px solid rgba(255,80,80,.3);color:#ff6b6b;border-radius:5px;padding:4px 9px;cursor:pointer;font-size:12px;flex-shrink:0">✕</button>`
+        : `<button class="btn" onclick="claim('${esc(e.id)}',this)">Claim</button>`
+      }
       <div class="pop" id="pop-${esc(e.id)}"></div>
     </div>`;
   }).join('');
@@ -313,9 +320,44 @@ function render(entries){
     }
   });
 
+  // Show "Clear Read" button only when there are deletable entries
+  const hasRead = entries.some(e => e.claimed || e.type === 'message' || e.type === 'promo');
+  const clearBtn = $('clear-read-btn');
+  if (clearBtn) clearBtn.style.display = hasRead ? '' : 'none';
+
   setInterval(()=>{
     document.querySelectorAll('.exp[data-exp]').forEach(el=>{ el.textContent = fmtCountdown(el.dataset.exp); });
   }, 1000);
+}
+
+async function deleteOne(id) {
+  try {
+    const r = await tenantFetch('/.netlify/functions/mailbox', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'deleteOne', entryId: id }),
+    });
+    if (!r.ok) { const j = await r.json(); throw new Error(j.error || 'Error'); }
+    const el = document.getElementById('chest-' + id);
+    if (el) { el.style.transition = 'opacity .2s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 220); }
+    const remaining = document.querySelectorAll('[id^="chest-"]');
+    if (remaining.length <= 1) load();
+  } catch(e) { toast('⚠ ' + e.message); }
+}
+
+async function deleteRead() {
+  const btn = $('clear-read-btn');
+  if (btn) btn.disabled = true;
+  try {
+    const r = await tenantFetch('/.netlify/functions/mailbox', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'deleteRead' }),
+    });
+    if (!r.ok) { const j = await r.json(); throw new Error(j.error || 'Error'); }
+    load();
+  } catch(e) {
+    toast('⚠ ' + e.message);
+    if (btn) btn.disabled = false;
+  }
 }
 
 function copyPromoCode(id, code, btn){
