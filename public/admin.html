@@ -1556,58 +1556,94 @@ function renderAutomations(){
   const seqs = STATE.dripSequences || [];
   const seqsHtml = seqs.map((seq, si) => {
     const steps = seq.steps || [];
+    const trigger = seq.trigger || 'join';
+    const isAutoTrigger = trigger === 'join';
+
     const stepsTimeline = steps.map((step, ti) => {
-      const dayLabel = step.delayDays === 0 ? 'Day 0 — Send immediately' : `Day ${step.delayDays}`;
+      const isFirst = ti === 0;
+      const delayLabel = isFirst ? '📩 Gửi ngay khi bắt đầu' : `⏱ Đợi ${step.delayDays || 1} ngày sau tin nhắn trước`;
       const preview = (step.message||'').trim().slice(0, 90) + ((step.message||'').trim().length > 90 ? '…' : '');
-      const nextDelay = steps[ti+1] ? steps[ti+1].delayDays - step.delayDays : null;
+      const nextStep = steps[ti+1];
       return `
       <details style="background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.09);border-radius:10px;overflow:hidden">
         <summary style="display:flex;align-items:flex-start;gap:10px;padding:11px 14px;cursor:pointer;list-style:none;user-select:none">
           <div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:rgba(39,227,255,.15);border:2px solid rgba(39,227,255,.4);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:12px;color:var(--cyan);font-weight:700">${ti+1}</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-family:'Oswald',sans-serif;letter-spacing:.06em;color:var(--cyan);margin-bottom:3px">${dayLabel}</div>
-            <div style="font-size:12px;color:${preview?'var(--text)':'var(--card-muted)'};font-style:${preview?'normal':'italic'};line-height:1.4;word-break:break-word">${preview||'No message yet…'}</div>
+            <div style="font-size:11px;font-family:'Oswald',sans-serif;letter-spacing:.06em;color:var(--cyan);margin-bottom:3px">${delayLabel}</div>
+            <div style="font-size:12px;color:${preview?'var(--text)':'var(--card-muted)'};font-style:${preview?'normal':'italic'};line-height:1.4;word-break:break-word">${preview||'Chưa có nội dung…'}</div>
           </div>
           <button onclick="event.preventDefault();event.stopPropagation();STATE.dripSequences[${si}].steps.splice(${ti},1);renderAll()" style="flex-shrink:0;margin-top:2px;background:none;border:1px solid rgba(255,80,80,.3);color:#ff6b6b;border-radius:5px;padding:2px 8px;cursor:pointer;font-size:11px">✕</button>
         </summary>
         <div style="padding:12px 14px;border-top:1px solid rgba(255,255,255,.07)">
+          ${isFirst ? `<div style="font-size:11px;color:var(--card-muted);margin-bottom:10px;padding:6px 10px;background:rgba(39,227,255,.06);border-radius:6px;border-left:3px solid rgba(39,227,255,.4)">Tin nhắn đầu tiên — gửi ngay khi bắt đầu chiến dịch</div>` : `
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-            <span style="font-size:12px;color:var(--card-muted)">Send on day</span>
-            <input type="number" min="0" value="${step.delayDays||0}" style="width:52px;text-align:center;font-weight:700;font-family:'Oswald',sans-serif;border:none;border-bottom:2px solid rgba(244,196,65,.5);background:transparent;color:var(--gold);padding:2px 4px;outline:none" oninput="setPath(STATE,'dripSequences.${si}.steps.${ti}.delayDays',Number(this.value)||0)"/>
-            <span style="font-size:12px;color:var(--card-muted)">after enrollment</span>
-          </div>
-          <textarea rows="3" placeholder="Message content…" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:6px;color:var(--text);padding:8px;font-size:12px;resize:vertical;font-family:inherit;box-sizing:border-box" oninput="setPath(STATE,'dripSequences.${si}.steps.${ti}.message',this.value)">${esc(step.message||'')}</textarea>
+            <span style="font-size:12px;color:var(--card-muted)">Đợi</span>
+            <input type="number" min="1" value="${step.delayDays||1}" style="width:52px;text-align:center;font-weight:700;font-family:'Oswald',sans-serif;border:none;border-bottom:2px solid rgba(244,196,65,.5);background:transparent;color:var(--gold);padding:2px 4px;outline:none" oninput="setPath(STATE,'dripSequences.${si}.steps.${ti}.delayDays',Math.max(1,Number(this.value)||1))"/>
+            <span style="font-size:12px;color:var(--card-muted)">ngày sau tin nhắn trước rồi gửi</span>
+          </div>`}
+          <textarea rows="3" placeholder="Nội dung tin nhắn…" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--card-border);border-radius:6px;color:var(--text);padding:8px;font-size:12px;resize:vertical;font-family:inherit;box-sizing:border-box" oninput="setPath(STATE,'dripSequences.${si}.steps.${ti}.message',this.value)">${esc(step.message||'')}</textarea>
         </div>
       </details>
-      ${nextDelay !== null ? `<div style="display:flex;align-items:center;gap:8px;padding:4px 0 4px 18px">
+      ${nextStep ? `<div style="display:flex;align-items:center;gap:8px;padding:4px 0 4px 18px">
         <div style="width:2px;height:20px;background:rgba(255,255,255,.12);border-radius:2px"></div>
-        <span style="font-size:11px;color:var(--card-muted);font-family:'Oswald',sans-serif;letter-spacing:.04em">WAIT ${nextDelay} DAY${nextDelay!==1?'S':''}</span>
+        <span style="font-size:11px;color:var(--card-muted);font-family:'Oswald',sans-serif;letter-spacing:.04em">⏳ ĐỢI ${nextStep.delayDays||1} NGÀY</span>
       </div>` : ''}`;
     }).join('');
 
     const stepCount = steps.length;
+    const prevDelay = stepCount > 0 ? (steps[stepCount-1].delayDays || 0) : 0;
+
+    const enrollSection = isAutoTrigger
+      ? `<div style="display:flex;align-items:center;gap:8px;padding:14px 0 0;border-top:1px solid rgba(255,255,255,.08)">
+          <span style="font-size:15px">🔔</span>
+          <div>
+            <div style="font-size:12px;color:var(--text);font-weight:600">Tự động gửi cho thành viên mới join</div>
+            <div style="font-size:11px;color:var(--card-muted);margin-top:2px">Mỗi khi có người join Whop community, họ sẽ tự động nhận chuỗi này</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;border-top:1px solid rgba(255,255,255,.05);padding-top:10px">
+          <div style="font-size:11px;color:var(--card-muted);margin-bottom:6px">Gửi cho thành viên cũ (existing members):</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <select id="drip-target-${si}" style="flex:1;min-width:120px;padding:7px 10px;border-radius:7px;border:1px solid var(--card-border);background:var(--chip-bg);color:var(--card-text);font-size:12px">
+              <option value="all">👥 Tất cả thành viên</option>
+              <option value="warm">🔥 Thành viên có trả tiền</option>
+              <option value="cold">❄️ Thành viên miễn phí</option>
+            </select>
+            <button class="btn" style="font-size:12px;margin-top:0;background:rgba(255,255,255,.08)" onclick="enrollDrip(${si})">▶ Gửi cho existing</button>
+            <span id="drip-enroll-status-${si}" style="font-size:11px;color:var(--card-muted);width:100%"></span>
+          </div>
+        </div>`
+      : `<div style="padding-top:14px;border-top:1px solid rgba(255,255,255,.08)">
+          <div style="font-family:'Oswald',sans-serif;font-size:11px;color:var(--card-muted);letter-spacing:.06em;margin-bottom:8px">GỬI CHO THÀNH VIÊN</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <select id="drip-target-${si}" style="flex:1;min-width:120px;padding:7px 10px;border-radius:7px;border:1px solid var(--card-border);background:var(--chip-bg);color:var(--card-text);font-size:12px">
+              <option value="all">👥 Tất cả thành viên</option>
+              <option value="warm">🔥 Thành viên có trả tiền</option>
+              <option value="cold">❄️ Thành viên miễn phí</option>
+            </select>
+            <button class="btn" style="font-size:12px;margin-top:0" onclick="enrollDrip(${si})">▶ Gửi ngay</button>
+            <span id="drip-enroll-status-${si}" style="font-size:11px;color:var(--card-muted);width:100%"></span>
+          </div>
+        </div>`;
+
     return `<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <div style="flex:1">
-          <input value="${esc(seq.name||'')}" placeholder="Sequence name…" oninput="setPath(STATE,'dripSequences.${si}.name',this.value)" style="font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;color:var(--text);background:transparent;border:none;border-bottom:2px solid rgba(255,255,255,.15);width:100%;outline:none;padding:2px 0"/>
+          <input value="${esc(seq.name||'')}" placeholder="Tên chiến dịch…" oninput="setPath(STATE,'dripSequences.${si}.name',this.value)" style="font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;color:var(--text);background:transparent;border:none;border-bottom:2px solid rgba(255,255,255,.15);width:100%;outline:none;padding:2px 0"/>
         </div>
-        <span style="font-size:11px;color:var(--card-muted);white-space:nowrap">${stepCount} step${stepCount!==1?'s':''}</span>
+        <span style="font-size:11px;color:var(--card-muted);white-space:nowrap">${stepCount} tin nhắn</span>
       </div>
-      <div style="margin-bottom:12px">${stepsTimeline||'<p style="font-size:12px;color:var(--card-muted);margin:0 0 10px;font-style:italic">No steps yet — add your first message below.</p>'}</div>
-      <button class="btn" style="font-size:12px;width:100%;margin-bottom:16px" onclick="(STATE.dripSequences[${si}].steps=STATE.dripSequences[${si}].steps||[]).push({delayDays:${stepCount===0?0:(steps[stepCount-1].delayDays||0)+1},message:'',options:[]});renderAll()">+ Add step</button>
-      <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:14px">
-        <div style="font-family:'Oswald',sans-serif;font-size:11px;color:var(--card-muted);letter-spacing:.06em;margin-bottom:8px">ENROLL MEMBERS INTO THIS SEQUENCE</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <select id="drip-target-${si}" style="flex:1;min-width:120px;padding:7px 10px;border-radius:7px;border:1px solid var(--card-border);background:var(--chip-bg);color:var(--card-text);font-size:12px">
-            <option value="warm">🔥 Warm — paid members</option>
-            <option value="cold">❄️ Cold — free members</option>
-            <option value="all">📣 All members</option>
-          </select>
-          <button class="btn" style="font-size:12px;margin-top:0" onclick="enrollDrip(${si})">🎯 Enroll</button>
-          <span id="drip-enroll-status-${si}" style="font-size:11px;color:var(--card-muted);width:100%"></span>
-        </div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:11px;color:var(--card-muted);display:block;margin-bottom:4px">Kích hoạt khi:</label>
+        <select onchange="setPath(STATE,'dripSequences.${si}.trigger',this.value);renderAll()" style="width:100%;padding:7px 10px;border-radius:7px;border:1px solid var(--card-border);background:var(--chip-bg);color:var(--card-text);font-size:12px">
+          <option value="join" ${trigger==='join'?'selected':''}>🔔 Thành viên mới join (tự động)</option>
+          <option value="manual" ${trigger==='manual'?'selected':''}>✋ Thủ công (admin tự chọn gửi ai)</option>
+        </select>
       </div>
-      <button class="btn del" style="margin-top:12px;font-size:12px" onclick="if(!confirm('Delete this sequence?'))return;STATE.dripSequences.splice(${si},1);renderAll()">🗑 Delete sequence</button>
+      <div style="margin-bottom:12px">${stepsTimeline||'<p style="font-size:12px;color:var(--card-muted);margin:0 0 10px;font-style:italic">Chưa có tin nhắn — thêm bước đầu tiên bên dưới.</p>'}</div>
+      <button class="btn" style="font-size:12px;width:100%;margin-bottom:16px" onclick="(STATE.dripSequences[${si}].steps=STATE.dripSequences[${si}].steps||[]).push({delayDays:${stepCount===0?0:1},message:''});renderAll()">+ Thêm tin nhắn</button>
+      ${enrollSection}
+      <button class="btn del" style="margin-top:12px;font-size:12px" onclick="if(!confirm('Xóa chiến dịch này?'))return;STATE.dripSequences.splice(${si},1);renderAll()">🗑 Xóa chiến dịch</button>
     </div>`;
   }).join('');
 
@@ -1622,12 +1658,12 @@ function renderAutomations(){
   </div>
 
   <div class="panel">
-    <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">📬 Drip Sequences</div>
-    <div class="hint-small" style="margin-bottom:10px">Automated message sequences sent on a schedule (Day 0, Day 3, Day 7…). Enroll members to start receiving each step on time.</div>
-    ${toggleRow(dripEnabled,"setPath(STATE,'dripEnabled',this.checked);renderAll()",'Enabled — drip engine runs daily.','Disabled — no drip messages are sent.')}
+    <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">📬 Chiến Dịch Tin Nhắn Tự Động</div>
+    <div class="hint-small" style="margin-bottom:10px">Tạo chuỗi tin nhắn gửi tự động theo lịch. Chọn trigger "Thành viên mới join" — hệ thống tự gửi, không cần làm gì thêm.</div>
+    ${toggleRow(dripEnabled,"setPath(STATE,'dripEnabled',this.checked);renderAll()",'Đã bật — engine gửi tin nhắn chạy mỗi ngày lúc 9:00 UTC.','Đã tắt — không có tin nhắn tự động nào được gửi.')}
     ${dripEnabled ? `
-      <div style="margin-top:12px">${seqsHtml||'<p class="hint-small">No sequences yet. Add one below.</p>'}</div>
-      <button class="btn" style="margin-top:8px" onclick="STATE.dripSequences.push({id:'seq_'+Date.now().toString(36),name:'New Sequence',steps:[]});renderAll()">+ Add sequence</button>
+      <div style="margin-top:12px">${seqsHtml||'<p class="hint-small">Chưa có chiến dịch nào. Tạo chiến dịch đầu tiên bên dưới.</p>'}</div>
+      <button class="btn" style="margin-top:8px" onclick="STATE.dripSequences.push({id:'seq_'+Date.now().toString(36),name:'Chiến dịch mới',trigger:'join',steps:[{delayDays:0,message:''}]});renderAll()">+ Tạo chiến dịch mới</button>
     ` : ''}
   </div>
 
@@ -1798,19 +1834,18 @@ async function enrollDrip(si) {
   // Validate: at least 1 step with a message
   const hasContent = (seq.steps||[]).some(s => s.message && s.message.trim());
   if (!hasContent) {
-    if (status) status.textContent = '⚠ Add at least one step with a message first.';
+    if (status) status.textContent = '⚠ Thêm ít nhất 1 tin nhắn có nội dung trước.';
     return;
   }
-  const target = ($('drip-target-' + si) && $('drip-target-' + si).value) || 'warm';
-  if (status) status.textContent = '💾 Saving settings...';
+  const target = ($('drip-target-' + si) && $('drip-target-' + si).value) || 'all';
+  if (status) status.textContent = '💾 Đang lưu cài đặt...';
   try {
-    // Auto-save config first so server has the latest sequence
     await saveConfig();
   } catch(e) {
-    if (status) status.textContent = '⚠ Save failed: ' + e.message;
+    if (status) status.textContent = '⚠ Lưu thất bại: ' + e.message;
     return;
   }
-  if (status) status.textContent = '⏳ Enrolling members...';
+  if (status) status.textContent = '⏳ Đang gửi cho thành viên...';
   try {
     const r = await tenantFetch('/.netlify/functions/drip-enroll', {
       method: 'POST',
@@ -1819,9 +1854,10 @@ async function enrollDrip(si) {
     });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
-    if (status) status.textContent = `✅ Enrolled ${j.enrolled} member${j.enrolled!==1?'s':''} (${j.skipped} already in).`;
+    const warn = j.warning ? ` ⚠ ${j.warning}` : '';
+    if (status) status.textContent = `✅ Đã gửi cho ${j.enrolled} thành viên (${j.skipped} đã có rồi).${warn}`;
   } catch(e) {
-    if (status) status.textContent = '⚠ ' + e.message;
+    if (status) status.textContent = '⚠ Lỗi: ' + e.message;
   }
 }
 
