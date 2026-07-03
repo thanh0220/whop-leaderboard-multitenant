@@ -61,9 +61,10 @@ async function sendViaWhopSupportChat(realCompanyId, apiKey, userId, content) {
   });
   if (!chanR.ok) {
     const t = await chanR.text().catch(() => "");
-    throw new Error(`support_channel ${chanR.status}: ${t.slice(0, 100)}`);
+    throw new Error(`support_channel ${chanR.status}: ${t.slice(0, 200)}`);
   }
   const chan = await chanR.json();
+  const chanDebug = JSON.stringify(chan).slice(0, 300);
   const msgR = await fetch("https://api.whop.com/api/v1/messages", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -71,8 +72,9 @@ async function sendViaWhopSupportChat(realCompanyId, apiKey, userId, content) {
   });
   if (!msgR.ok) {
     const t = await msgR.text().catch(() => "");
-    throw new Error(`message ${msgR.status}: ${t.slice(0, 100)}`);
+    throw new Error(`message ${msgR.status}: ${t.slice(0, 200)} | chan=${chanDebug}`);
   }
+  return chan;
 }
 
 export const handler = async (event) => {
@@ -111,6 +113,7 @@ export const handler = async (event) => {
 
     let sent = 0, failed = 0;
     const errors = [];
+    let debugChanSuccess = null, debugChanFail = null;
     // Small chunk + 300ms pause between batches to avoid Whop API rate limits.
     // Background function has no timeout so sequential is fine.
     const CHUNK = 3;
@@ -123,12 +126,14 @@ export const handler = async (event) => {
         let userOk = false;
         if (channel === "whop" || channel === "both") {
           try {
-            await sendViaWhopSupportChat(realCompanyId, apiKey, uid, text);
+            const chan = await sendViaWhopSupportChat(realCompanyId, apiKey, uid, text);
+            if (!debugChanSuccess) debugChanSuccess = { uid, chan };
             userOk = true;
           } catch (e) {
+            if (!debugChanFail) debugChanFail = { uid, err: e.message };
             if (channel === "whop") {
               failed++;
-              if (errors.length < 5) errors.push(`${uid}: ${e.message}`);
+              if (errors.length < 10) errors.push(`${uid}: ${e.message}`);
             }
             // "both": support chat failed but still write to mailbox below
           }
@@ -165,7 +170,7 @@ export const handler = async (event) => {
     }
 
     console.log(`[broadcast] DONE: sent=${sent} failed=${failed} errors=${JSON.stringify(errors)}`);
-    await writeResult({ done: true, sent, failed, total: targets.length, errors });
+    await writeResult({ done: true, sent, failed, total: targets.length, errors, debugChanSuccess, debugChanFail });
   } catch (err) {
     console.error(`[broadcast] FATAL:`, err.message);
     await writeResult({ done: true, error: err.message, sent: 0, failed: 0, total: 0 });
