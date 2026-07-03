@@ -1,5 +1,5 @@
 import { pointsStore, tenantKey } from "./_store.mjs";
-import { getAuthContext } from "./_auth.mjs";
+import { getAuthContext, getUserId } from "./_auth.mjs";
 import { getCompanyAccessToken, getRealCompanyId } from "./_tokens.mjs";
 import { getTenantConfig } from "./_tenant.mjs";
 
@@ -86,17 +86,20 @@ async function sendViaWhopSupportChat(realCompanyId, apiKey, userId, content, bo
 export const handler = async (event) => {
   if (!["GET", "POST"].includes(event.httpMethod)) return json(405, { error: "GET or POST only" });
 
+  // Job status polling: only needs JWT verify (no Whop API call).
+  // Calling isCompanyAdmin on every 2s poll triggers Whop rate limits → 400.
+  const q = event.queryStringParameters || {};
+  if (event.httpMethod === "GET" && q.jobId) {
+    const uid = await getUserId(event);
+    if (!uid) return json(401, { error: "Not authenticated." });
+    const store = pointsStore();
+    const result = await store.get("bcast-job:" + q.jobId, { type: "json" }).catch(() => null);
+    return json(200, result || { done: false, sent: 0, failed: 0, total: 0 });
+  }
+
   const { userId, companyId } = await getAuthContext(event);
   if (!userId) return json(401, { error: "Not authenticated." });
   if (!companyId) return json(400, { error: "No community found." });
-
-  // Fast path: check background job status (no need to fetch member list)
-  const jobId = event.queryStringParameters?.jobId;
-  if (event.httpMethod === "GET" && jobId) {
-    const store = pointsStore();
-    const result = await store.get(tenantKey("bcast-job", companyId, jobId), { type: "json" }).catch(() => null);
-    return json(200, result || { done: false, sent: 0, failed: 0, total: 0 });
-  }
 
   try {
     const cfg = await getTenantConfig(companyId);

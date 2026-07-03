@@ -82,9 +82,9 @@ export const handler = async (event) => {
 
   const store = pointsStore();
 
-  const writeResult = async (companyId, data) => {
+  const writeResult = async (data) => {
     try {
-      await store.setJSON(tenantKey("bcast-job", companyId || "unknown", jobId || "noid"), data);
+      await store.setJSON("bcast-job:" + (jobId || "noid"), data);
     } catch (_) {}
   };
 
@@ -92,7 +92,7 @@ export const handler = async (event) => {
 
   const { userId, companyId } = await getAuthContext(event);
   if (!userId || !companyId) {
-    await writeResult("unknown", { done: true, error: "Auth failed", sent: 0, failed: 0, total: 0 });
+    await writeResult({ done: true, error: "Auth failed", sent: 0, failed: 0, total: 0 });
     return { statusCode: 200, body: "" };
   }
 
@@ -115,7 +115,7 @@ export const handler = async (event) => {
     const CHUNK = 3;
 
     // Write initial progress so client knows we started
-    await writeResult(companyId, { done: false, sent: 0, failed: 0, total: targets.length });
+    await writeResult({ done: false, sent: 0, failed: 0, total: targets.length });
 
     for (let i = 0; i < targets.length; i += CHUNK) {
       await Promise.all(targets.slice(i, i + CHUNK).map(async ({ userId: uid }) => {
@@ -148,13 +148,13 @@ export const handler = async (event) => {
         }
       }));
       // Update progress + pause between batches (rate limit safety)
-      await writeResult(companyId, { done: false, sent, failed, total: targets.length });
+      await writeResult({ done: false, sent, failed, total: targets.length });
       await new Promise(r => setTimeout(r, 300));
     }
 
-    await writeResult(companyId, { done: true, sent, failed, total: targets.length, errors });
+    await writeResult({ done: true, sent, failed, total: targets.length, errors });
   } catch (err) {
-    await writeResult(companyId, { done: true, error: err.message, sent: 0, failed: 0, total: 0 });
+    await writeResult({ done: true, error: err.message, sent: 0, failed: 0, total: 0 });
   }
 
   return { statusCode: 200, body: "" };
