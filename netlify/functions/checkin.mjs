@@ -2,8 +2,6 @@ import { pointsStore, tenantKey, casUpdate } from "./_store.mjs";
 import { getAuthContext } from "./_auth.mjs";
 import { getTenantConfig } from "./_tenant.mjs";
 import { utcDayKey } from "./_season.mjs";
-import { getCompanyAccessToken, getRealCompanyId } from "./_tokens.mjs";
-import { triggerPromoReward } from "./_promo-reward.mjs";
 
 const json = (code, obj) => ({
   statusCode: code,
@@ -95,18 +93,6 @@ export const handler = async (event) => {
         return String((Number(current) || 0) + reward);
       }, { type: "text" }));
 
-      // Fire-and-forget promo reward if streak hits a configured milestone
-      if (cfg.promoRewards?.enabled) {
-        const hit = (cfg.promoRewards.milestones || []).find((m) => m.streakDays === newStreak);
-        if (hit) {
-          Promise.all([
-            getCompanyAccessToken(companyId),
-            getRealCompanyId(companyId, cfg),
-          ]).then(([apiKey, realCompanyId]) =>
-            triggerPromoReward(userId, companyId, newStreak, hit.discountPct, apiKey, realCompanyId)
-          ).catch(() => {});
-        }
-      }
 
       return json(200, {
         ok: true,
