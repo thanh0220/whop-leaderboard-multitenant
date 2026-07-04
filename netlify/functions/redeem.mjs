@@ -49,6 +49,50 @@ export const handler = async (event) => {
       if (e instanceof ClaimLockedError) return json(409, { error: "Redeem already in progress. Please wait a moment." });
     }
 
+    // Đổi bằng mảnh ghép (altCost) — bỏ qua XU hoàn toàn
+    if (body.useAltCost) {
+      const altCost = reward.altCost;
+      if (!Array.isArray(altCost) || altCost.length === 0) {
+        return json(400, { error: "This reward does not support piece exchange." });
+      }
+      const piecesKey = tenantKey("pieces", companyId, userId);
+      let insufficient = null;
+      try {
+        await casUpdate(store, piecesKey, (current) => {
+          const inv = (current && typeof current === "object") ? { ...current } : {};
+          for (const req of altCost) {
+            if ((inv[req.pieceId] || 0) < req.count) { insufficient = req; throw new Error("NOT_ENOUGH_PIECES"); }
+          }
+          for (const req of altCost) inv[req.pieceId] = (inv[req.pieceId] || 0) - req.count;
+          return inv;
+        });
+      } catch (e) {
+        if (insufficient) return json(402, { error: `Không đủ mảnh: cần ${insufficient.count}× ${insufficient.pieceId}` });
+        throw e;
+      }
+      if (reward.stock != null) {
+        const stockKey = tenantKey("stock", companyId, body.rewardId);
+        let soldOut = false;
+        try {
+          await casUpdate(store, stockKey, (c) => {
+            const rem = c !== null ? Number(c) : reward.stock;
+            if (rem <= 0) { soldOut = true; throw new Error("SOLD_OUT"); }
+            return String(rem - 1);
+          }, { type: "text" });
+        } catch (e) {
+          if (soldOut || e.message === "SOLD_OUT") return json(402, { error: "This item is sold out." });
+          throw e;
+        }
+      }
+      const payload = reward.payload || { kind: "code", code: "" };
+      const codeSummary = summarize(payload);
+      let history = [];
+      try { const h = await store.get(tenantKey("history", companyId, userId), { type: "json" }); if (Array.isArray(h)) history = h; } catch (_) {}
+      history.unshift({ at: new Date().toISOString(), rewardId: reward.id, reward: reward.name, cost: 0, code: codeSummary, payload, paidWithPieces: true });
+      await store.setJSON(tenantKey("history", companyId, userId), history);
+      return json(200, { ok: true, reward: reward.name, code: codeSummary, payload, paidWithPieces: true });
+    }
+
     // Daily deal price override
     const dailyDeal = cfg.dailyDeal;
     let effectiveCost = reward.cost;
@@ -134,6 +178,7 @@ export const handler = async (event) => {
       reward: finalRewardName,
       cost: effectiveCost,
       code: codeSummary,
+      payload,
     });
     await store.setJSON(tenantKey("history", companyId, userId), history);
 

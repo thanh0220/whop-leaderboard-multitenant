@@ -46,6 +46,7 @@ export const handler = async (event) => {
       dailyEnabled: cfg.dailyEnabled !== false,
       storeEnabled: cfg.storeEnabled !== false,
       mailboxEnabled: cfg.mailboxEnabled !== false,
+      videosEnabled: cfg.videoSettings?.enabled !== false && (cfg.lockedVideos || []).length > 0,
       dailyPending,
       mailboxCount,
     });

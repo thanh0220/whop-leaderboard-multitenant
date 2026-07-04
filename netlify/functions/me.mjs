@@ -81,18 +81,20 @@ export const handler = async (event) => {
       .map(r => store.get(tenantKey("stock", companyId, r.id), { type: "text" }).catch(() => null)
         .then(v => [r.id, v !== null ? Number(v) : r.stock]));
 
-    const [{ earned, paidUsd, referrals, months, bonus, username }, spentRaw, historyRaw, checkinRaw, paid, ...stockEntries] =
+    const [{ earned, paidUsd, referrals, months, bonus, username }, spentRaw, historyRaw, checkinRaw, paid, piecesRaw, ...stockEntries] =
       await Promise.all([
         computeEarned(userId, apiKey, companyId, cfg),
         store.get(tenantKey("spent", companyId, userId)).catch(() => null),
         store.get(tenantKey("history", companyId, userId), { type: "json" }).catch(() => null),
         store.get(tenantKey("checkin", companyId, userId), { type: "json" }).catch(() => null),
         isPaidTier(companyId, cfg),
+        store.get(tenantKey("pieces", companyId, userId), { type: "json" }).catch(() => null),
         ...stockReads,
       ]);
 
     const stockMap = Object.fromEntries(stockEntries);
     const isVip = paidUsd > 0;
+    const pieces = (piecesRaw && typeof piecesRaw === "object") ? piecesRaw : {};
 
     const spent = Number(spentRaw) || 0;
     const history = Array.isArray(historyRaw) ? historyRaw : [];
@@ -126,6 +128,8 @@ export const handler = async (event) => {
       seasonVip: { ...seasonInfo(), topRewards: cfg.seasonVipTopRewards },
       seasonRef: { ...seasonInfo(), topRewards: cfg.seasonRefTopRewards },
       branding: cfg.branding,
+      pieces,
+      puzzlePieces: cfg.puzzlePieces || [],
     });
   } catch (err) {
     return json(500, { error: err.message });

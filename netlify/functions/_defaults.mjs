@@ -65,10 +65,11 @@ export const DEFAULT_TENANT = {
   dailyEnabled:   true,
   storeEnabled:   true,
   mailboxEnabled: true,
-  // Rỗng có chủ đích: rewards là sản phẩm của TỪNG business, không ship sẵn
-  // sản phẩm của 1 business cụ thể cho mọi tenant khác. store.html tự hiện
-  // "no rewards yet" khi mảng rỗng — sạch, không gây nhầm lẫn cho member.
-  rewards: [],
+  rewards: [
+    { id: 'reward_default_1', name: 'Basic Package',   cost: 5000,  desc: '', image: '', buttonLabel: 'BUY', tier: 1, payload: { kind: 'code', code: '' } },
+    { id: 'reward_default_2', name: 'Premium Package', cost: 10000, desc: '', image: '', buttonLabel: 'BUY', tier: 1, payload: { kind: 'code', code: '' } },
+    { id: 'reward_default_3', name: 'VIP Package',     cost: 15000, desc: '', image: '', buttonLabel: 'BUY', tier: 1, payload: { kind: 'code', code: '' } },
+  ],
 
   redeemCodes: {
     WELCOME: { xu: 100 },

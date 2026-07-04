@@ -69,6 +69,9 @@ const ALLOWED_KEYS = [
   "digestEnabled",
   "digestEmail",
   "dailyDeal",
+  "puzzlePieces",
+  "lockedVideos",
+  "videoSettings",
 ];
 
 // GET: trả toàn bộ config tenant (trừ whopApiKey/setupSecret — không bao giờ
@@ -124,6 +127,9 @@ export const handler = async (event) => {
         digestEnabled: !!cfg.digestEnabled,
         digestEmail: cfg.digestEmail || "",
         dailyDeal: cfg.dailyDeal || null,
+        puzzlePieces: cfg.puzzlePieces || [],
+        lockedVideos: cfg.lockedVideos || [],
+        videoSettings: cfg.videoSettings || { enabled: true, xuPerPiece: 0 },
       });
     }
 

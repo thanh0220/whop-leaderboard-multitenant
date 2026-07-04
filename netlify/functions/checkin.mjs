@@ -93,6 +93,33 @@ export const handler = async (event) => {
         return String((Number(current) || 0) + reward);
       }, { type: "text" }));
 
+      // Mở rương mảnh ghép mỗi 5 ngày streak
+      let chestResult = null;
+      if (newStreak % 5 === 0) {
+        const pool = Array.isArray(cfg.puzzlePieces) ? cfg.puzzlePieces : [];
+        if (pool.length > 0) {
+          const totalWeight = pool.reduce((s, p) => s + (Number(p.weight) || 1), 0);
+          const rollCount = Math.random() < 0.4 ? 2 : 1; // 40% cơ hội nhận 2 mảnh
+          const rolled = [];
+          for (let r = 0; r < rollCount; r++) {
+            let rand = Math.random() * totalWeight;
+            let selected = pool[pool.length - 1];
+            for (const p of pool) { rand -= (Number(p.weight) || 1); if (rand <= 0) { selected = p; break; } }
+            rolled.push(selected.id);
+          }
+          await casUpdate(store, tenantKey("pieces", companyId, userId), (current) => {
+            const inv = (current && typeof current === "object") ? { ...current } : {};
+            for (const pid of rolled) inv[pid] = (inv[pid] || 0) + 1;
+            return inv;
+          });
+          const grouped = {};
+          for (const pid of rolled) grouped[pid] = (grouped[pid] || 0) + 1;
+          chestResult = Object.entries(grouped).map(([pid, count]) => {
+            const piece = pool.find(p => p.id === pid);
+            return { id: pid, name: piece?.name || pid, icon: piece?.icon || "🧩", count };
+          });
+        }
+      }
 
       return json(200, {
         ok: true,
@@ -100,6 +127,8 @@ export const handler = async (event) => {
         reward,
         bonusTotal: bonus,
         message: `+${reward} XU — ${newStreak}-day streak!`,
+        chestResult,
+        chestDay: newStreak % 5 === 0,
       });
     } catch (e) {
       if (e instanceof AlreadyCheckedInError) {
