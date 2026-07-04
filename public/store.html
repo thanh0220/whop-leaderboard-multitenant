@@ -191,6 +191,13 @@
   .card.lucky-card:hover{border-color:rgba(178,102,255,.75);box-shadow:0 14px 34px rgba(0,0,0,.55),0 0 28px rgba(178,102,255,.3)}
   .btn.lucky-btn{background:linear-gradient(135deg,rgba(178,102,255,.2),rgba(244,196,65,.15));border-color:rgba(178,102,255,.6);color:#d5b8ff}
   .btn.lucky-btn:hover:not(:disabled){background:linear-gradient(135deg,rgba(178,102,255,.35),rgba(244,196,65,.25));box-shadow:0 0 18px rgba(178,102,255,.4)}
+  /* Chest popup */
+  .chest-popup{position:fixed;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(6px)}
+  .chest-inner{background:var(--card1);border:1px solid rgba(39,227,255,.3);border-radius:20px;padding:32px 28px;max-width:320px;width:90%;text-align:center;animation:pop-in .35s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes pop-in{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+  .chest-icon{font-size:60px;margin-bottom:8px;display:block;animation:chest-shake .6s ease .1s both}
+  @keyframes chest-shake{0%{transform:rotate(0)}20%{transform:rotate(-10deg) scale(1.1)}40%{transform:rotate(10deg) scale(1.15)}60%{transform:rotate(-6deg) scale(1.1)}80%{transform:rotate(3deg)}100%{transform:rotate(0) scale(1)}}
+  .chest-title{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--card-text);margin-bottom:16px}
 </style>
 </head>
 <body>
@@ -622,6 +629,7 @@ async function luckyRedeem(rewardId, btn) {
     if (btn) { btn.disabled = false; btn.textContent = '🎲 Shake & Reveal!'; }
   }
 }
+
 
 function vipUpgradeCta() {
   toast('👑 Buy any paid plan (>$1) to unlock VIP rewards and redeem with XU!');

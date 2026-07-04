@@ -93,6 +93,72 @@
     .day{box-shadow:0 2px 8px rgba(22,28,44,.05)}
     .err{color:#9a2030}
   }
+  /* Milestone day cells (day 5,10,15…) */
+  .day.milestone{background:linear-gradient(150deg,#0e0028 0%,#1e0050 50%,#0a0018 100%)!important;border-color:#7c3aed!important;box-shadow:0 0 12px #7c3aed66,inset 0 0 14px #ffffff05;overflow:hidden}
+  .day.milestone .n{color:#c4b5fd}
+  .day.milestone .r{background:linear-gradient(170deg,#e8d5ff 0%,#a855f7 50%,#6d28d9 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 8px #a855f7);font-size:20px!important;animation:ms-glow 2.2s ease-in-out infinite alternate}
+  .day.milestone::before{content:'';position:absolute;top:-100%;left:-70%;width:40%;height:300%;background:linear-gradient(90deg,transparent,#ffffff10,transparent);transform:skewX(-15deg);animation:ms-shimmer 4s ease-in-out infinite;pointer-events:none}
+  .day.milestone.done .r{-webkit-text-fill-color:var(--cyan);background:none;filter:none;font-size:18px!important;animation:none}
+  @keyframes ms-glow{from{filter:drop-shadow(0 0 5px #a855f7)}to{filter:drop-shadow(0 0 20px #c084fc) drop-shadow(0 0 35px #7c3aed)}}
+  @keyframes ms-shimmer{0%{left:-70%}100%{left:130%}}
+  .day.day30{background:linear-gradient(150deg,#1a1000 0%,#3a2800 50%,#1a1000 100%)!important;border-color:var(--gold)!important;box-shadow:0 0 16px rgba(244,196,65,.5),inset 0 0 14px rgba(255,255,255,.03)!important;overflow:hidden}
+  .day.day30 .n{color:#fcd34d}
+  .day.day30 .r{background:linear-gradient(170deg,#fff8e0,#f4c441,#c8860a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 8px #f4c441);font-size:20px!important;animation:d30-glow 2s ease-in-out infinite alternate}
+  .day.day30::before{content:'';position:absolute;top:-100%;left:-70%;width:40%;height:300%;background:linear-gradient(90deg,transparent,rgba(244,196,65,.15),transparent);transform:skewX(-15deg);animation:ms-shimmer 3s ease-in-out infinite;pointer-events:none}
+  .day.day30.done .r{-webkit-text-fill-color:var(--cyan);background:none;filter:none;font-size:18px!important;animation:none}
+  @keyframes d30-glow{from{filter:drop-shadow(0 0 6px #f4c441)}to{filter:drop-shadow(0 0 22px #fcd34d) drop-shadow(0 0 40px #e88c10)}}
+
+  /* ── Daily Card Popup ── */
+  .dc-overlay{position:fixed;inset:0;z-index:950;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,0,16,.93);backdrop-filter:blur(12px);padding:20px}
+  .dc-label{color:var(--gold);font-size:11px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:28px;font-family:'Oswald',sans-serif;font-weight:700;text-align:center}
+  .dc-cards{display:flex;gap:18px;align-items:center;justify-content:center;perspective:1100px}
+  .dc-card-wrap{display:flex;flex-direction:column;align-items:center;cursor:pointer}
+  .dc-card-wrap.dc-locked{cursor:default;pointer-events:none}
+  .dc-float{transform-style:preserve-3d;animation:dc-bob 4.5s ease-in-out infinite alternate}
+  .dc-float.stop{animation:none!important;transform:none!important;transition:transform .4s ease}
+  .dc-card-wrap:hover:not(.dc-locked) .dc-float:not(.stop){transform:translateY(-14px) rotateY(-7deg) scale(1.05)!important;animation-play-state:paused}
+  .dc-card-wrap.dc-missed .dc-float{filter:saturate(.12) brightness(.35)}
+  .dc-card-inner{width:140px;height:210px;transform-style:preserve-3d;transition:transform .75s cubic-bezier(.34,1.1,.64,1);position:relative}
+  .dc-card-inner.dc-flipped{transform:rotateY(180deg)}
+  .dc-single .dc-float{animation-duration:5.5s}
+  .dc-single .dc-card-inner{width:200px;height:290px}
+  .dc-face{position:absolute;inset:0;border-radius:16px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px;overflow:hidden}
+  .dc-back{background:linear-gradient(150deg,#0e0028 0%,#1e0050 50%,#0a0018 100%);border:1.5px solid #7c3aed;box-shadow:0 0 24px #7c3aed88,0 0 60px #4c008055,inset 0 0 36px #ffffff05}
+  .dc-front{transform:rotateY(180deg);background:linear-gradient(150deg,#1a1000 0%,#3a2800 50%,#1a1000 100%);border:1.5px solid rgba(244,196,65,.65);box-shadow:0 0 24px rgba(244,196,65,.4),inset 0 0 24px rgba(244,196,65,.06)}
+  .dc-card-wrap.dc-chosen .dc-front{border-color:var(--gold)!important;box-shadow:0 0 40px rgba(244,196,65,.7),inset 0 0 24px rgba(244,196,65,.1)!important}
+  .dc-shimmer{position:absolute;top:-100%;left:-70%;width:40%;height:300%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);transform:skewX(-15deg);animation:dc-shimmer 3.5s ease-in-out infinite;pointer-events:none}
+  @keyframes dc-shimmer{0%{left:-70%}100%{left:130%}}
+  .dc-rune{position:absolute;font-size:12px;opacity:.3;color:#a78bfa;animation:dc-blink 3s ease-in-out infinite alternate;line-height:1}
+  .dc-rune.tl{top:10px;left:10px}.dc-rune.tr{top:10px;right:10px}.dc-rune.bl{bottom:10px;left:10px}.dc-rune.br{bottom:10px;right:10px}
+  @keyframes dc-blink{0%{opacity:.1}60%{opacity:.45}100%{opacity:.1}}
+  .dc-q{font-family:'Oswald',sans-serif;font-size:72px;font-weight:700;background:linear-gradient(170deg,#e8d5ff 0%,#a855f7 50%,#6d28d9 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 14px #a855f7);animation:dc-qpulse 2.5s ease-in-out infinite alternate;line-height:1;user-select:none}
+  .dc-single .dc-q{font-size:96px}
+  @keyframes dc-qpulse{from{filter:drop-shadow(0 0 8px #a855f7)}to{filter:drop-shadow(0 0 32px #c084fc) drop-shadow(0 0 64px #7c3aed)}}
+  .dc-day-lbl{font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.12em;font-family:'Oswald',sans-serif;text-transform:uppercase}
+  .dc-xu{font-family:'Oswald',sans-serif;font-size:30px;font-weight:700;color:var(--gold);text-shadow:0 0 20px rgba(244,196,65,.6);line-height:1}
+  .dc-single .dc-xu{font-size:48px}
+  .dc-xu-unit{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.18em;color:rgba(244,196,65,.55);text-transform:uppercase;margin-top:-4px}
+  .dc-tag-row{display:flex;gap:18px;justify-content:center;margin-top:14px;min-height:18px}
+  .dc-tag{width:140px;text-align:center;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:0;transition:opacity .35s}
+  .dc-tag.show{opacity:1}
+  .dc-tag.dc-chosen{color:var(--gold)}
+  .dc-tag.dc-missed{color:rgba(255,255,255,.3)}
+  .dc-hint{color:#ffffff30;font-size:12px;letter-spacing:1px;margin-top:22px;animation:c3d-hint-blink 2s ease-in-out infinite;transition:opacity .35s}
+  .dc-hint.hidden{opacity:0!important;pointer-events:none}
+  .dc-collect{font-family:'Oswald',sans-serif;letter-spacing:.14em;text-transform:uppercase;font-size:14px;font-weight:700;padding:12px 36px;border-radius:10px;border:2px solid var(--gold);background:rgba(244,196,65,.12);color:var(--gold);cursor:pointer;transition:.15s;margin-top:22px;display:none}
+  .dc-collect.show{display:inline-block}
+  .dc-collect:hover{background:rgba(244,196,65,.28);box-shadow:0 0 20px rgba(244,196,65,.4)}
+  @keyframes dc-bob{0%{transform:translateY(0) rotateY(-12deg) rotateX(5deg)}100%{transform:translateY(-14px) rotateY(12deg) rotateX(-5deg)}}
+  @keyframes c3d-hint-blink{0%,100%{opacity:.25}50%{opacity:.75}}
+  .c3d-burst{position:fixed;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:999;animation:c3d-burst-fly var(--dur,.7s) ease-out forwards}
+  @keyframes c3d-burst-fly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:var(--tx) scale(0)}}
+  .chest-popup{position:fixed;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(6px)}
+  .chest-inner{background:var(--card1);border:1px solid rgba(39,227,255,.3);border-radius:20px;padding:32px 28px;max-width:320px;width:90%;text-align:center;animation:pop-in .35s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes pop-in{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+  .chest-icon{font-size:60px;margin-bottom:8px;display:block;animation:chest-shake .6s ease .1s both}
+  @keyframes chest-shake{0%{transform:rotate(0)}20%{transform:rotate(-10deg) scale(1.1)}40%{transform:rotate(10deg) scale(1.15)}60%{transform:rotate(-6deg) scale(1.1)}80%{transform:rotate(3deg)}100%{transform:rotate(0) scale(1)}}
+  .chest-title{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--card-text);margin-bottom:16px}
+
 </style>
 </head>
 <body>
@@ -110,6 +176,150 @@
 const $=id=>document.getElementById(id);
 const fmt=n=>Number(n||0).toLocaleString('en-US');
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),3500);}
+
+function rndInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+
+function _dcCardBack(day){
+  return `<div class="dc-face dc-back">
+    <div class="dc-shimmer"></div>
+    <div class="dc-rune tl">✦</div><div class="dc-rune tr">✦</div>
+    <div class="dc-rune bl">✦</div><div class="dc-rune br">✦</div>
+    <div class="dc-q">?</div>
+    <div class="dc-day-lbl">Day ${day}</div>
+  </div>`;
+}
+
+function showDailyCardPopup(streak, xuAmount, day30offer){
+  const dayInCycle=((streak-1)%30+30)%30+1;
+  const isDay30=streak===30;
+  const isMilestone=!isDay30&&dayInCycle%5===0;
+  const day=dayInCycle;
+  const ov=document.createElement('div');
+  ov.className='dc-overlay';
+  document.body.appendChild(ov);
+
+  if(isDay30){
+    const offer=day30offer||{icon:'🏅',label:'Special Month-End Reward',desc:'A special gift for completing 30 days — check with your community owner.',value:'#'};
+    ov.innerHTML=`
+      <div class="dc-label" style="color:var(--gold);font-size:13px">🏅 DAY 30 — SPECIAL MONTH-END REWARD</div>
+      <div style="background:linear-gradient(135deg,rgba(244,196,65,.14),rgba(244,196,65,.04));border:1.5px solid rgba(244,196,65,.5);border-radius:16px;padding:28px 24px;text-align:center;max-width:300px;animation:pop-in .35s cubic-bezier(.34,1.56,.64,1)">
+        <div style="font-size:56px;margin-bottom:12px">${offer.icon}</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;color:var(--gold);letter-spacing:.06em;margin-bottom:8px">${offer.label}</div>
+        <div style="font-size:13px;color:var(--card-muted);line-height:1.5;margin-bottom:20px">${offer.desc}</div>
+        <a href="${offer.value}" target="_blank" style="display:inline-block;font-family:'Oswald',sans-serif;letter-spacing:.12em;text-transform:uppercase;font-size:13px;font-weight:700;padding:12px 28px;border-radius:10px;border:2px solid var(--gold);background:rgba(244,196,65,.15);color:var(--gold);text-decoration:none;transition:.15s" onmouseover="this.style.background='rgba(244,196,65,.28)'" onmouseout="this.style.background='rgba(244,196,65,.15)'">CLAIM NOW →</a>
+      </div>
+      <button class="dc-collect show" style="margin-top:14px" onclick="this.closest('.dc-overlay').remove()">CLOSE</button>`;
+    return;
+  }
+
+  if(isMilestone){
+    const base=xuAmount||10;
+    const cards=[
+      {xu:Math.max(1,Math.round(base*rndInt(80,120)/100))},
+      {xu:Math.max(1,Math.round(base*rndInt(150,250)/100))},
+      {xu:Math.max(1,Math.round(base*rndInt(300,500)/100))}
+    ].sort(()=>Math.random()-.5);
+    ov.innerHTML=`
+      <div class="dc-label">🏆 Milestone Day · Pick 1 Card</div>
+      <div class="dc-cards" id="dc-cards">
+        ${cards.map((c,i)=>`
+          <div class="dc-card-wrap" id="dcw${i}">
+            <div class="dc-float" id="dcfl${i}" style="animation-delay:${i*-1.5}s">
+              <div class="dc-card-inner" id="dci${i}">
+                ${_dcCardBack(day)}
+                <div class="dc-face dc-front">
+                  <div class="dc-day-lbl">Day ${day}</div>
+                  <div class="dc-xu">+${c.xu}</div>
+                  <div class="dc-xu-unit">XU</div>
+                </div>
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+      <div class="dc-tag-row">
+        ${cards.map((_,i)=>`<div class="dc-tag" id="dct${i}"></div>`).join('')}
+      </div>
+      <div class="dc-hint" id="dc-hint">Pick a card to reveal</div>
+      <button class="dc-collect" id="dc-collect" onclick="this.closest('.dc-overlay').remove()">COLLECT</button>`;
+    let chosen=false;
+    cards.forEach((_,i)=>{
+      document.getElementById('dcw'+i).addEventListener('click',()=>{
+        if(chosen)return; chosen=true;
+        document.getElementById('dc-hint').classList.add('hidden');
+        document.getElementById('dcfl'+i).classList.add('stop');
+        document.getElementById('dci'+i).classList.add('dc-flipped');
+        document.getElementById('dcw'+i).classList.add('dc-chosen','dc-locked');
+        setTimeout(()=>{
+          cards.forEach((_,j)=>{
+            document.getElementById('dcw'+j).classList.add('dc-locked');
+            if(j!==i){
+              document.getElementById('dcfl'+j).classList.add('stop');
+              document.getElementById('dci'+j).classList.add('dc-flipped');
+              document.getElementById('dcw'+j).classList.add('dc-missed');
+            }
+          });
+          setTimeout(()=>{
+            cards.forEach((_,j)=>{
+              const t=document.getElementById('dct'+j);
+              t.textContent=j===i?'✓ Your pick':'Could have won';
+              t.className='dc-tag show '+(j===i?'dc-chosen':'dc-missed');
+            });
+            document.getElementById('dc-collect').classList.add('show');
+            spawnC3DBurst(document.getElementById('dcw'+i));
+          },300);
+        },650);
+      });
+    });
+  } else {
+    ov.innerHTML=`
+      <div class="dc-label">🎁 Daily Reward · Day ${day}</div>
+      <div class="dc-cards dc-single">
+        <div class="dc-card-wrap" id="dcw0">
+          <div class="dc-float" id="dcfl0">
+            <div class="dc-card-inner" id="dci0">
+              ${_dcCardBack(day)}
+              <div class="dc-face dc-front">
+                <div class="dc-day-lbl">Day ${day}</div>
+                <div class="dc-xu">+${xuAmount||0}</div>
+                <div class="dc-xu-unit">XU</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dc-hint" id="dc-hint">Tap card to reveal</div>
+      <button class="dc-collect" id="dc-collect" onclick="this.closest('.dc-overlay').remove()">COLLECT</button>`;
+    let done=false;
+    document.getElementById('dcw0').addEventListener('click',()=>{
+      if(done)return; done=true;
+      document.getElementById('dcfl0').classList.add('stop');
+      document.getElementById('dci0').classList.add('dc-flipped');
+      document.getElementById('dc-hint').classList.add('hidden');
+      document.getElementById('dcw0').classList.add('dc-locked');
+      setTimeout(()=>{
+        spawnC3DBurst(document.getElementById('dcw0'));
+        document.getElementById('dc-collect').classList.add('show');
+      },700);
+    });
+  }
+}
+
+function spawnC3DBurst(scene){
+  const rect=scene.getBoundingClientRect();
+  const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+  const cols=['#4ade80','#86efac','#a855f7','#c084fc','#fcd34d','#ffffff'];
+  for(let i=0;i<28;i++){
+    const dot=document.createElement('div');
+    dot.className='c3d-burst';
+    const ang=Math.random()*360,dist=70+Math.random()*110;
+    const tx=`translate(${Math.cos(ang*Math.PI/180)*dist}px,${Math.sin(ang*Math.PI/180)*dist}px)`;
+    const dur=(.5+Math.random()*.5)+'s';
+    dot.style.cssText=`left:${cx}px;top:${cy}px;background:${cols[Math.floor(Math.random()*cols.length)]};--tx:${tx};--dur:${dur};animation-delay:${Math.random()*.12}s`;
+    document.body.appendChild(dot);
+    setTimeout(()=>dot.remove(),1100);
+  }
+}
+
 
 /* Mọi request gửi kèm experienceId/companyId Whop truyền vào URL khi nhúng
    app trong iframe — backend dùng để biết đang phục vụ business nào. */
@@ -179,7 +389,12 @@ function calendarHTML(ck){
     if(dayNum<=ck.streak && ck.streak>0 && !ck.canClaim && dayNum<=cur) cls+=' done';
     else if(dayNum<=ck.streak && ck.streak>0 && ck.canClaim===false) cls+=' done';
     if(ck.canClaim && dayNum===ck.nextStreak%cal.length||(ck.canClaim&&dayNum===((ck.nextStreak-1)%cal.length+1))) cls+=' next';
-    return `<div class="${cls}"><div class="n">Day ${dayNum}</div><div class="r">+${rw}</div></div>`;
+    const isDay30Gold = dayNum === 30 && ck.streak <= 30;
+    const isMilestone = dayNum % 5 === 0 && !isDay30Gold;
+    if(isDay30Gold) cls+=' day30';
+    else if(isMilestone) cls+=' milestone';
+    const rContent = isDay30Gold && !cls.includes('done') ? '🏅' : isMilestone && !cls.includes('done') ? '?' : '+'+rw;
+    return `<div class="${cls}"><div class="n">Day ${dayNum}</div><div class="r">${rContent}</div></div>`;
   }).join('');
 }
 
@@ -198,6 +413,7 @@ function render(d){
           🛡️ Activate 30-Day Streak Shield — 20 XU
         </button>${!canAffordShield?`<div style="font-size:11px;color:var(--card-muted);text-align:center;margin-top:4px">Need 20 XU to activate</div>`:''}`
       :'');
+  const todayXU = ck.canClaim ? ck.nextReward : ((ck.calendar||[])[((ck.streak-1)%(ck.calendar||[1]).length+(ck.calendar||[1]).length)%(ck.calendar||[1]).length]||0);
   const html=`
     <div class="bal">
       <div class="b main"><div class="v">${fmt(d.available)}</div><div class="l">🪙 Available XU</div></div>
@@ -250,7 +466,8 @@ function render(d){
       let j=null;
       try{ j=await r.json(); }catch(_){ j=null; }
       if(!r.ok) throw new Error((j&&j.error)||'Could not check in, please try again.');
-      toast((j&&j.message)||(j&&j.reward?`🎉 +${j.reward} XU received!`:'🎉 Checked in successfully!'));
+      toast(j&&j.reward?`🎉 +${j.reward} XU received!`:'🎉 Checked in successfully!');
+      showDailyCardPopup(j&&j.streak||1, j&&j.reward||0, j&&j.day30offer||null);
       setTimeout(load,400);
     }catch(e){
       const friendly = /unexpected token|json|fetch|network/i.test(e.message||'')
@@ -279,6 +496,7 @@ function render(d){
       }
     };
   }
+
 
   // countdown
   if(se.endsAt){
