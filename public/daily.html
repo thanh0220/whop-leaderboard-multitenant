@@ -108,6 +108,41 @@
   .day.day30.done .r{-webkit-text-fill-color:var(--cyan);background:none;filter:none;font-size:18px!important;animation:none}
   @keyframes d30-glow{from{filter:drop-shadow(0 0 6px #f4c441)}to{filter:drop-shadow(0 0 22px #fcd34d) drop-shadow(0 0 40px #e88c10)}}
 
+  /* ── Milestone Bonus Modal ── */
+  .mb-overlay{position:fixed;inset:0;z-index:980;display:flex;align-items:flex-start;justify-content:center;background:rgba(4,0,16,.95);backdrop-filter:blur(14px);padding:8px 4px;overflow-y:auto;cursor:pointer}
+  .mb-modal{background:linear-gradient(150deg,#0a0a18,#12101e);border:1px solid rgba(124,58,237,.4);border-radius:20px;max-width:520px;width:100%;margin:auto;overflow:hidden;cursor:default;animation:pop-in .35s cubic-bezier(.34,1.56,.64,1)}
+  .mb-modal.mb-wide{max-width:min(1360px,98vw);width:98vw}
+  .mb-video-title{font-family:'Oswald',sans-serif;font-size:clamp(16px,2.8vw,32px);font-weight:700;color:#fff;text-align:center;padding:4px 24px 18px;letter-spacing:.05em;text-wrap:balance}
+  .mb-video-wrap{position:relative;padding-top:56.25%;background:#000}
+  .mb-video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+  .mb-body{padding:24px}
+  .mb-close-row{display:flex;justify-content:flex-end;padding:14px 14px 0}
+  .mb-close-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.6);font-size:15px;line-height:1;transition:.15s;flex-shrink:0}
+  .mb-close-btn:hover{background:rgba(255,255,255,.18);color:#fff}
+  .mb-offer{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(39,227,255,.04));border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:18px 18px 18px 22px;margin-bottom:12px;position:relative;overflow:hidden}
+  .mb-offer::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#7c3aed,#27e3ff);border-radius:3px 0 0 3px}
+  .mb-badge{font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.14em;font-weight:700;color:#a78bfa;background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.35);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;text-transform:uppercase}
+  .mb-offer-title{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:var(--card-text);letter-spacing:.04em;margin-bottom:4px}
+  .mb-offer-price{font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;color:var(--gold);margin-bottom:6px;text-shadow:0 0 16px rgba(244,196,65,.3)}
+  .mb-offer-desc{font-size:13px;color:var(--card-muted);line-height:1.55}
+  .mb-cta{display:block;width:100%;text-align:center;font-family:'Oswald',sans-serif;letter-spacing:.1em;font-size:15px;font-weight:700;padding:16px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;cursor:pointer;text-decoration:none;transition:.2s;box-shadow:0 4px 20px rgba(34,197,94,.3)}
+  .mb-cta:hover{background:linear-gradient(135deg,#4ade80,#22c55e);box-shadow:0 0 28px rgba(34,197,94,.5);transform:translateY(-2px)}
+  .day.milestone.done.has-bonus::after,.day.day30.done.has-bonus::after{content:"★";position:absolute;top:4px;right:6px;color:#a78bfa;font-size:9px}
+  /* Expand button below video */
+  .mb-expand-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:rgba(124,58,237,.12);border:none;border-top:1px solid rgba(124,58,237,.2);color:#c4b5fd;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;letter-spacing:.1em;padding:13px 16px;cursor:pointer;transition:.2s;text-transform:uppercase}
+  .mb-expand-btn:hover{background:rgba(124,58,237,.24);color:#ddd6fe}
+  .mb-expand-icon{display:inline-block;font-size:10px;transition:transform .3s ease}
+  .mb-expandable{overflow:hidden;transition:max-height .45s cubic-bezier(.4,0,.2,1)}
+  /* Countdown timer */
+  .mb-countdown{display:flex;align-items:center;gap:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:rgba(255,100,100,.9)}
+  .mb-cd-time{font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;color:#ef4444;letter-spacing:.08em;min-width:60px;text-align:right;margin-left:auto}
+  /* Coupon code */
+  .mb-coupon{background:linear-gradient(135deg,rgba(244,196,65,.08),rgba(244,196,65,.03));border:1px dashed rgba(244,196,65,.4);border-radius:12px;padding:16px;text-align:center;margin-top:12px}
+  .mb-coupon-label{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.12em;color:rgba(244,196,65,.6);margin-bottom:8px;font-weight:700}
+  .mb-coupon-code{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;color:var(--gold);letter-spacing:.18em;background:rgba(0,0,0,.3);border:1px solid rgba(244,196,65,.25);border-radius:8px;padding:10px 16px;cursor:pointer;user-select:all;transition:.15s;margin-bottom:6px;display:inline-block;width:100%}
+  .mb-coupon-code:hover{background:rgba(244,196,65,.1)}
+  .mb-coupon-hint{font-size:11px;color:rgba(255,255,255,.28)}
+
   /* ── Daily Card Popup ── */
   .dc-overlay{position:fixed;inset:0;z-index:950;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,0,16,.93);backdrop-filter:blur(12px);padding:20px}
   .dc-label{color:var(--gold);font-size:11px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:28px;font-family:'Oswald',sans-serif;font-weight:700;text-align:center}
@@ -187,6 +222,98 @@ function _dcCardBack(day){
     <div class="dc-q">?</div>
     <div class="dc-day-lbl">Day ${day}</div>
   </div>`;
+}
+
+function toEmbedUrl(u){if(!u)return'';let m=u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);if(m)return'https://www.youtube.com/embed/'+m[1]+'?rel=0&autoplay=1';m=u.match(/vimeo\.com\/(\d+)/);if(m)return'https://player.vimeo.com/video/'+m[1]+'?autoplay=1';return'';}
+
+function mbCountdownStr(){
+  const now=new Date(),mid=new Date();mid.setHours(24,0,0,0);
+  const d=Math.max(0,mid-now);
+  const h=Math.floor(d/3600000),m=Math.floor((d%3600000)/60000),s=Math.floor((d%60000)/1000);
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+
+function mbExpandOffers(btn){
+  const wrap=btn.nextElementSibling;if(!wrap)return;
+  const open=wrap.style.maxHeight&&wrap.style.maxHeight!=='0px';
+  if(open){wrap.style.maxHeight='0';btn.querySelector('.mb-expand-icon').style.transform='rotate(0deg)';}
+  else{wrap.style.maxHeight=wrap.scrollHeight+'px';btn.querySelector('.mb-expand-icon').style.transform='rotate(180deg)';}
+}
+
+function showMilestoneBonusModal(bonus){
+  if(!bonus||bonus.type==='none')return;
+  const ov=document.createElement('div');
+  ov.className='mb-overlay';
+  ov.onclick=e=>{if(e.target===ov){clearInterval(ov._cd);ov.remove();}};
+
+  const hasOffers=bonus.offersEnabled&&bonus.offers&&bonus.offers.length;
+  const hasCta=bonus.offersEnabled&&(bonus.ctaUrl||bonus.ctaLabel);
+  const hasCoupon=bonus.offersEnabled&&bonus.coupon;
+  const hasExtras=hasOffers||hasCta||hasCoupon;
+  const isVideo=bonus.type==='video';
+
+  // Countdown bar (always shown when offersEnabled + hasExtras)
+  const countdownBar=hasExtras
+    ?'<div class="mb-countdown">⏰ Offer expires today <span class="mb-cd-time" id="mb-cd-time">'+mbCountdownStr()+'</span></div>':''
+
+  // Offers
+  const offersHtml=hasOffers
+    ?bonus.offers.map(o=>{
+        const badge=o.badge?'<div class="mb-badge">'+o.badge+'</div>':'';
+        const title=o.title?'<div class="mb-offer-title">'+o.title+'</div>':'';
+        const price=o.price?'<div class="mb-offer-price">'+o.price+'</div>':'';
+        const desc=o.desc?'<div class="mb-offer-desc">'+o.desc+'</div>':'';
+        return '<div class="mb-offer">'+badge+title+price+desc+'</div>';
+      }).join(''):'';
+
+  // CTA
+  const ctaHtml=(bonus.offersEnabled&&bonus.ctaUrl)
+    ?'<a href="'+bonus.ctaUrl+'" target="_blank" class="mb-cta">'+(bonus.ctaLabel||'Get Access Now →')+'</a>'
+    :(bonus.offersEnabled&&bonus.ctaLabel?'<div class="mb-cta" style="opacity:.5;cursor:default">'+bonus.ctaLabel+'</div>':'');
+
+  // Coupon
+  const couponHtml=hasCoupon
+    ?'<div class="mb-coupon"><div class="mb-coupon-label">🎟 COUPON CODE</div>'
+      +'<div class="mb-coupon-code" onclick="if(navigator.clipboard){navigator.clipboard.writeText(\''+bonus.coupon+'\');this.textContent=\'✓ Copied!\';const _s=this;setTimeout(()=>_s.textContent=\''+bonus.coupon+'\',1800)}">'+bonus.coupon+'</div>'
+      +'<div class="mb-coupon-hint">Tap to copy</div></div>':''
+
+  const bodyInner=countdownBar+offersHtml+ctaHtml+couponHtml;
+
+  // Top content
+  let topHtml='';
+  if(isVideo){
+    const embed=toEmbedUrl(bonus.url||'');
+    const titleHtml=bonus.title?'<div class="mb-video-title">'+bonus.title+'</div>':'';
+    topHtml=titleHtml+(embed
+      ?'<div class="mb-video-wrap"><iframe src="'+embed+'" allowfullscreen allow="autoplay"></iframe></div>'
+      :'<div style="padding:40px;text-align:center;color:rgba(255,255,255,.35);font-size:14px">No video URL configured.</div>');
+  }else if(bonus.type==='ebook'){
+    topHtml='<div class="mb-body" style="text-align:center;padding-top:32px"><div style="font-size:52px;margin-bottom:12px">📥</div><div style="font-family:\'Oswald\',sans-serif;font-size:18px;font-weight:700;color:var(--gold);margin-bottom:16px;letter-spacing:.06em">Free Ebook</div><a href="'+(bonus.url||'#')+'" target="_blank" class="mb-cta" style="display:inline-flex;align-items:center;gap:8px;width:auto;padding:14px 32px;text-decoration:none;border-radius:12px">📥 Download Now</a></div>';
+  }
+
+  // Layout: video → expand button → collapsible body; ebook → body auto-visible
+  let inner;
+  const closeBtn='<button class="mb-close-btn" onclick="clearInterval(this.closest(\'.mb-overlay\')._cd);this.closest(\'.mb-overlay\').remove()">✕</button>';
+  if(isVideo&&hasExtras){
+    inner='<div class="mb-close-row">'+closeBtn+'</div>'
+      +topHtml
+      +'<button class="mb-expand-btn" onclick="mbExpandOffers(this)"><span class="mb-expand-icon">▼</span>&nbsp;See exclusive offer</button>'
+      +'<div class="mb-expandable" style="max-height:0"><div class="mb-body">'+bodyInner+'</div></div>';
+  }else{
+    inner='<div class="mb-close-row">'+closeBtn+'</div>'
+      +topHtml
+      +(bodyInner?'<div class="mb-body">'+bodyInner+'</div>':'');
+  }
+
+  ov.innerHTML='<div class="mb-modal'+(isVideo?' mb-wide':'')+'">'+inner+'</div>';
+  document.body.appendChild(ov);
+
+  if(hasExtras){
+    ov._cd=setInterval(()=>{
+      const el=document.getElementById('mb-cd-time');
+      if(el)el.textContent=mbCountdownStr();else clearInterval(ov._cd);
+    },1000);
+  }
 }
 
 function showDailyCardPopup(streak, xuAmount, day30offer){
@@ -379,26 +506,31 @@ async function load(){
   }
 }
 
-function calendarHTML(ck){
+function calendarHTML(ck, milestoneBonus){
   const cal=ck.calendar||[];
+  const bonus=milestoneBonus||[];
   return cal.map((rw,i)=>{
     const dayNum=i+1;
     const cur=((ck.streak-1)%cal.length+cal.length)%cal.length+1;
     let cls='day';
+    const isDone=(dayNum<=ck.streak && ck.streak>0 && !ck.canClaim && dayNum<=cur)||(dayNum<=ck.streak && ck.streak>0 && ck.canClaim===false);
     if(rw>=50) cls+=' big';
-    if(dayNum<=ck.streak && ck.streak>0 && !ck.canClaim && dayNum<=cur) cls+=' done';
-    else if(dayNum<=ck.streak && ck.streak>0 && ck.canClaim===false) cls+=' done';
+    if(isDone) cls+=' done';
     if(ck.canClaim && dayNum===ck.nextStreak%cal.length||(ck.canClaim&&dayNum===((ck.nextStreak-1)%cal.length+1))) cls+=' next';
     const isDay30Gold = dayNum === 30 && ck.streak <= 30;
     const isMilestone = dayNum % 5 === 0 && !isDay30Gold;
     if(isDay30Gold) cls+=' day30';
     else if(isMilestone) cls+=' milestone';
-    const rContent = isDay30Gold && !cls.includes('done') ? '🏅' : isMilestone && !cls.includes('done') ? '?' : '+'+rw;
-    return `<div class="${cls}"><div class="n">Day ${dayNum}</div><div class="r">${rContent}</div></div>`;
+    const rContent = isDay30Gold && !isDone ? '🏅' : isMilestone && !isDone ? '?' : '+'+rw;
+    const b=bonus[i];
+    const hasBonus=isDone&&b&&b.type&&b.type!=='none';
+    if(hasBonus) cls+=' has-bonus';
+    return '<div class="'+cls+'"><div class="n">Day '+dayNum+'</div><div class="r">'+rContent+'</div></div>';
   }).join('');
 }
 
 function render(d){
+  window.__MB=d.checkinMilestoneBonus||[];
   const ck=d.checkin, se=d.seasonVip||d.season||{};
   const shieldActive=ck.shieldActive;
   const shieldExpiresAt=ck.shieldExpiresAt;
@@ -429,7 +561,7 @@ function render(d){
           ${ck.canClaim?`Claim +${ck.nextReward} XU`:'Claimed today'}
         </button>
       </div>
-      <div class="calendar">${calendarHTML(ck)}</div>
+      <div class="calendar">${calendarHTML(ck,window.__MB)}</div>
       <div style="background:rgba(245,158,11,.08);border-left:3px solid #f59e0b;border-radius:6px;padding:8px 12px;font-size:12px;color:#fcd34d;margin-top:12px">
         ⚠️ Missing a day resets your streak to Day 1. Milestone days have bigger rewards 🎉
       </div>
@@ -468,6 +600,12 @@ function render(d){
       if(!r.ok) throw new Error((j&&j.error)||'Could not check in, please try again.');
       toast(j&&j.reward?`🎉 +${j.reward} XU received!`:'🎉 Checked in successfully!');
       showDailyCardPopup(j&&j.streak||1, j&&j.reward||0, j&&j.day30offer||null);
+      // Auto-show milestone bonus modal on milestone days (every 5th day)
+      const newStreak=j&&j.streak||0;
+      if(newStreak>0&&newStreak%5===0){
+        const bonus=window.__MB&&window.__MB[newStreak-1];
+        if(bonus&&bonus.type&&bonus.type!=='none') setTimeout(()=>showMilestoneBonusModal(bonus),900);
+      }
       setTimeout(load,400);
     }catch(e){
       const friendly = /unexpected token|json|fetch|network/i.test(e.message||'')
