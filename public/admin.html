@@ -1503,6 +1503,7 @@
       src="https://js.whop.com/static/checkout/loader.js"
     ></script>
     <script type="module" src="/chest3d.module.js"></script>
+    <script type="module" src="/gem-chest3d.module.js"></script>
     <script>
 
       const $ = (id) => document.getElementById(id);
@@ -1536,7 +1537,8 @@ function introBlock(what, steps){  return `<div class="intro-card">    <p class=
 // có thể cần chọn 1 item Store làm quà; nút nhảy thẳng sang tab Store cho đỡ
 // bối rối "dropdown trống nghĩa là gì".
 function rewardEmptyWarning(required){  const msg = required    ? "⚠ You MUST have at least 1 reward in the 🎁 Reward Store before using this feature."    : "💡 You don't have any rewards in the 🎁 Reward Store yet — this still works with plain XU, but adding a real item makes it more exciting.";  return `<div class="reward-empty">    <p>${msg}</p>    <button class="btn" type="button" onclick="switchTab('store')">🎁 Go to Reward Store</button>  </div>`;}// Xem trước nhỏ — "đây là thứ member sẽ thấy" — dùng cho 1 reward cụ thể.
-function miniPreview(reward, big){  if (!reward) return '';  const visual = reward.image    ? `<img src="${esc(reward.image)}" alt=""/>`    : `<div class="ic">🎁</div>`;  return `<div class="mini-preview${big?' big':''}">${visual}    <div><div class="nm">${esc(reward.name||'(Unnamed)')}</div><div class="sub">👀 Members will see exactly this item</div></div>  </div>`;}function switchTab(id){  activeTab = id;  history.replaceState(null, '', '#'+id);  renderAll();}function applyNavActive(){  document.querySelectorAll('.nav a').forEach(a=>{    a.classList.toggle('active', a.getAttribute('href') === '#'+activeTab);  });}function renderAll(){  const fn = TAB_RENDERERS[activeTab] || renderConn;  $('content').innerHTML =    `<div class="tab-panel">${fn()}</div>` +    `<div class="save-bar"><button class="btn big" id="save-all">💾 Save all</button></div>`;  $('save-all').onclick = saveAll;  applyNavActive();  if (activeTab === 'chests') initChestPreviews();}// Rương 3D dùng làm preview tĩnh (không animate) cho mỗi tier — dispose canvas cũ
+function miniPreview(reward, big){  if (!reward) return '';  const visual = reward.image    ? `<img src="${esc(reward.image)}" alt=""/>`    : `<div class="ic">🎁</div>`;  return `<div class="mini-preview${big?' big':''}">${visual}    <div><div class="nm">${esc(reward.name||'(Unnamed)')}</div><div class="sub">👀 Members will see exactly this item</div></div>  </div>`;}function switchTab(id){  activeTab = id;  history.replaceState(null, '', '#'+id);  renderAll();}function applyNavActive(){  document.querySelectorAll('.nav a').forEach(a=>{    a.classList.toggle('active', a.getAttribute('href') === '#'+activeTab);  });}function renderAll(){  const fn = TAB_RENDERERS[activeTab] || renderConn;  $('content').innerHTML =    `<div class="tab-panel">${fn()}</div>` +    `<div class="save-bar"><button class="btn big" id="save-all">💾 Save all</button></div>`;  $('save-all').onclick = saveAll;  applyNavActive();  if (activeTab === 'chests') initChestPreviews();
+  if (activeTab === 'milestones') { msDisposeChests(); setTimeout(()=>msInitChests(STATE.milestoneRules?.tiers||[]),0); }}// Rương 3D dùng làm preview tĩnh (không animate) cho mỗi tier — dispose canvas cũ
 // trước khi tạo lại vì renderAll() re-render toàn bộ innerHTML mỗi lần đổi field.
 const chestPreviewRegistry = {};function initChestPreviews(){  Object.values(chestPreviewRegistry).forEach(c => { try{ c.dispose(); }catch(_){} });  for (const k in chestPreviewRegistry) delete chestPreviewRegistry[k];  document.querySelectorAll('.chest-preview[data-tier]').forEach(canvas => {    if (window.ChestVoxel) chestPreviewRegistry[canvas.id] = window.ChestVoxel.create(canvas, canvas.dataset.tier);  });}// ===== #conn =====
 function renderConn(){  const statusHtml=CONFIGURED?`<span class="status on">✅ Connected — Company ID: ${esc(STATE.whopCompanyId)}</span>`:`<span class="status off">⚠ Not connected yet — close this and reopen the app inside Whop</span>`;  return `    <div class="sect" id="conn">🔌 Connect Whop</div>    <div class="panel">      ${introBlock("This app automatically connects to YOUR Whop community as soon as you open it from inside Whop — there is nothing for you to set up here.",["Just make sure you opened this Settings page from inside your own Whop dashboard (not a link someone else sent you)","The status below should say \"Connected\" — if it doesn't, close and reopen the app"])}      ${statusHtml}    </div>    </div>`;}// ===== #billing =====
@@ -1596,9 +1598,14 @@ function renderChests(){
       </div>
     </div>
   </div>`;}
-// ===== #milestones — WYSIWYG Carousel =====
+// ===== #milestones — WYSIWYG Carousel (3D box + mystery card) =====
 function gdriveImg(url){if(!url)return url;const m=url.match(/\/file\/d\/([^/?#]+)/);return m?'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w800':url;}
 function setMsRewardType(ai,type){const tiers=STATE.milestoneRules.tiers;if(type==='xu'){tiers[ai].rewardId=null;tiers[ai].customItem=null;}else if(type==='item'){tiers[ai].rewardId=null;tiers[ai].customItem=tiers[ai].customItem||{name:'',image:''};}renderAll();}
+const MS_TIER_CYCLE=['bronze','jade','gold','ruby','diamond'];
+function msTierFor(i){return MS_TIER_CYCLE[i%MS_TIER_CYCLE.length];}
+let msChestReg={};
+function msDisposeChests(){Object.values(msChestReg).forEach(c=>{try{c.dispose();}catch(_){}});for(const k in msChestReg)delete msChestReg[k];}
+function msInitChests(tiers){tiers.forEach((t,ai)=>{if(t.customItem)return;const c=document.getElementById('ms-chest-'+ai);if(c&&window.GemChest)msChestReg['n'+ai]=window.GemChest.create(c,msTierFor(ai));});}
 let msWySelIdx=-1;let msDragMsIdx=null;
 function msWyToggle(ai){msWySelIdx=msWySelIdx===ai?-1:ai;renderAll();}
 function msDragMsStart(e,ai){msDragMsIdx=ai;e.dataTransfer.effectAllowed='move';setTimeout(()=>{const el=document.querySelector('.ms-wy-node[data-ai="'+ai+'"]');if(el)el.style.opacity='0.35';},0);}
@@ -1610,38 +1617,50 @@ function renderMilestones(){
   if(!document.getElementById('ms-wy-style')){
     const s=document.createElement('style');s.id='ms-wy-style';
     s.textContent=
-      '.ms-wy-track{display:flex;align-items:flex-start;gap:8px;overflow-x:auto;padding:8px 2px 14px;scrollbar-width:thin;scrollbar-color:rgba(124,58,237,.4) transparent}'
+      '.ms-wy-track{display:flex;align-items:flex-start;gap:10px;overflow-x:auto;padding:10px 2px 16px;scrollbar-width:thin;scrollbar-color:rgba(124,58,237,.4) transparent}'
       +'.ms-wy-track::-webkit-scrollbar{height:4px}.ms-wy-track::-webkit-scrollbar-thumb{background:rgba(124,58,237,.4);border-radius:2px}'
-      +'.ms-wy-node{position:relative;flex:0 0 auto;width:90px;text-align:center;border-radius:12px;padding:10px 4px 28px;border:1.5px solid var(--card-border);background:var(--chip-bg);cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s;user-select:none}'
+      +'.ms-wy-node{position:relative;flex:0 0 auto;width:116px;text-align:center;border-radius:14px;padding:10px 6px 32px;border:1.5px solid var(--card-border);background:var(--chip-bg);cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s;user-select:none}'
       +'.ms-wy-node:hover:not(.ms-wy-sel){border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.05)}'
-      +'.ms-wy-sel{border-color:#7c3aed!important;background:rgba(124,58,237,.1)!important;box-shadow:0 0 14px rgba(124,58,237,.3)!important}'
+      +'.ms-wy-sel{border-color:#f4c441!important;background:rgba(244,196,65,.07)!important;box-shadow:0 0 16px rgba(244,196,65,.25)!important}'
       +'.ms-wy-droptgt{outline:2px solid #7c3aed;outline-offset:2px}'
-      +'.ms-wy-dh{position:absolute;top:3px;right:3px;cursor:grab;color:rgba(255,255,255,.2);font-size:11px;padding:2px;user-select:none;letter-spacing:-2px;line-height:1;transition:color .15s}'
-      +'.ms-wy-dh:hover{color:rgba(124,58,237,.85)}.ms-wy-dh:active{cursor:grabbing}'
-      +'.ms-wy-ico{font-size:34px;margin-bottom:4px;line-height:1;pointer-events:none}'
-      +'.ms-wy-refs-num{font-family:\'Oswald\',sans-serif;font-weight:700;font-size:13px;color:var(--gold);letter-spacing:.03em;border-radius:3px;padding:0 3px;outline:none;cursor:text;display:inline-block;min-width:10px;transition:background .15s}'
-      +'.ms-wy-refs-num:hover{background:rgba(255,255,255,.08)}.ms-wy-refs-num:focus{background:rgba(124,58,237,.2);box-shadow:0 0 0 1px rgba(124,58,237,.4)}'
-      +'.ms-wy-lbl{font-size:10px;color:var(--card-text);border-radius:3px;padding:1px 3px;outline:none;cursor:text;display:block;word-break:break-word;transition:background .15s;min-height:14px;margin-top:3px}'
-      +'.ms-wy-lbl:hover{background:rgba(255,255,255,.08)}.ms-wy-lbl:focus{background:rgba(124,58,237,.18);box-shadow:0 0 0 1px rgba(124,58,237,.4)}'
+      +'.ms-wy-dh{position:absolute;top:4px;right:4px;cursor:grab;color:rgba(255,255,255,.2);font-size:11px;padding:2px;user-select:none;letter-spacing:-2px;line-height:1;transition:color .15s}'
+      +'.ms-wy-dh:hover{color:rgba(244,196,65,.8)}.ms-wy-dh:active{cursor:grabbing}'
+      +'.ms-wy-refs-num{font-family:\'Oswald\',sans-serif;font-weight:700;font-size:14px;color:var(--gold);letter-spacing:.03em;border-radius:3px;padding:0 4px;outline:none;cursor:text;display:inline-block;min-width:12px;transition:background .15s}'
+      +'.ms-wy-refs-num:hover{background:rgba(255,255,255,.08)}.ms-wy-refs-num:focus{background:rgba(244,196,65,.15);box-shadow:0 0 0 1px rgba(244,196,65,.4)}'
+      +'.ms-wy-lbl{font-size:11px;color:var(--card-text);border-radius:3px;padding:2px 4px;outline:none;cursor:text;display:block;word-break:break-word;transition:background .15s;min-height:16px;margin-top:4px;line-height:1.4}'
+      +'.ms-wy-lbl:hover{background:rgba(255,255,255,.08)}.ms-wy-lbl:focus{background:rgba(244,196,65,.12);box-shadow:0 0 0 1px rgba(244,196,65,.35)}'
       +'[contenteditable][data-ph]:empty::before{content:attr(data-ph);opacity:.3;pointer-events:none;font-style:italic;font-weight:400;font-size:.9em}'
-      +'.ms-wy-rew{font-size:9px;color:var(--card-muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 3px;pointer-events:none}'
-      +'.ms-wy-ebtn{position:absolute;bottom:5px;left:50%;transform:translateX(-50%);font-size:9px;color:rgba(255,255,255,.28);cursor:pointer;padding:2px 7px;border-radius:4px;transition:all .15s;white-space:nowrap;border:1px solid rgba(255,255,255,.1)}'
-      +'.ms-wy-ebtn:hover{color:#a78bfa;background:rgba(124,58,237,.15);border-color:rgba(124,58,237,.35)}'
-      +'.ms-wy-add{flex:0 0 auto;width:60px;min-height:130px;display:flex;align-items:center;justify-content:center;border:1.5px dashed rgba(255,255,255,.18);border-radius:12px;color:rgba(255,255,255,.28);font-size:24px;cursor:pointer;transition:all .15s;align-self:stretch}'
-      +'.ms-wy-add:hover{border-color:rgba(124,58,237,.5);color:#a78bfa;background:rgba(124,58,237,.06)}'
-      +'.ms-wy-panel{background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.22);border-radius:12px;padding:14px 16px;margin-top:10px}';
+      +'.ms-wy-rew{font-size:10px;color:var(--gold);font-family:\'Oswald\',sans-serif;font-weight:700;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px;pointer-events:none}'
+      +'.ms-wy-ebtn{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);font-size:9px;color:rgba(255,255,255,.3);cursor:pointer;padding:2px 8px;border-radius:4px;transition:all .15s;white-space:nowrap;border:1px solid rgba(255,255,255,.12)}'
+      +'.ms-wy-ebtn:hover{color:#fcd34d;background:rgba(244,196,65,.12);border-color:rgba(244,196,65,.4)}'
+      +'.ms-wy-add{flex:0 0 auto;width:70px;min-height:160px;display:flex;align-items:center;justify-content:center;border:1.5px dashed rgba(255,255,255,.18);border-radius:14px;color:rgba(255,255,255,.28);font-size:28px;cursor:pointer;transition:all .15s;align-self:stretch}'
+      +'.ms-wy-add:hover{border-color:rgba(244,196,65,.5);color:#fcd34d;background:rgba(244,196,65,.06)}'
+      +'.ms-wy-panel{background:rgba(244,196,65,.05);border:1px solid rgba(244,196,65,.2);border-radius:12px;padding:14px 16px;margin-top:10px}'
+      +'.ms-mcard-wrap{width:60px;height:86px;margin:0 auto}'
+      +'.ms-mcard-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;animation:ms-mfloat 3s ease-in-out infinite}'
+      +'.ms-mcard-face{position:absolute;inset:0;border-radius:8px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center}'
+      +'.ms-mcard-front{border:1.5px solid}'
+      +'.ms-mcard-back{transform:rotateY(180deg);font-size:18px;background:linear-gradient(150deg,#1a0800,#4a1e00);border:1.5px solid #f59e0b}'
+      +'.ms-mcard-q{font-size:28px;font-weight:bold;font-family:Georgia,serif}'
+      +'@keyframes ms-mfloat{0%,100%{transform:translateY(0) rotateY(-9deg)}50%{transform:translateY(-5px) rotateY(9deg)}}'
+      +'.ms-mcard-c0 .ms-mcard-front{background:linear-gradient(150deg,#0e0028,#2d006b);border-color:#7c3aed}.ms-mcard-c0 .ms-mcard-q{color:#c084fc}'
+      +'.ms-mcard-c1 .ms-mcard-front{background:linear-gradient(150deg,#000e28,#001a6b);border-color:#3b82f6}.ms-mcard-c1 .ms-mcard-q{color:#93c5fd}'
+      +'.ms-mcard-c2 .ms-mcard-front{background:linear-gradient(150deg,#180c00,#4a2800);border-color:#f59e0b}.ms-mcard-c2 .ms-mcard-q{color:#fcd34d}'
+      +'.ms-mcard-c3 .ms-mcard-front{background:linear-gradient(150deg,#001a10,#004d2c);border-color:#10b981}.ms-mcard-c3 .ms-mcard-q{color:#6ee7b7}'
+      +'.ms-mcard-c4 .ms-mcard-front{background:linear-gradient(150deg,#1a0008,#4a0018);border-color:#f43f5e}.ms-mcard-c4 .ms-mcard-q{color:#fda4af}';
     document.head.appendChild(s);
   }
   const rules=STATE.milestoneRules||{enabled:false,tiers:[]};
   const tiers=rules.tiers||[];
   const _ml=TIER_LEVEL===0?4:TIER_LEVEL===1?10:9999;
   const _mc=tiers.length;
-  const ICONS=['🎁','💎','🏆','🌟','👑','🎖','🔮','⚡','🦄','💫'];
-  const rewardSummary=(t)=>{if(t.rewardId==='__spin__')return`🎰 ${t.spinTickets||1}x spin`;if(t.customItem)return`🎴 ${(t.customItem.name||'Item').slice(0,10)}`;return`+${t.xu||0} XU`;};
+  const rewardSummary=(t)=>{if(t.rewardId==='__spin__')return`🎰 ${t.spinTickets||1}x spin`;if(t.customItem)return`🎴 ${(t.customItem.name||'Item').slice(0,12)}`;return`+${t.xu||0} XU`;};
   const IS='width:100%;box-sizing:border-box;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:var(--card-text);padding:7px 10px;font-size:13px;outline:none';
   const nodesHtml=tiers.map((t,ai)=>{
     const isSpin=t.rewardId==='__spin__',isItem=!!t.customItem&&!isSpin,isSel=msWySelIdx===ai;
-    const icon=isSpin?'🎰':isItem?'🎴':ICONS[ai%ICONS.length];
+    const visual=isItem
+      ?`<div class="ms-mcard-wrap"><div class="ms-mcard-inner ms-mcard-c${ai%5}"><div class="ms-mcard-face ms-mcard-front"><div class="ms-mcard-q">?</div></div><div class="ms-mcard-face ms-mcard-back">✨</div></div></div>`
+      :`<div style="width:80px;height:80px;margin:0 auto"><canvas id="ms-chest-${ai}" width="80" height="80" style="width:80px;height:80px;display:block"></canvas></div>`;
     return `<div class="ms-wy-node${isSel?' ms-wy-sel':''}" data-ai="${ai}"
       draggable="true"
       ondragstart="msDragMsStart(event,${ai})"
@@ -1650,13 +1669,13 @@ function renderMilestones(){
       ondrop="msDragMsDrop(event,${ai})"
       ondragend="msDragMsEnd()">
       <span class="ms-wy-dh" onclick="event.stopPropagation()" title="Drag to reorder">⠿⠿</span>
-      <div class="ms-wy-ico">${icon}</div>
-      <div style="display:flex;align-items:baseline;justify-content:center;gap:2px">
+      ${visual}
+      <div style="display:flex;align-items:baseline;justify-content:center;gap:2px;margin-top:6px">
         <span contenteditable="true" class="ms-wy-refs-num"
           onclick="event.stopPropagation()"
           oninput="STATE.milestoneRules.tiers[${ai}].thresholdReferrals=parseInt(this.textContent.replace(/\\D/g,''))||0"
           spellcheck="false">${t.thresholdReferrals||0}</span>
-        <span style="font-size:9px;color:var(--gold);opacity:.55;pointer-events:none">refs</span>
+        <span style="font-size:9px;color:var(--gold);opacity:.6;pointer-events:none">ref</span>
       </div>
       <span contenteditable="true" class="ms-wy-lbl" data-ph="Name..."
         onclick="event.stopPropagation()"
@@ -1667,7 +1686,6 @@ function renderMilestones(){
     </div>`;
   }).join('');
   const addBtn=_mc<_ml?`<div class="ms-wy-add" onclick="STATE.milestoneRules.tiers.push({thresholdReferrals:1,rewardId:null,xu:50,label:'Milestone ${_mc+1}',customItem:null});msWySelIdx=${_mc};renderAll()">+</div>`:'';
-  // Edit panel for selected node
   let editPanel='';
   if(msWySelIdx>=0&&msWySelIdx<tiers.length){
     const t=tiers[msWySelIdx];const isSpin=t.rewardId==='__spin__',isItem=!!t.customItem&&!isSpin,rType=isItem?'item':'xu';
@@ -1695,7 +1713,7 @@ function renderMilestones(){
       </div>
     </div>`;
   }
-  return `<div class="sect" id="milestones">🎯 Referral Milestones</div><div class="panel">${introBlock("Members earn a reward each time they cross a referral milestone you set — automatically, you don't have to do anything.",["Drag ⠿⠿ to reorder · click refs or name directly to edit","Click ⚙ edit on any card to set reward type, XU amount, or item","Turn on Enabled, then Save all"])}${toggleRow(rules.enabled,"setPath(STATE,'milestoneRules.enabled',this.checked);renderAll()",'Enabled — members can see the Referral Milestones page.',"Disabled — members can't see this program.")}
+  return `<div class="sect" id="milestones">🎯 Referral Milestones</div><div class="panel">${introBlock("Members earn a reward each time they cross a referral milestone you set — automatically, you don't have to do anything.",["Drag ⠿⠿ to reorder · click the number or name on any card to edit inline","Click ⚙ edit to set reward type, XU amount, or custom item","Turn on Enabled, then Save all"])}${toggleRow(rules.enabled,"setPath(STATE,'milestoneRules.enabled',this.checked);renderAll()",'Enabled — members can see the Referral Milestones page.',"Disabled — members can't see this program.")}
   <div class="ms-wy-track">${nodesHtml}${addBtn}</div>
   ${_mc>=_ml?`<p class="hint-small" style="margin-top:4px">${TIER_LEVEL>0?`Limit reached (${_mc}/${_ml}).`:`Free plan limit (${_mc}/${_ml}) —`}${TIER_LEVEL===0?` <a href="#billing" style="color:var(--cyan)" onclick="activeTab='billing';renderAll();return false">Upgrade</a> for more.`:''}</p>`:''}
   ${editPanel}</div>`;
