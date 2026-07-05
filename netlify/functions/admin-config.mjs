@@ -195,6 +195,11 @@ export const handler = async (event) => {
     if ("milestoneRules" in partial && (partial.milestoneRules?.tiers || []).length > msLimit) {
       return json(400, { error: `Your plan allows up to ${msLimit} milestones. Upgrade for more.` });
     }
+    const mdLimitArr = [5, 15, 30];
+    const mdLimit = cfg.unlockAllFeatures ? 30 : (mdLimitArr[tierLevel] ?? 5);
+    if ("checkinMilestoneDays" in partial && Array.isArray(partial.checkinMilestoneDays) && partial.checkinMilestoneDays.length > mdLimit) {
+      return json(400, { error: `Your plan allows up to ${mdLimit} milestone days. Upgrade for more.` });
+    }
     if ("branding" in partial && !paid) {
       partial.branding = { ...partial.branding, logoUrl: cfg.branding.logoUrl || null };
     }

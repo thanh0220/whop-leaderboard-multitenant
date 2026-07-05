@@ -47,7 +47,7 @@ export const DEFAULT_TENANT = {
     10, 10, 10, 10, 10,
     10, 10, 10, 10, 200,
   ],
-  checkinMilestoneDays: [5, 10, 15, 20, 25, 30],
+  checkinMilestoneDays: [5, 10, 15, 20, 30],
   checkinMilestoneBonus: [],
   seasonVipTopRewards: [
     { rank: "🥇 Top 1", prize: "2,000 XU", xu: 2000 },
@@ -122,11 +122,10 @@ export const DEFAULT_TENANT = {
   milestoneRules: {
     enabled: false,
     tiers: [
-      { thresholdReferrals: 1,  rewardId: null, xu: 50,   label: "Starter Reward", icon: "🎁" },
-      { thresholdReferrals: 3,  rewardId: null, xu: 150,  label: "Bronze Reward",  icon: "🎁" },
-      { thresholdReferrals: 5,  rewardId: null, xu: 400,  label: "Silver Reward",  icon: "🎁" },
-      { thresholdReferrals: 10, rewardId: null, xu: 900,  label: "Gold Reward",    icon: "🎁" },
-      { thresholdReferrals: 20, rewardId: null, xu: 2000, label: "Diamond Reward", icon: "🎁" },
+      { thresholdReferrals: 1,  rewardId: null, xu: 50,  label: "Starter Reward", icon: "🎁" },
+      { thresholdReferrals: 3,  rewardId: null, xu: 150, label: "Bronze Reward",  icon: "🎁" },
+      { thresholdReferrals: 5,  rewardId: null, xu: 400, label: "Silver Reward",  icon: "🎁" },
+      { thresholdReferrals: 10, rewardId: null, xu: 900, label: "Gold Reward",    icon: "🎁" },
     ],
   },
   // Chatbot display name — shown as sender in Whop Support Chat (agent_name field)
