@@ -72,6 +72,7 @@ const ALLOWED_KEYS = [
   "puzzlePieces",
   "lockedVideos",
   "videoSettings",
+  "checkinMilestoneBonus",
 ];
 
 // GET: trả toàn bộ config tenant (trừ whopApiKey/setupSecret — không bao giờ
