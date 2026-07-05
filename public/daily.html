@@ -319,7 +319,7 @@ function showMilestoneBonusModal(bonus){
 function showDailyCardPopup(streak, xuAmount, day30offer, milestoneDays){
   const msSet=new Set(milestoneDays??[5,10,15,20,25,30]);
   const dayInCycle=((streak-1)%30+30)%30+1;
-  const isDay30=streak===30;
+  const isDay30=dayInCycle===30;
   const isMilestone=!isDay30&&msSet.has(dayInCycle);
   const day=dayInCycle;
   const ov=document.createElement('div');
@@ -519,7 +519,7 @@ function calendarHTML(ck, milestoneBonus, milestoneDays){
     if(rw>=50) cls+=' big';
     if(isDone) cls+=' done';
     if(ck.canClaim && dayNum===ck.nextStreak%cal.length||(ck.canClaim&&dayNum===((ck.nextStreak-1)%cal.length+1))) cls+=' next';
-    const isDay30Gold = dayNum === 30 && ck.streak <= 30;
+    const isDay30Gold = dayNum === 30 && msSet.has(30);
     const isMilestone = msSet.has(dayNum) && !isDay30Gold;
     if(isDay30Gold) cls+=' day30';
     else if(isMilestone) cls+=' milestone';
