@@ -316,10 +316,11 @@ function showMilestoneBonusModal(bonus){
   }
 }
 
-function showDailyCardPopup(streak, xuAmount, day30offer){
+function showDailyCardPopup(streak, xuAmount, day30offer, milestoneDays){
+  const msSet=new Set(milestoneDays??[5,10,15,20,25,30]);
   const dayInCycle=((streak-1)%30+30)%30+1;
   const isDay30=streak===30;
-  const isMilestone=!isDay30&&dayInCycle%5===0;
+  const isMilestone=!isDay30&&msSet.has(dayInCycle);
   const day=dayInCycle;
   const ov=document.createElement('div');
   ov.className='dc-overlay';
@@ -506,9 +507,10 @@ async function load(){
   }
 }
 
-function calendarHTML(ck, milestoneBonus){
+function calendarHTML(ck, milestoneBonus, milestoneDays){
   const cal=ck.calendar||[];
   const bonus=milestoneBonus||[];
+  const msSet=new Set(milestoneDays??[5,10,15,20,25,30]);
   return cal.map((rw,i)=>{
     const dayNum=i+1;
     const cur=((ck.streak-1)%cal.length+cal.length)%cal.length+1;
@@ -518,7 +520,7 @@ function calendarHTML(ck, milestoneBonus){
     if(isDone) cls+=' done';
     if(ck.canClaim && dayNum===ck.nextStreak%cal.length||(ck.canClaim&&dayNum===((ck.nextStreak-1)%cal.length+1))) cls+=' next';
     const isDay30Gold = dayNum === 30 && ck.streak <= 30;
-    const isMilestone = dayNum % 5 === 0 && !isDay30Gold;
+    const isMilestone = msSet.has(dayNum) && !isDay30Gold;
     if(isDay30Gold) cls+=' day30';
     else if(isMilestone) cls+=' milestone';
     const rContent = isDay30Gold && !isDone ? '🏅' : isMilestone && !isDone ? '?' : '+'+rw;
@@ -531,6 +533,7 @@ function calendarHTML(ck, milestoneBonus){
 
 function render(d){
   window.__MB=d.checkinMilestoneBonus||[];
+  window.__MSD=d.checkinMilestoneDays||null;
   const ck=d.checkin, se=d.seasonVip||d.season||{};
   const shieldActive=ck.shieldActive;
   const shieldExpiresAt=ck.shieldExpiresAt;
@@ -561,7 +564,7 @@ function render(d){
           ${ck.canClaim?`Claim +${ck.nextReward} XU`:'Claimed today'}
         </button>
       </div>
-      <div class="calendar">${calendarHTML(ck,window.__MB)}</div>
+      <div class="calendar">${calendarHTML(ck,window.__MB,window.__MSD)}</div>
       <div style="background:rgba(245,158,11,.08);border-left:3px solid #f59e0b;border-radius:6px;padding:8px 12px;font-size:12px;color:#fcd34d;margin-top:12px">
         ⚠️ Missing a day resets your streak to Day 1. Milestone days have bigger rewards 🎉
       </div>
@@ -599,10 +602,12 @@ function render(d){
       try{ j=await r.json(); }catch(_){ j=null; }
       if(!r.ok) throw new Error((j&&j.error)||'Could not check in, please try again.');
       toast(j&&j.reward?`🎉 +${j.reward} XU received!`:'🎉 Checked in successfully!');
-      showDailyCardPopup(j&&j.streak||1, j&&j.reward||0, j&&j.day30offer||null);
-      // Auto-show milestone bonus modal on milestone days (every 5th day)
+      showDailyCardPopup(j&&j.streak||1, j&&j.reward||0, j&&j.day30offer||null, window.__MSD);
+      // Auto-show milestone bonus modal on milestone days
       const newStreak=j&&j.streak||0;
-      if(newStreak>0&&newStreak%5===0){
+      const _msSet=new Set(window.__MSD??[5,10,15,20,25,30]);
+      const _dayInCycle=((newStreak-1)%30+30)%30+1;
+      if(newStreak>0&&_msSet.has(_dayInCycle)){
         const bonus=window.__MB&&window.__MB[newStreak-1];
         if(bonus&&bonus.type&&bonus.type!=='none') setTimeout(()=>showMilestoneBonusModal(bonus),900);
       }
