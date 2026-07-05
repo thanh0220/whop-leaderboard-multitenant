@@ -73,6 +73,7 @@ const ALLOWED_KEYS = [
   "lockedVideos",
   "videoSettings",
   "checkinMilestoneBonus",
+  "checkinMilestoneDays",
 ];
 
 // GET: trả toàn bộ config tenant (trừ whopApiKey/setupSecret — không bao giờ
@@ -128,6 +129,7 @@ export const handler = async (event) => {
         digestEnabled: !!cfg.digestEnabled,
         digestEmail: cfg.digestEmail || "",
         dailyDeal: cfg.dailyDeal || null,
+        checkinMilestoneDays: cfg.checkinMilestoneDays || null,
         puzzlePieces: cfg.puzzlePieces || [],
         lockedVideos: cfg.lockedVideos || [],
         videoSettings: cfg.videoSettings || { enabled: true, xuPerPiece: 0 },
