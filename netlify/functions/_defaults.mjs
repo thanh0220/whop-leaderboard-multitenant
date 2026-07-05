@@ -47,6 +47,8 @@ export const DEFAULT_TENANT = {
     10, 10, 10, 10, 10,
     10, 10, 10, 10, 200,
   ],
+  checkinMilestoneDays: [5, 10, 15, 20, 25, 30],
+  checkinMilestoneBonus: [],
   seasonVipTopRewards: [
     { rank: "🥇 Top 1", prize: "2,000 XU", xu: 2000 },
     { rank: "🥈 Top 2", prize: "1,000 XU", xu: 1000 },

@@ -126,6 +126,7 @@ export const handler = async (event) => {
       points: cfg.points,
       checkin: { today, streak: ck.streak, canClaim: checkinCanClaim, nextStreak, nextReward, calendar: cfg.checkinRewards, shieldActive: !!(ck.shieldExpiresAt && ck.shieldExpiresAt >= today), shieldExpiresAt: ck.shieldExpiresAt || null },
       checkinMilestoneBonus: cfg.checkinMilestoneBonus || [],
+      checkinMilestoneDays: cfg.checkinMilestoneDays || null,
       seasonVip: { ...seasonInfo(), topRewards: cfg.seasonVipTopRewards },
       seasonRef: { ...seasonInfo(), topRewards: cfg.seasonRefTopRewards },
       branding: cfg.branding,
