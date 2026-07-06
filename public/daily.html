@@ -226,12 +226,8 @@ function _dcCardBack(day){
 
 function toEmbedUrl(u){if(!u)return'';let m=u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);if(m)return'https://www.youtube.com/embed/'+m[1]+'?rel=0&autoplay=1';m=u.match(/vimeo\.com\/(\d+)/);if(m)return'https://player.vimeo.com/video/'+m[1]+'?autoplay=1';return'';}
 
-function mbCountdownStr(){
-  const now=new Date(),mid=new Date();mid.setHours(24,0,0,0);
-  const d=Math.max(0,mid-now);
-  const h=Math.floor(d/3600000),m=Math.floor((d%3600000)/60000),s=Math.floor((d%60000)/1000);
-  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-}
+function fmtCd(sec){const s=Math.max(0,Math.round(sec));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function mbStartCd(ov,sec){ov._cdSec=sec;ov._cd=setInterval(()=>{const e=document.getElementById('mb-cd-time');if(!e){clearInterval(ov._cd);return;}ov._cdSec=Math.max(0,(ov._cdSec||0)-1);e.textContent=fmtCd(ov._cdSec);if(ov._cdSec<60)e.style.color='#ff4444';if(ov._cdSec<=0){clearInterval(ov._cd);const bar=e.closest('.mb-countdown');if(bar)bar.style.opacity='.4';}},1000);}
 
 function mbExpandOffers(btn){
   const wrap=btn.nextElementSibling;if(!wrap)return;
@@ -252,9 +248,11 @@ function showMilestoneBonusModal(bonus){
   const hasExtras=hasOffers||hasCta||hasCoupon;
   const isVideo=bonus.type==='video';
 
-  // Countdown bar (always shown when offersEnabled + hasExtras)
-  const countdownBar=hasExtras
-    ?'<div class="mb-countdown">⏰ Offer expires today <span class="mb-cd-time" id="mb-cd-time">'+mbCountdownStr()+'</span></div>':''
+  const offerDelay=bonus.offerDelay??300;
+  const offerCd=bonus.offerCountdown??300;
+  // Countdown bar (shown when offersEnabled + hasExtras + offerCd > 0)
+  const countdownBar=hasExtras&&offerCd>0
+    ?'<div class="mb-countdown">⏰ Offer expires in <span class="mb-cd-time" id="mb-cd-time">'+fmtCd(offerCd)+'</span></div>':''
 
   // Offers
   const offersHtml=hasOffers
@@ -267,8 +265,9 @@ function showMilestoneBonusModal(bonus){
       }).join(''):'';
 
   // CTA
-  const ctaHtml=(bonus.offersEnabled&&bonus.ctaUrl)
-    ?'<a href="'+bonus.ctaUrl+'" target="_blank" class="mb-cta">'+(bonus.ctaLabel||'Get Access Now →')+'</a>'
+  const _safeCtaUrl=bonus.ctaUrl&&/^https?:\/\//.test(bonus.ctaUrl)?bonus.ctaUrl:'';
+  const ctaHtml=(bonus.offersEnabled&&_safeCtaUrl)
+    ?'<a href="'+_safeCtaUrl+'" target="_blank" class="mb-cta">'+(bonus.ctaLabel||'YES! Upgrade Me To VIP!')+'</a>'
     :(bonus.offersEnabled&&bonus.ctaLabel?'<div class="mb-cta" style="opacity:.5;cursor:default">'+bonus.ctaLabel+'</div>':'');
 
   // Coupon
@@ -277,7 +276,11 @@ function showMilestoneBonusModal(bonus){
       +'<div class="mb-coupon-code" onclick="if(navigator.clipboard){navigator.clipboard.writeText(\''+bonus.coupon+'\');this.textContent=\'✓ Copied!\';const _s=this;setTimeout(()=>_s.textContent=\''+bonus.coupon+'\',1800)}">'+bonus.coupon+'</div>'
       +'<div class="mb-coupon-hint">Tap to copy</div></div>':''
 
-  const bodyInner=countdownBar+offersHtml+ctaHtml+couponHtml;
+  // Price display block
+  const regTotal=(bonus.offers||[]).reduce((s,o)=>{const n=parseFloat((o.price||'').replace(/[^0-9.]/g,''));return s+(isNaN(n)?0:n);},0);
+  const regPriceStr=regTotal>0?'$'+regTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}):'';
+  const priceHtml=bonus.discountedPrice&&regPriceStr?'<div style="text-align:center;padding:12px 0 4px"><div style="font-size:13px;color:rgba(255,255,255,.4);text-decoration:line-through">'+regPriceStr+'</div><div style="font-size:24px;font-weight:700;color:#22c55e;font-family:\'Oswald\',sans-serif;letter-spacing:.04em">Today: '+bonus.discountedPrice+'</div></div>':'';
+  const bodyInner=countdownBar+priceHtml+offersHtml+ctaHtml+couponHtml;
 
   // Top content
   let topHtml='';
@@ -293,26 +296,38 @@ function showMilestoneBonusModal(bonus){
 
   // Layout: video → expand button → collapsible body; ebook → body auto-visible
   let inner;
-  const closeBtn='<button class="mb-close-btn" onclick="clearInterval(this.closest(\'.mb-overlay\')._cd);this.closest(\'.mb-overlay\').remove()">✕</button>';
+  const closeBtn='<button class="mb-close-btn" onclick="clearInterval(this.closest(\'.mb-overlay\')._cd);clearInterval(this.closest(\'.mb-overlay\')._delayT);this.closest(\'.mb-overlay\').remove()">✕</button>';
+  const unlockPh=offerDelay>0&&hasExtras?'<div id="mb-unlock-ph" style="text-align:center;padding:12px 0;color:rgba(255,255,255,.5);font-size:13px">🎁 Offer unlocking in <span id="mb-unlock-cd" style="font-family:Oswald,sans-serif;font-size:15px;font-weight:700;color:var(--gold)">'+fmtCd(offerDelay)+'</span></div>':'';
   if(isVideo&&hasExtras){
     inner='<div class="mb-close-row">'+closeBtn+'</div>'
       +topHtml
-      +'<button class="mb-expand-btn" onclick="mbExpandOffers(this)"><span class="mb-expand-icon">▼</span>&nbsp;See exclusive offer</button>'
+      +unlockPh
+      +'<button id="mb-expand-btn-main" class="mb-expand-btn" style="'+(offerDelay>0?'display:none':'')+'" onclick="mbExpandOffers(this)"><span class="mb-expand-icon">▼</span>&nbsp;See exclusive offer</button>'
       +'<div class="mb-expandable" style="max-height:0"><div class="mb-body">'+bodyInner+'</div></div>';
   }else{
     inner='<div class="mb-close-row">'+closeBtn+'</div>'
       +topHtml
-      +(bodyInner?'<div class="mb-body">'+bodyInner+'</div>':'');
+      +(bodyInner?(offerDelay>0?unlockPh+'<div id="mb-offer-zone" style="display:none"><div class="mb-body">'+bodyInner+'</div></div>':'<div class="mb-body">'+bodyInner+'</div>'):'');
   }
 
   ov.innerHTML='<div class="mb-modal'+(isVideo?' mb-wide':'')+'">'+inner+'</div>';
   document.body.appendChild(ov);
 
-  if(hasExtras){
-    ov._cd=setInterval(()=>{
-      const el=document.getElementById('mb-cd-time');
-      if(el)el.textContent=mbCountdownStr();else clearInterval(ov._cd);
+  if(hasExtras&&offerDelay>0){
+    let dSec=offerDelay;
+    ov._delayT=setInterval(()=>{
+      dSec--;
+      const dc=document.getElementById('mb-unlock-cd');if(dc)dc.textContent=fmtCd(dSec);
+      if(dSec<=0){
+        clearInterval(ov._delayT);
+        const ph=document.getElementById('mb-unlock-ph');if(ph)ph.remove();
+        const btn=document.getElementById('mb-expand-btn-main');if(btn){btn.style.display='';mbExpandOffers(btn);}
+        const zone=document.getElementById('mb-offer-zone');if(zone)zone.style.display='';
+        if(offerCd>0)mbStartCd(ov,offerCd);
+      }
     },1000);
+  }else if(hasExtras&&offerCd>0){
+    mbStartCd(ov,offerCd);
   }
 }
 
