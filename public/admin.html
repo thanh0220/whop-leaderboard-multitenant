@@ -1797,6 +1797,7 @@ function msRenderOffersSection(){
       +'oninput="MS_EDIT_DRAFT.title=this.textContent.trim()" spellcheck="false">'+esc(MS_EDIT_DRAFT.title||'')+'</div>';
   }else if(vtInj){vtInj.remove();}
   const enabled=MS_EDIT_DRAFT.offersEnabled;const offers=MS_EDIT_DRAFT.offers||[];
+  const regTot=offers.reduce((s,o)=>{const n=parseFloat((o.price||'').replace(/[^0-9.]/g,''));return s+(isNaN(n)?0:n);},0);const regStr=regTot>0?'$'+regTot.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}):'';
   const offerCards=offers.map((o,j)=>
     '<div class="ms-offer-dnd" draggable="true" data-oi="'+j+'" '
     +'ondragstart="msDragOfferStart(event,'+j+')" ondragover="msDragOfferOver(event,'+j+')" '
@@ -1808,7 +1809,7 @@ function msRenderOffersSection(){
     +'<button onclick="msRemoveOffer('+j+')" title="Remove" style="position:absolute;top:10px;right:10px;background:rgba(255,60,60,.1);border:1px solid rgba(255,60,60,.25);color:rgba(255,80,80,.7);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;padding:0;line-height:1">✕</button>'
     +'<div contenteditable="true" data-ph="BADGE" oninput="msUpdateOffer('+j+',\'badge\',this.textContent.trim())" spellcheck="false" style="font-family:\'Oswald\',sans-serif;font-size:9px;letter-spacing:.14em;font-weight:700;color:#a78bfa;background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.35);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;text-transform:uppercase;min-width:30px">'+esc(o.badge||'')+'</div>'
     +'<div contenteditable="true" data-ph="Title" oninput="msUpdateOffer('+j+',\'title\',this.textContent.trim())" spellcheck="false" style="display:block;font-family:\'Oswald\',sans-serif;font-size:18px;font-weight:700;color:var(--card-text);letter-spacing:.04em;margin-bottom:4px">'+esc(o.title||'')+'</div>'
-    +'<div contenteditable="true" data-ph="$0/mo" oninput="msUpdateOffer('+j+',\'price\',this.textContent.trim())" spellcheck="false" style="display:block;font-family:\'Oswald\',sans-serif;font-size:26px;font-weight:700;color:var(--gold);margin-bottom:6px;text-shadow:0 0 16px rgba(244,196,65,.3)">'+esc(o.price||'')+'</div>'
+    +'<div contenteditable="true" data-ph="$0/mo" oninput="msUpdateOffer('+j+',\'price\',this.textContent.trim());msUpdateRegPrice()" spellcheck="false" style="display:block;font-family:\'Oswald\',sans-serif;font-size:26px;font-weight:700;color:var(--gold);margin-bottom:6px;text-shadow:0 0 16px rgba(244,196,65,.3)">'+esc(o.price||'')+'</div>'
     +'<div contenteditable="true" data-ph="Short description..." oninput="msUpdateOffer('+j+',\'desc\',this.textContent.trim())" spellcheck="false" style="display:block;font-size:13px;color:var(--card-muted);line-height:1.55">'+esc(o.desc||'')+'</div>'
     +'</div>'
     +'</div>'
@@ -1817,6 +1818,22 @@ function msRenderOffersSection(){
   if(enabled){
     body=offerCards
       +'<button onclick="msAddOffer()" style="width:100%;box-sizing:border-box;background:transparent;border:1px dashed rgba(255,255,255,.18);border-radius:8px;color:rgba(255,255,255,.4);padding:8px;cursor:pointer;font-size:12px;margin-bottom:14px">+ Add Offer Card</button>'
+      +'<div style="background:rgba(255,200,100,.05);border:1px solid rgba(255,200,100,.12);border-radius:10px;padding:14px;margin-bottom:12px">'
+      +'<div style="font-size:10px;letter-spacing:.07em;color:rgba(255,200,100,.8);margin-bottom:10px;font-family:\'Oswald\',sans-serif;font-weight:700">⏱ TIMING — ADMIN ONLY</div>'
+      +'<div style="display:flex;gap:10px;margin-bottom:6px">'
+      +'<div style="flex:1"><div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:4px">Show offer after (sec)</div>'
+      +'<input type="number" min="0" max="7200" value="'+(MS_EDIT_DRAFT.offerDelay??300)+'" oninput="MS_EDIT_DRAFT.offerDelay=Number(this.value)||0" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:var(--card-text);padding:7px 10px;font-size:13px;outline:none;text-align:center;margin-bottom:0"/></div>'
+      +'<div style="flex:1"><div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:4px">Countdown timer (sec)</div>'
+      +'<input type="number" min="0" max="7200" value="'+(MS_EDIT_DRAFT.offerCountdown??300)+'" oninput="MS_EDIT_DRAFT.offerCountdown=Number(this.value)||0" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:var(--card-text);padding:7px 10px;font-size:13px;outline:none;text-align:center;margin-bottom:0"/></div>'
+      +'</div>'
+      +'<div style="font-size:10px;color:rgba(255,255,255,.25)">Default 300 s = 5 min. Set 0 to show immediately / disable countdown.</div>'
+      +'</div>'
+      +'<div style="background:rgba(255,255,255,.05);border-radius:10px;padding:14px;margin-bottom:12px">'
+      +'<div style="font-size:10px;letter-spacing:.07em;color:var(--gold);margin-bottom:10px;font-family:\'Oswald\',sans-serif;font-weight:700">PRICING DISPLAY</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:12px;color:rgba(255,255,255,.4)">Regular (auto-sum):</span><span id="ms-reg-price-span" style="font-size:14px;color:rgba(255,255,255,.4);text-decoration:line-through;font-family:\'Oswald\',sans-serif">'+(regStr||'—')+'</span></div>'
+      +'<input placeholder="Sale price shown to members (e.g. $47 or FREE)" value="'+esc(MS_EDIT_DRAFT.discountedPrice||'')+'" oninput="MS_EDIT_DRAFT.discountedPrice=this.value;msUpdatePricePreview()" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:var(--card-text);padding:7px 10px;font-size:13px;outline:none;margin-bottom:0"/>'
+      +'<div id="ms-price-preview" style="text-align:center;padding-top:8px">'+(regStr&&MS_EDIT_DRAFT.discountedPrice?'<s style="color:rgba(255,255,255,.4);font-size:13px">'+esc(regStr)+'</s><div style="font-size:20px;font-weight:700;color:#22c55e;font-family:\'Oswald\',sans-serif;margin-top:2px">Today: '+esc(MS_EDIT_DRAFT.discountedPrice)+'</div>':'')+'</div>'
+      +'</div>'
       +'<div style="background:rgba(255,255,255,.05);border-radius:10px;padding:14px">'
       +'<div style="font-size:10px;letter-spacing:.07em;color:var(--gold);margin-bottom:8px;font-family:\'Oswald\',sans-serif;font-weight:700">GREEN CTA BUTTON <span style="font-weight:400;opacity:.45;font-size:9px">— click label to edit</span></div>'
       +'<input id="ms-cta-url" placeholder="https://... (destination link)" value="'+esc(MS_EDIT_DRAFT.ctaUrl||'')+'" oninput="MS_EDIT_DRAFT.ctaUrl=this.value" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:var(--card-text);padding:7px 10px;font-size:13px;outline:none;margin-bottom:10px"/>'
