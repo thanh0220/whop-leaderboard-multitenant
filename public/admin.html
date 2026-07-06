@@ -1785,7 +1785,7 @@ function msRenderOffersSection(){
     document.head.appendChild(s);
   }
   const wrap=document.getElementById('ms-offers-section');if(!wrap||!MS_EDIT_DRAFT)return;
-  const isVideoType=MS_EDIT_DRAFT.type==='video';if(!isVideoType){wrap.innerHTML='';return;}
+  const isVideoType=MS_EDIT_DRAFT.type==='video';if(!isVideoType){const _vtI=document.getElementById('ms-vt-inject');if(_vtI)_vtI.remove();wrap.innerHTML='';return;}
   // Inject video title above #ms-bonus-prev (removed when switching away from video)
   const prevEl=document.getElementById('ms-bonus-prev');
   let vtInj=document.getElementById('ms-vt-inject');
