@@ -249,10 +249,8 @@ function showMilestoneBonusModal(bonus){
   const isVideo=bonus.type==='video';
 
   const offerDelay=bonus.offerDelay??300;
-  const offerCd=bonus.offerCountdown??300;
-  // Countdown bar (shown when offersEnabled + hasExtras + offerCd > 0)
-  const countdownBar=hasExtras&&offerCd>0
-    ?'<div class="mb-countdown">⏰ Offer expires in <span class="mb-cd-time" id="mb-cd-time">'+fmtCd(offerCd)+'</span></div>':''
+  const _mn=new Date();_mn.setHours(24,0,0,0);const _secToMid=Math.floor((_mn-new Date())/1000);
+  const countdownBar=hasExtras?'<div class="mb-countdown">⏰ Offer expires in <span class="mb-cd-time" id="mb-cd-time">'+fmtCd(_secToMid)+'</span></div>':'';
 
   // Offers
   const offersHtml=hasOffers
@@ -323,11 +321,11 @@ function showMilestoneBonusModal(bonus){
         const ph=document.getElementById('mb-unlock-ph');if(ph)ph.remove();
         const btn=document.getElementById('mb-expand-btn-main');if(btn){btn.style.display='';mbExpandOffers(btn);}
         const zone=document.getElementById('mb-offer-zone');if(zone)zone.style.display='';
-        if(offerCd>0)mbStartCd(ov,offerCd);
+        const _mn2=new Date();_mn2.setHours(24,0,0,0);mbStartCd(ov,Math.floor((_mn2-new Date())/1000));
       }
     },1000);
-  }else if(hasExtras&&offerCd>0){
-    mbStartCd(ov,offerCd);
+  }else if(hasExtras){
+    mbStartCd(ov,_secToMid);
   }
 }
 
@@ -542,7 +540,16 @@ function calendarHTML(ck, milestoneBonus, milestoneDays){
     const b=bonus[i];
     const hasBonus=isDone&&b&&b.type&&b.type!=='none';
     if(hasBonus) cls+=' has-bonus';
-    return '<div class="'+cls+'"><div class="n">Day '+dayNum+'</div><div class="r">'+rContent+'</div></div>';
+    const isClaimedToday=!ck.canClaim&&dayNum===cur&&(isMilestone||isDay30Gold);
+    let viewBtn='';
+    if(isClaimedToday&&b&&b.type&&b.type!=='none'){
+      const ts=parseInt(localStorage.getItem('ms_offer_ts_'+dayNum)||'0');
+      const claimedSameDay=ts>0&&new Date(ts).toDateString()===new Date().toDateString();
+      if(claimedSameDay||!ts){
+        viewBtn='<button id="ms-view-btn-'+dayNum+'" onclick="event.stopPropagation();showMilestoneBonusModal(window.__MB['+i+'])" style="display:block;width:100%;margin-top:6px;background:rgba(244,196,65,.12);border:1px solid rgba(244,196,65,.28);border-radius:5px;color:var(--gold);font-size:9px;padding:3px 4px;cursor:pointer;white-space:nowrap;font-family:\'Oswald\',sans-serif;letter-spacing:.04em;box-sizing:border-box">🎁 View offer</button>';
+      }
+    }
+    return '<div class="'+cls+'"><div class="n">Day '+dayNum+'</div><div class="r">'+rContent+'</div>'+viewBtn+'</div>';
   }).join('');
 }
 
@@ -624,7 +631,7 @@ function render(d){
       const _dayInCycle=((newStreak-1)%30+30)%30+1;
       if(newStreak>0&&_msSet.has(_dayInCycle)){
         const bonus=window.__MB&&window.__MB[newStreak-1];
-        if(bonus&&bonus.type&&bonus.type!=='none') setTimeout(()=>showMilestoneBonusModal(bonus),900);
+        if(bonus&&bonus.type&&bonus.type!=='none'){localStorage.setItem('ms_offer_ts_'+_dayInCycle,Date.now().toString());setTimeout(()=>showMilestoneBonusModal(bonus),900);}
       }
       setTimeout(load,400);
     }catch(e){
