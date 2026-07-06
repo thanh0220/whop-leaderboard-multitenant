@@ -277,7 +277,7 @@ function showMilestoneBonusModal(bonus){
   // Price display block
   const regTotal=(bonus.offers||[]).reduce((s,o)=>{const n=parseFloat((o.price||'').replace(/[^0-9.]/g,''));return s+(isNaN(n)?0:n);},0);
   const regPriceStr=regTotal>0?'$'+regTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}):'';
-  const priceHtml=bonus.discountedPrice&&regPriceStr?'<div style="text-align:center;padding:12px 0 4px"><div style="font-size:13px;color:rgba(255,255,255,.4);text-decoration:line-through">'+regPriceStr+'</div><div style="font-size:24px;font-weight:700;color:#22c55e;font-family:\'Oswald\',sans-serif;letter-spacing:.04em">Today: '+bonus.discountedPrice+'</div></div>':'';
+  const priceHtml=bonus.discountedPrice&&regPriceStr?'<div style="text-align:center;padding:16px 0 8px"><div style="font-size:36px;font-weight:700;color:rgba(255,255,255,.35);text-decoration:line-through;font-family:\'Oswald\',sans-serif;letter-spacing:.04em;margin-bottom:4px">Normally:'+regPriceStr+'</div><div style="font-size:54px;font-weight:700;color:#22c55e;font-family:\'Oswald\',sans-serif;letter-spacing:.04em;line-height:1.05">Today: '+bonus.discountedPrice+'</div></div>':'';
   const bodyInner=countdownBar+priceHtml+offersHtml+ctaHtml+couponHtml;
 
   // Top content
@@ -295,7 +295,7 @@ function showMilestoneBonusModal(bonus){
   // Layout: video → expand button → collapsible body; ebook → body auto-visible
   let inner;
   const closeBtn='<button class="mb-close-btn" onclick="clearInterval(this.closest(\'.mb-overlay\')._cd);clearInterval(this.closest(\'.mb-overlay\')._delayT);this.closest(\'.mb-overlay\').remove()">✕</button>';
-  const unlockPh=offerDelay>0&&hasExtras?'<div id="mb-unlock-ph" style="text-align:center;padding:12px 0;color:rgba(255,255,255,.5);font-size:13px">🎁 Offer unlocking in <span id="mb-unlock-cd" style="font-family:Oswald,sans-serif;font-size:15px;font-weight:700;color:var(--gold)">'+fmtCd(offerDelay)+'</span></div>':'';
+  const unlockPh=offerDelay>0&&hasExtras?'<div id="mb-unlock-ph" style="display:none"><span id="mb-unlock-cd"></span></div>':'';
   if(isVideo&&hasExtras){
     inner='<div class="mb-close-row">'+closeBtn+'</div>'
       +topHtml

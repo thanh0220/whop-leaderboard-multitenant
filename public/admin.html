@@ -1838,11 +1838,10 @@ function msRenderOffersSection(){
       +'<span style="font-size:10px;letter-spacing:.07em;color:var(--gold);font-family:\'Oswald\',sans-serif;font-weight:700">💰 PRICING DISPLAY</span>'
       +'</label>'
       +(pricingOn?'<div style="padding:14px 12px;text-align:center">'
-        +(regStr?'<div id="ms-reg-price-span" style="font-size:13px;color:rgba(255,255,255,.28);text-decoration:line-through;margin-bottom:6px;font-family:\'Oswald\',sans-serif">'+esc(regStr)+'</div>'
+        +(regStr?'<div id="ms-reg-price-span" style="font-size:32px;font-weight:700;color:rgba(255,255,255,.28);text-decoration:line-through;margin-bottom:4px;font-family:\'Oswald\',sans-serif;letter-spacing:.04em">Normally:'+esc(regStr)+'</div>'
           :'<div id="ms-reg-price-span" style="font-size:9px;color:rgba(255,255,255,.18);margin-bottom:6px">Add offer prices to see strikethrough</div>')
-        +'<div style="display:inline-flex;align-items:baseline;gap:6px">'
-        +'<span style="font-size:14px;color:rgba(255,255,255,.38)">Today:</span>'
-        +'<span contenteditable="true" spellcheck="false" oninput="MS_EDIT_DRAFT.discountedPrice=this.textContent.trim()" style="font-family:\'Oswald\',sans-serif;font-size:28px;font-weight:700;color:#22c55e;letter-spacing:.04em;min-width:40px;outline:none;border-bottom:1px dashed rgba(34,197,94,.4);cursor:text">'+esc(MS_EDIT_DRAFT.discountedPrice)+'</span>'
+        +'<div style="font-family:\'Oswald\',sans-serif;font-size:48px;font-weight:700;color:#22c55e;letter-spacing:.04em;line-height:1.05">'
+        +'Today: <span contenteditable="true" spellcheck="false" oninput="MS_EDIT_DRAFT.discountedPrice=this.textContent.trim()" style="outline:none;border-bottom:1px dashed rgba(34,197,94,.4);cursor:text;min-width:30px;display:inline-block">'+esc(MS_EDIT_DRAFT.discountedPrice)+'</span>'
         +'</div>'
         +'</div>'
       :'')
