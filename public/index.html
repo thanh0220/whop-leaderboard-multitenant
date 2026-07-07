@@ -9,47 +9,40 @@
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#070910;
-    --red:#ff2d4b; --redglow:#ff5d74;
-    --cyan:#27e3ff;
-    --gold:#f4c441; --silver:#cbd5e1; --bronze:#e1955a; --diamond:#9beaff;
-    --muted:#8a93a6; --text:#eef2f8;
-    --line:rgba(255,45,75,.22); --line2:rgba(39,227,255,.3);
-    /* Surface "viền/nền mờ" dùng trực tiếp trên nền trang (không phải trong
-       card) — đổi riêng theo theme để không bị "trắng trên trắng". */
-    --ctrl-bg:rgba(255,255,255,.02); --ctrl-border:rgba(255,255,255,.12);
-    --topbar-bg:rgba(7,9,16,.92); --text2:#fff;
-    /* Nền/viền/chữ của card (podium, row, popup...) — TÁCH RIÊNG khỏi
-       --bg/--text của trang vì card luôn "nổi" lên 1 sắc độ so với nền,
-       không thể dùng chung biến trang. */
-    --card1:#16202f; --card2:#0a0f18; --card-border:rgba(255,255,255,.08);
-    --card-text:#eef2f8; --card-muted:#8a93a6;
-    --chip-bg:rgba(0,0,0,.25);
-    --modal-bg:#0a0f18; --modal-border:rgba(255,255,255,.12);
+    --bg:#F2F2F7;
+    --red:#FF3B30; --redglow:#FF6B6B;
+    --cyan:#007AFF;
+    --gold:#FF9500; --silver:#5d6b80; --bronze:#a85a1f; --diamond:#0090b0;
+    --muted:#6D6D72; --text:#000000;
+    --line:rgba(255,59,48,.22); --line2:rgba(0,122,255,.2);
+    --ctrl-bg:rgba(0,0,0,.04); --ctrl-border:rgba(0,0,0,.12);
+    --topbar-bg:rgba(242,242,247,.92); --text2:#000000;
+    --card1:#ffffff; --card2:#F2F2F7; --card-border:rgba(0,0,0,.08);
+    --card-text:#000000; --card-muted:#6D6D72;
+    --chip-bg:#E5E5EA;
+    --modal-bg:#ffffff; --modal-border:rgba(0,0,0,.12);
   }
-  /* Light mode: đổi ĐỒNG BỘ cả nền trang VÀ nền card/chip/modal/màu nhấn —
-     không chỉ đảo trắng/đen, mà giữ đúng "mood" ánh xanh-than + màu nhấn
-     neon của bản tối, chỉ giảm độ sáng cho đủ tương phản trên nền sáng. */
-  @media (prefers-color-scheme: light){
+  @media(prefers-color-scheme:dark){
     :root{
-      --bg:#eef1f7; --text:#161c2c; --muted:#5d6478;
-      --red:#e0123a; --redglow:#ef3a5c; --cyan:#0098bb;
-      --gold:#c9860a; --silver:#5d6b80; --bronze:#a85a1f; --diamond:#0090b0;
-      --line:rgba(224,18,58,.28); --line2:rgba(0,152,187,.32);
-      --ctrl-bg:rgba(22,28,44,.04); --ctrl-border:rgba(22,28,44,.14);
-      --topbar-bg:rgba(255,255,255,.9); --text2:#101826;
-      --card1:#ffffff; --card2:#eef2f9; --card-border:rgba(22,28,44,.09);
-      --card-text:#161c2c; --card-muted:#5d6478;
-      --chip-bg:#e4e9f2;
-      --modal-bg:#ffffff; --modal-border:rgba(22,28,44,.12);
+      --bg:#070910;
+      --red:#ff2d4b; --redglow:#ff5d74;
+      --cyan:#27e3ff;
+      --gold:#f4c441; --silver:#cbd5e1; --bronze:#e1955a; --diamond:#9beaff;
+      --muted:#8a93a6; --text:#eef2f8;
+      --line:rgba(255,45,75,.22); --line2:rgba(39,227,255,.3);
+      --ctrl-bg:rgba(255,255,255,.02); --ctrl-border:rgba(255,255,255,.12);
+      --topbar-bg:rgba(7,9,16,.92); --text2:#fff;
+      --card1:#16202f; --card2:#0a0f18; --card-border:rgba(255,255,255,.08);
+      --card-text:#eef2f8; --card-muted:#8a93a6;
+      --chip-bg:rgba(0,0,0,.25);
+      --modal-bg:#0a0f18; --modal-border:rgba(255,255,255,.12);
     }
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-text-size-adjust:100%}
   body{font-family:'Be Vietnam Pro',ui-sans-serif,system-ui,sans-serif;color:var(--text);min-height:100vh;
     position:relative;overflow-x:hidden;padding-bottom:54px;
-    background:radial-gradient(120% 70% at 50% -10%,rgba(255,45,75,.13),var(--bg) 55%),var(--bg);
-    background-attachment:fixed}
+    background:var(--bg);background-attachment:fixed}
   body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;z-index:0;
     background-image:
       radial-gradient(1.4px 1.4px at 14% 10%,#fff,transparent),
@@ -149,8 +142,8 @@
     box-shadow:inset 0 2px 14px rgba(0,0,0,.6);animation:rise .55s cubic-bezier(.2,.8,.2,1) both}
   .pcard .watersuit{position:absolute;right:8px;bottom:-6px;font-size:64px;line-height:1;opacity:.07;z-index:0}
   .pcard>*{position:relative;z-index:1}
-  .pcard.first{background:linear-gradient(160deg,#10322a,#08160f);border-color:var(--line2);padding-top:32px;
-    padding-bottom:28px;box-shadow:inset 0 0 30px rgba(39,227,255,.22),0 0 28px rgba(39,227,255,.28);animation-delay:.05s}
+  .pcard.first{background:linear-gradient(160deg,#ECFDF5,#D1FAE5);border-color:var(--line2);padding-top:32px;
+    padding-bottom:28px;box-shadow:inset 0 0 30px rgba(0,122,255,.1),0 0 18px rgba(0,122,255,.15);animation-delay:.05s}
   .pcard.second{border-color:rgba(203,213,225,.25);animation-delay:.16s}
   .pcard.third{border-color:rgba(255,45,75,.3);box-shadow:inset 0 0 22px rgba(255,45,75,.14),0 0 16px rgba(255,45,75,.18);animation-delay:.26s}
   @keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
@@ -252,26 +245,34 @@
     background:var(--chip-bg);border:1px solid var(--card-border);border-radius:8px;padding:4px 9px;
     display:none;pointer-events:none}
 
-  /* Light-mode visual overrides — đặt CUỐI file (sau mọi rule gốc) để thắng
-     cascade CSS, vì rule body/.pcard gốc ở trên không có media query nên
-     cùng độ ưu tiên; rule nằm sau mới thắng. */
-  @media (prefers-color-scheme: light){
-    body{background:radial-gradient(120% 70% at 50% -10%,rgba(224,18,58,.10),#f4f1fb 45%,#eef1f7 100%);background-attachment:fixed}
-    body::before{opacity:.3;background-image:
-      radial-gradient(1.4px 1.4px at 14% 10%,var(--red),transparent),
-      radial-gradient(1px 1px at 66% 16%,var(--cyan),transparent),
-      radial-gradient(1.4px 1.4px at 38% 34%,var(--gold),transparent),
-      radial-gradient(1px 1px at 84% 46%,var(--red),transparent),
-      radial-gradient(1.4px 1.4px at 22% 70%,var(--cyan),transparent),
-      radial-gradient(1px 1px at 70% 86%,var(--gold),transparent)}
-    .pcard{box-shadow:0 4px 14px rgba(22,28,44,.07),inset 0 2px 14px rgba(0,0,0,.05)}
-    .pcard.first{box-shadow:0 4px 14px rgba(22,28,44,.07),inset 0 0 22px rgba(0,152,187,.12),0 0 18px rgba(0,152,187,.18)}
-    .pcard.third{box-shadow:0 4px 14px rgba(22,28,44,.07),inset 0 0 16px rgba(224,18,58,.10),0 0 12px rgba(224,18,58,.14)}
-    .row{box-shadow:0 3px 10px rgba(22,28,44,.06)}
-    .prize{box-shadow:0 3px 10px rgba(22,28,44,.06)}
-    .cd-box{box-shadow:0 2px 8px rgba(22,28,44,.05)}
-    .code-card{box-shadow:0 14px 34px rgba(22,28,44,.14)}
-    .err{color:#9a2030}
+  body::before{opacity:.3;background-image:
+    radial-gradient(1.4px 1.4px at 14% 10%,var(--red),transparent),
+    radial-gradient(1px 1px at 66% 16%,var(--cyan),transparent),
+    radial-gradient(1.4px 1.4px at 38% 34%,var(--gold),transparent),
+    radial-gradient(1px 1px at 84% 46%,var(--red),transparent),
+    radial-gradient(1.4px 1.4px at 22% 70%,var(--cyan),transparent),
+    radial-gradient(1px 1px at 70% 86%,var(--gold),transparent)}
+  .pcard{box-shadow:0 4px 14px rgba(22,28,44,.07),inset 0 2px 14px rgba(0,0,0,.05)}
+  .pcard.third{box-shadow:0 4px 14px rgba(22,28,44,.07),inset 0 0 16px rgba(255,59,48,.10),0 0 12px rgba(255,59,48,.14)}
+  .row{box-shadow:0 3px 10px rgba(22,28,44,.06)}
+  .prize{box-shadow:0 3px 10px rgba(22,28,44,.06)}
+  .cd-box{box-shadow:0 2px 8px rgba(22,28,44,.05)}
+  .code-card{box-shadow:0 14px 34px rgba(22,28,44,.14)}
+  .err{color:#9a2030}
+  @media(prefers-color-scheme:dark){
+    body{background:radial-gradient(120% 70% at 50% -10%,rgba(255,45,75,.13),var(--bg) 55%),var(--bg);background-attachment:fixed}
+    body::before{opacity:.5;background-image:
+      radial-gradient(1.4px 1.4px at 14% 10%,#fff,transparent),
+      radial-gradient(1px 1px at 66% 16%,#ff9fb0,transparent),
+      radial-gradient(1.4px 1.4px at 38% 34%,#9fe9ff,transparent),
+      radial-gradient(1px 1px at 84% 46%,#fff,transparent),
+      radial-gradient(1.4px 1.4px at 22% 70%,#ff9fb0,transparent),
+      radial-gradient(1px 1px at 70% 86%,#9fe9ff,transparent)}
+    .pcard{box-shadow:inset 0 2px 14px rgba(0,0,0,.6)}
+    .pcard.first{background:linear-gradient(160deg,#10322a,#08160f);box-shadow:inset 0 0 30px rgba(39,227,255,.22),0 0 28px rgba(39,227,255,.28)}
+    .pcard.third{box-shadow:inset 0 0 22px rgba(255,45,75,.14),0 0 16px rgba(255,45,75,.18)}
+    .row,.prize,.cd-box,.code-card{box-shadow:none}
+    .err{color:#ffd0d8}
   }
   .you-badge{background:rgba(39,227,255,.15);color:var(--cyan);border:1px solid rgba(39,227,255,.45);font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;padding:2px 7px;border-radius:5px;flex-shrink:0}
   .you-row{border-color:rgba(39,227,255,.4)!important;background:linear-gradient(160deg,rgba(39,227,255,.07),rgba(39,227,255,.02))!important;box-shadow:0 0 18px rgba(39,227,255,.14)}
