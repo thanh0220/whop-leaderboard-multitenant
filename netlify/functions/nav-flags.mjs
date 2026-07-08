@@ -49,6 +49,7 @@ export const handler = async (event) => {
       videosEnabled: cfg.videoSettings?.enabled !== false && (cfg.lockedVideos || []).length > 0,
       dailyPending,
       mailboxCount,
+      lang: cfg.lang || 'en',
     });
   } catch (e) {
     return json(500, { error: e.message || "Could not load nav flags." });
