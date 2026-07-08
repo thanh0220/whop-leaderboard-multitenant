@@ -178,10 +178,13 @@ function tenantFetch(path,opts){return fetch(path+tenantQS(),opts);}
   const qs=tenantQS();if(!qs)return;
   document.querySelectorAll('a[href^="/"]').forEach(a=>{if(!a.getAttribute('href').includes('?'))a.href=a.getAttribute('href')+qs;});
 })();
+window.LANG='en';
+function t(en,vi){return window.LANG==='vi'?vi:en;}
 (async function applyNavVisibility(){
   try{
     const r=await tenantFetch('/.netlify/functions/nav-flags');
     const j=await r.json();if(!r.ok)return;
+    if(j.lang) window.LANG=j.lang;
     const map={'/events.html':j.eventsEnabled,'/milestones.html':j.milestonesEnabled,
       '/daily.html':j.dailyEnabled,'/store.html':j.storeEnabled,'/mailbox.html':j.mailboxEnabled};
     document.querySelectorAll('.nav a').forEach(a=>{
@@ -315,8 +318,8 @@ function renderFeatured(item){
     <div class="feat-date">📅 ${fmtRange(item)}</div>
     <div class="feat-row">
       <div class="days-badge ${isTodayClass}">🗓 ${esc(daysTxt)}</div>
-      ${validLink(item.link)?`<a href="${esc(validLink(item.link)||'')}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;background:rgba(244,196,65,.15);border:1px solid rgba(244,196,65,.35);color:var(--gold);font-size:13px;font-weight:700;text-decoration:none">🔗 Join Event</a>`:''}
-      <button class="rsvp-btn" id="rsvp-btn" onclick="toggleRsvp()">✓ I'll attend</button>
+      ${validLink(item.link)?`<a href="${esc(validLink(item.link)||'')}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;background:rgba(244,196,65,.15);border:1px solid rgba(244,196,65,.35);color:var(--gold);font-size:13px;font-weight:700;text-decoration:none">🔗 ${t('Join Event','Tham gia sự kiện')}</a>`:''}
+      <button class="rsvp-btn" id="rsvp-btn" onclick="toggleRsvp()">✓ ${t("I'll attend","Tôi sẽ tham gia")}</button>
     </div>
     <div class="feat-att" id="feat-att"></div>
     <div class="cal-row" id="cal-row">
@@ -332,7 +335,7 @@ function toggleRsvp(){
   const btn=$('rsvp-btn');const cal=$('cal-row');
   if(!btn)return;
   if(rsvpDone){
-    btn.classList.add('attending');btn.textContent='✓ Attending!';
+    btn.classList.add('attending');btn.textContent=t('✓ Attending!','✓ Đã đăng ký!');
     if(cal)cal.classList.add('show');
   }else{
     btn.classList.remove('attending');btn.textContent='✓ I\'ll attend';
@@ -353,7 +356,7 @@ function openEventModal(idx,listName){
       style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:10px;
         background:rgba(244,196,65,.15);border:1px solid rgba(244,196,65,.35);color:var(--gold);
         font-size:13px;font-weight:700;text-decoration:none;margin-top:14px">
-      🔗 Join Event
+      🔗 ${t('Join Event','Tham gia sự kiện')}
     </a>`:'';
   const calHtml=isUpcoming?`
     <div style="margin-top:16px;border-top:1px solid var(--card-border);padding-top:14px">

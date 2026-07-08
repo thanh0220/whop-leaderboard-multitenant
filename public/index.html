@@ -328,8 +328,8 @@
   <div class="controls">
     <div class="tabs">
       <button class="tab active" data-sort="season" onclick="setSort('season',this)">🏆 Season</button>
-      <button class="tab" data-sort="paid" onclick="setSort('paid',this)">VIP Members</button>
-      <button class="tab" data-sort="referrals" onclick="setSort('referrals',this)">Referrals</button>
+      <button class="tab" data-sort="paid" onclick="setSort('paid',this)" id="tab-vip">VIP Members</button>
+      <button class="tab" data-sort="referrals" onclick="setSort('referrals',this)" id="tab-ref">Referrals</button>
     </div>
     <div class="search">
       <span class="ic">🔍</span>
@@ -342,7 +342,7 @@
   </div>
 
   <div id="content">
-    <div class="state"><div class="spinner"></div><div>Loading data from Whop...</div></div>
+    <div class="state"><div class="spinner"></div><div id="lb-loading-text">Loading data from Whop...</div></div>
   </div>
 </div>
 
@@ -379,11 +379,14 @@ function tenantFetch(path, opts){
     if (!a.getAttribute('href').includes('?')) a.href = a.getAttribute('href') + qs;
   });
 })();
+window.LANG='en';
+function t(en,vi){return window.LANG==='vi'?vi:en;}
 (async function applyNavVisibility(){
   try{
     const r = await tenantFetch('/.netlify/functions/nav-flags');
     const j = await r.json();
     if(!r.ok) return;
+    if(j.lang) window.LANG=j.lang;
     const map = { '/events.html': j.eventsEnabled, '/milestones.html': j.milestonesEnabled,
 
       '/daily.html': j.dailyEnabled, '/store.html': j.storeEnabled, '/mailbox.html': j.mailboxEnabled };
@@ -395,6 +398,11 @@ function tenantFetch(path, opts){
       if (badge) { const b = document.createElement('span'); b.className = 'nav-badge'; b.textContent = badge > 99 ? '99+' : String(badge); a.appendChild(b); }
     });
     if(!j.codesEnabled){ const fab=document.querySelector('.code-fab'); if(fab) fab.remove(); }
+    if(window.LANG==='vi'){
+      const tv=document.getElementById('tab-vip');if(tv)tv.textContent=t('VIP Members','Thành viên VIP');
+      const tr=document.getElementById('tab-ref');if(tr)tr.textContent=t('Referrals','Giới thiệu');
+      const hb=document.querySelector('.hero-badge');if(hb)hb.textContent=t('Community Leaderboard','Bảng xếp hạng cộng đồng');
+    }
   }catch(_){}
 })();
 
@@ -529,7 +537,7 @@ function render(){
       if(myIdx===-1){
         const refs=Number(meData?.referrals)||0;
         document.getElementById('content').insertAdjacentHTML('beforeend',
-          selfRankFooterEl('—', refs>0?refs+' referrals — not in top list':'No referrals yet this month'));
+          selfRankFooterEl('—', refs>0?refs+' '+t('referrals — not in top list','giới thiệu — chưa vào top'):t('No referrals yet this month','Chưa có giới thiệu tháng này')));
       }
     }
     return;
@@ -573,7 +581,7 @@ function render(){
   if(meUserId&&!q){
     const myIdx=data.findIndex(m=>m.userId===meUserId);
     if(myIdx===-1){
-      const hint=sortBy==='paid'?'Not in VIP leaderboard yet':'No activity this season yet';
+      const hint=sortBy==='paid'?t('Not in VIP leaderboard yet','Chưa có trong bảng xếp hạng VIP'):t('No activity this season yet','Chưa có hoạt động mùa này');
       document.getElementById('content').insertAdjacentHTML('beforeend',selfRankFooterEl('—',hint));
     }
   }
@@ -608,8 +616,8 @@ function tickCountdown(){
 
 async function loadData(){
   const btn=document.getElementById('refresh');
-  btn.classList.add('loading');btn.textContent='↻ Loading...';
-  document.getElementById('content').innerHTML=`<div class="state"><div class="spinner"></div><div>Loading data from Whop...</div></div>`;
+  btn.classList.add('loading');btn.textContent=t('↻ Loading...','↻ Đang tải...');
+  document.getElementById('content').innerHTML=`<div class="state"><div class="spinner"></div><div>${t('Loading data from Whop...','Đang tải dữ liệu...')}</div></div>`;
   try{
     const [res, meJson] = await Promise.all([
       tenantFetch('/.netlify/functions/whop-data'),
@@ -627,7 +635,7 @@ async function loadData(){
     document.getElementById('s-members').textContent=json.stats?.totalMembers ?? allData.length;
     document.getElementById('s-paid').textContent=json.stats?.paidMembers ?? allData.filter(m=>m.paid).length;
     document.getElementById('s-top').textContent=(topPaid&&Number(topPaid.paidAmount)>0?topPaid.username:allData[0]?.username)||'--';
-    document.getElementById('updated').textContent='Updated: '+new Date(json.updatedAt).toLocaleTimeString('en-US');
+    document.getElementById('updated').textContent=t('Updated: ','Cập nhật: ')+new Date(json.updatedAt).toLocaleTimeString('en-US');
     document.getElementById('brand-name').textContent=json.branding?.displayName||'Leaderboard';
     document.getElementById('powered-badge').style.display=(json.isPaid&&json.branding?.logoUrl)?'none':'block';
     updateSeasonPanel();

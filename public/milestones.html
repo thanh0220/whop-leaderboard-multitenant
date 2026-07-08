@@ -198,7 +198,7 @@
 <div class="wrap">
   <div class="nav" data-shared></div>
   <script src="/_nav.js"></script>
-  <div id="content"><div class="state"><div class="spinner"></div>Loading...</div></div>
+  <div id="content"><div class="state"><div class="spinner"></div>${tr('Loading...','Đang tải...')}</div></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -233,11 +233,14 @@ function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
     if (!a.getAttribute('href').includes('?')) a.href = a.getAttribute('href') + qs;
   });
 })();
+window.LANG='en';
+function tr(en,vi){return window.LANG==='vi'?vi:en;}
 (async function applyNavVisibility(){
   try{
     const r = await tenantFetch('/.netlify/functions/nav-flags');
     const j = await r.json();
     if(!r.ok) return;
+    if(j.lang) window.LANG=j.lang;
     const map = { '/events.html': j.eventsEnabled, '/milestones.html': j.milestonesEnabled,
 
       '/daily.html': j.dailyEnabled, '/store.html': j.storeEnabled, '/mailbox.html': j.mailboxEnabled };
@@ -260,7 +263,7 @@ const TIER_CYCLE = ['bronze','jade','gold','ruby','diamond'];
 function chestTierFor(i){ return TIER_CYCLE[i % TIER_CYCLE.length]; }
 
 async function load(){
-  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading...</div>`;
+  $('content').innerHTML=`<div class="state"><div class="spinner"></div>${tr('Loading...','Đang tải...')}</div>`;
   try{
     const r=await tenantFetch('/.netlify/functions/milestones');
     const j=await r.json();
@@ -344,8 +347,8 @@ function render(j, selIdx){
 
   const head = `
     <div class="hero">
-      <div class="cta">Refer members to unlock exclusive rewards!</div>
-      <h1>Referral Rewards</h1>
+      <div class="cta">${tr('Refer members to unlock exclusive rewards!','Giới thiệu thành viên để mở khóa phần thưởng độc quyền!')}</div>
+      <h1>${tr('Referral Rewards','Phần thưởng giới thiệu')}</h1>
     </div>
     <div class="track-wrap">
       <div class="ms-nav">
@@ -368,19 +371,19 @@ function render(j, selIdx){
 
   let cta;
   if (t.claimed){
-    cta = `<button class="cta-btn" disabled>✅ Claimed</button>`;
+    cta = `<button class="cta-btn" disabled>✅ ${tr('Claimed','Đã nhận')}</button>`;
   } else if (ready){
-    cta = `<button class="cta-btn ready" onclick="claim(${selIdx},this)">🎁 Claim</button>`;
+    cta = `<button class="cta-btn ready" onclick="claim(${selIdx},this)">🎁 ${tr('Claim','Nhận')}</button>`;
   } else {
     cta = need === 0
-      ? `<button class="cta-btn ready" onclick="claim(${selIdx},this)">🎁 Claim</button>`
-      : `<button class="cta-btn" disabled>Need ${fmtMoney(need)} more referral${need===1?'':'s'}</button>`;
+      ? `<button class="cta-btn ready" onclick="claim(${selIdx},this)">🎁 ${tr('Claim','Nhận')}</button>`
+      : `<button class="cta-btn" disabled>${tr('Need','Cần')} ${fmtMoney(need)} ${tr(`more referral${need===1?'':'s'}`,`lượt giới thiệu nữa`)}</button>`;
   }
 
   let panel;
   if (isCustomItem) {
     const badgeClass = t.claimed ? 'claimed' : (ready ? 'unlocked' : '');
-    const badgeText  = t.claimed ? '✅ Claimed' : (ready ? '✨ Unlocked!' : '🎯 Exclusive Reward');
+    const badgeText  = t.claimed ? `✅ ${tr('Claimed','Đã nhận')}` : (ready ? `✨ ${tr('Unlocked!','Đã mở khóa!')}` : `🎯 ${tr('Exclusive Reward','Phần thưởng độc quyền')}`);
     panel = `
     <div class="item-card">
       ${t.image ? `<img class="item-card-img" src="${esc(t.image)}" alt="${esc(t.label)}"/>` : `<div class="item-card-img-ph">🎁</div>`}
@@ -389,8 +392,8 @@ function render(j, selIdx){
         <div class="item-card-divider"></div>
         <div class="item-card-status">${t.claimed ? 'Already claimed' : (ready ? "You've unlocked" : 'Preview reward')}</div>
         <div class="item-card-title">${esc(t.label)}</div>
-        <div class="item-card-progress">Progress: <b>${fmtMoney(j.referrals)} / ${fmtMoney(t.thresholdReferrals)} referrals</b></div>
-        ${!ready && !t.claimed ? `<div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:4px">Share your referral link to unlock this reward</div>` : ''}
+        <div class="item-card-progress">${tr('Progress','Tiến độ')}: <b>${fmtMoney(j.referrals)} / ${fmtMoney(t.thresholdReferrals)} ${tr('referrals','lượt giới thiệu')}</b></div>
+        ${!ready && !t.claimed ? `<div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:4px">${tr('Share your referral link to unlock this reward','Chia sẻ link giới thiệu để mở khóa phần thưởng này')}</div>` : ''}
         ${cta}
       </div>
     </div>`;
@@ -409,7 +412,7 @@ function render(j, selIdx){
         <div class="label2">${esc(t.label)}</div>
         ${rewardLine}
         <div class="progress-txt">Progress: <b>${fmtMoney(j.referrals)} / ${fmtMoney(t.thresholdReferrals)} referrals</b></div>
-        ${!ready && !t.claimed ? `<div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:4px">Share your referral link to unlock this reward</div>` : ''}
+        ${!ready && !t.claimed ? `<div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:4px">${tr('Share your referral link to unlock this reward','Chia sẻ link giới thiệu để mở khóa phần thưởng này')}</div>` : ''}
       </div>
       ${cta}
     </div>`;
@@ -449,7 +452,7 @@ async function claim(i, btn){
     const [r] = await Promise.all([reqPromise, animDone]);
     const j = await r.json();
     if(!r.ok) throw new Error(j.error||'Error');
-    toast(j.tickets ? `+${j.tickets} 🎰 Lucky Spin ticket${j.tickets>1?'s':''} added!` : (j.xu ? `+${j.xu} XU added!` : (j.code ? `Reward unlocked: ${j.code}` : 'Reward claimed!')));
+    toast(j.tickets ? `+${j.tickets} 🎰 ${tr('Lucky Spin ticket','Vé Spin ngẫu nhiên')}${j.tickets>1?tr('s',''):''}  ${tr('added!','đã thêm!')}` : (j.xu ? `+${j.xu} XU ${tr('added!','đã thêm!')}` : (j.code ? `${tr('Reward unlocked:','Phần thưởng đã mở:')} ${j.code}` : tr('Reward claimed!','Đã nhận phần thưởng!'))));
     setTimeout(load, 900);
   }catch(e){
     toast('⚠ '+e.message);

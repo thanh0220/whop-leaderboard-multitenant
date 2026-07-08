@@ -266,7 +266,7 @@ function showMilestoneBonusModal(bonus){
 
   const offerDelay=bonus.offerDelay??300;
   const _mn=new Date();_mn.setHours(24,0,0,0);const _secToMid=Math.floor((_mn-new Date())/1000);
-  const countdownBar=hasExtras?'<div class="mb-countdown">⏰ Offer expires in <span class="mb-cd-time" id="mb-cd-time">'+fmtCd(_secToMid)+'</span></div>':'';
+  const countdownBar=hasExtras?'<div class="mb-countdown">⏰ '+t('Offer expires in','Ưu đãi hết hạn sau')+' <span class="mb-cd-time" id="mb-cd-time">'+fmtCd(_secToMid)+'</span></div>':'';
 
   // Offers
   const offersHtml=hasOffers
@@ -288,12 +288,12 @@ function showMilestoneBonusModal(bonus){
   const couponHtml=hasCoupon
     ?'<div class="mb-coupon"><div class="mb-coupon-label">🎟 COUPON CODE</div>'
       +'<div class="mb-coupon-code" onclick="if(navigator.clipboard){navigator.clipboard.writeText(\''+bonus.coupon+'\');this.textContent=\'✓ Copied!\';const _s=this;setTimeout(()=>_s.textContent=\''+bonus.coupon+'\',1800)}">'+bonus.coupon+'</div>'
-      +'<div class="mb-coupon-hint">Tap to copy</div></div>':''
+      +'<div class="mb-coupon-hint">'+t('Tap to copy','Nhấn để sao chép')+'</div></div>':''
 
   // Price display block
   const regTotal=(bonus.offers||[]).reduce((s,o)=>{const n=parseFloat((o.price||'').replace(/[^0-9.]/g,''));return s+(isNaN(n)?0:n);},0);
   const regPriceStr=regTotal>0?'$'+regTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}):'';
-  const priceHtml=bonus.discountedPrice&&regPriceStr?'<div style="text-align:center;padding:16px 0 8px"><div style="font-size:36px;font-weight:700;color:rgba(255,255,255,.35);text-decoration:line-through;font-family:\'Oswald\',sans-serif;letter-spacing:.04em;margin-bottom:4px">Normally:'+regPriceStr+'</div><div style="font-size:54px;font-weight:700;color:#22c55e;font-family:\'Oswald\',sans-serif;letter-spacing:.04em;line-height:1.05">Today: '+bonus.discountedPrice+'</div></div>':'';
+  const priceHtml=bonus.discountedPrice&&regPriceStr?'<div style="text-align:center;padding:16px 0 8px"><div style="font-size:36px;font-weight:700;color:rgba(255,255,255,.35);text-decoration:line-through;font-family:\'Oswald\',sans-serif;letter-spacing:.04em;margin-bottom:4px">'+t('Normally:','Thông thường:')+regPriceStr+'</div><div style="font-size:54px;font-weight:700;color:#22c55e;font-family:\'Oswald\',sans-serif;letter-spacing:.04em;line-height:1.05">'+t('Today:','Hôm nay:')+' '+bonus.discountedPrice+'</div></div>':'';
   const bodyInner=countdownBar+priceHtml+offersHtml+ctaHtml+couponHtml;
 
   // Top content
@@ -305,7 +305,7 @@ function showMilestoneBonusModal(bonus){
       ?'<div class="mb-video-wrap"><iframe src="'+embed+'" allowfullscreen allow="autoplay"></iframe></div>'
       :'<div style="padding:40px;text-align:center;color:rgba(255,255,255,.35);font-size:14px">No video URL configured.</div>');
   }else if(bonus.type==='ebook'){
-    const _mDrive=bonus.mockupUrl?.match(/\/file\/d\/([^/?#]+)/);const _mockSrc=_mDrive?'https://drive.google.com/uc?export=view&id='+_mDrive[1]:(bonus.mockupUrl||'');const _mockImg=bonus.mockupEnabled&&bonus.mockupUrl?'<img src="'+_mockSrc+'" style="max-width:200px;max-height:240px;border-radius:8px;display:block;margin:0 auto 16px" onerror="this.style.display=\'none\'">':'<div style="font-size:52px;margin-bottom:12px">📥</div>';topHtml='<div class="mb-body" style="text-align:center;padding-top:32px">'+_mockImg+'<div style="font-family:\'Oswald\',sans-serif;font-size:18px;font-weight:700;color:var(--gold);margin-bottom:16px;letter-spacing:.06em">Free Ebook</div><a href="'+(bonus.url||'#')+'" target="_blank" class="mb-cta" style="display:inline-flex;align-items:center;gap:8px;width:auto;padding:14px 32px;text-decoration:none;border-radius:12px">📥 Download Now</a></div>';
+    const _mDrive=bonus.mockupUrl?.match(/\/file\/d\/([^/?#]+)/);const _mockSrc=_mDrive?'https://drive.google.com/uc?export=view&id='+_mDrive[1]:(bonus.mockupUrl||'');const _mockImg=bonus.mockupEnabled&&bonus.mockupUrl?'<img src="'+_mockSrc+'" style="max-width:200px;max-height:240px;border-radius:8px;display:block;margin:0 auto 16px" onerror="this.style.display=\'none\'">':'<div style="font-size:52px;margin-bottom:12px">📥</div>';topHtml='<div class="mb-body" style="text-align:center;padding-top:32px">'+_mockImg+'<div style="font-family:\'Oswald\',sans-serif;font-size:18px;font-weight:700;color:var(--gold);margin-bottom:16px;letter-spacing:.06em">'+t('Free Ebook','Ebook miễn phí')+'</div><a href="'+(bonus.url||'#')+'" target="_blank" class="mb-cta" style="display:inline-flex;align-items:center;gap:8px;width:auto;padding:14px 32px;text-decoration:none;border-radius:12px">📥 '+t('Download Now','Tải về ngay')+'</a></div>';
   }
 
   // Layout: video → expand button → collapsible body; ebook → body auto-visible
@@ -316,7 +316,7 @@ function showMilestoneBonusModal(bonus){
     inner='<div class="mb-close-row">'+closeBtn+'</div>'
       +topHtml
       +unlockPh
-      +'<button id="mb-expand-btn-main" class="mb-expand-btn" style="'+(offerDelay>0?'display:none':'')+'" onclick="mbExpandOffers(this)"><span class="mb-expand-icon">▼</span>&nbsp;See exclusive offer</button>'
+      +'<button id="mb-expand-btn-main" class="mb-expand-btn" style="'+(offerDelay>0?'display:none':'')+'" onclick="mbExpandOffers(this)"><span class="mb-expand-icon">▼</span>&nbsp;'+t('See exclusive offer','Xem ưu đãi độc quyền')+'</button>'
       +'<div class="mb-expandable" style="max-height:0"><div class="mb-body">'+bodyInner+'</div></div>';
   }else{
     inner='<div class="mb-close-row">'+closeBtn+'</div>'
@@ -358,14 +358,14 @@ function showDailyCardPopup(streak, xuAmount, day30offer, milestoneDays){
   if(isDay30){
     const offer=day30offer||{icon:'🏅',label:'Special Month-End Reward',desc:'A special gift for completing 30 days — check with your community owner.',value:'#'};
     ov.innerHTML=`
-      <div class="dc-label" style="color:var(--gold);font-size:13px">🏅 DAY 30 — SPECIAL MONTH-END REWARD</div>
+      <div class="dc-label" style="color:var(--gold);font-size:13px">🏅 ${t('DAY 30 — SPECIAL MONTH-END REWARD','NGÀY 30 — PHẦN THƯỞNG ĐẶC BIỆT CUỐI THÁNG')}</div>
       <div style="background:linear-gradient(135deg,rgba(244,196,65,.14),rgba(244,196,65,.04));border:1.5px solid rgba(244,196,65,.5);border-radius:16px;padding:28px 24px;text-align:center;max-width:300px;animation:pop-in .35s cubic-bezier(.34,1.56,.64,1)">
         <div style="font-size:56px;margin-bottom:12px">${offer.icon}</div>
         <div style="font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;color:var(--gold);letter-spacing:.06em;margin-bottom:8px">${offer.label}</div>
         <div style="font-size:13px;color:var(--card-muted);line-height:1.5;margin-bottom:20px">${offer.desc}</div>
-        <a href="${offer.value}" target="_blank" style="display:inline-block;font-family:'Oswald',sans-serif;letter-spacing:.12em;text-transform:uppercase;font-size:13px;font-weight:700;padding:12px 28px;border-radius:10px;border:2px solid var(--gold);background:rgba(244,196,65,.15);color:var(--gold);text-decoration:none;transition:.15s" onmouseover="this.style.background='rgba(244,196,65,.28)'" onmouseout="this.style.background='rgba(244,196,65,.15)'">CLAIM NOW →</a>
+        <a href="${offer.value}" target="_blank" style="display:inline-block;font-family:'Oswald',sans-serif;letter-spacing:.12em;text-transform:uppercase;font-size:13px;font-weight:700;padding:12px 28px;border-radius:10px;border:2px solid var(--gold);background:rgba(244,196,65,.15);color:var(--gold);text-decoration:none;transition:.15s" onmouseover="this.style.background='rgba(244,196,65,.28)'" onmouseout="this.style.background='rgba(244,196,65,.15)'">${t('CLAIM NOW →','NHẬN NGAY →')}</a>
       </div>
-      <button class="dc-collect show" style="margin-top:14px" onclick="this.closest('.dc-overlay').remove()">CLOSE</button>`;
+      <button class="dc-collect show" style="margin-top:14px" onclick="this.closest('.dc-overlay').remove()">${t('CLOSE','ĐÓNG')}</button>`;
     return;
   }
 
@@ -377,7 +377,7 @@ function showDailyCardPopup(streak, xuAmount, day30offer, milestoneDays){
       {xu:Math.max(1,Math.round(base*rndInt(300,500)/100))}
     ].sort(()=>Math.random()-.5);
     ov.innerHTML=`
-      <div class="dc-label">🏆 Milestone Day · Pick 1 Card</div>
+      <div class="dc-label">🏆 ${t('Milestone Day · Pick 1 Card','Ngày mốc · Chọn 1 thẻ')}</div>
       <div class="dc-cards" id="dc-cards">
         ${cards.map((c,i)=>`
           <div class="dc-card-wrap" id="dcw${i}">
@@ -385,7 +385,7 @@ function showDailyCardPopup(streak, xuAmount, day30offer, milestoneDays){
               <div class="dc-card-inner" id="dci${i}">
                 ${_dcCardBack(day)}
                 <div class="dc-face dc-front">
-                  <div class="dc-day-lbl">Day ${day}</div>
+                  <div class="dc-day-lbl">${t('Day','Ngày')} ${day}</div>
                   <div class="dc-xu">+${c.xu}</div>
                   <div class="dc-xu-unit">XU</div>
                 </div>
@@ -396,8 +396,8 @@ function showDailyCardPopup(streak, xuAmount, day30offer, milestoneDays){
       <div class="dc-tag-row">
         ${cards.map((_,i)=>`<div class="dc-tag" id="dct${i}"></div>`).join('')}
       </div>
-      <div class="dc-hint" id="dc-hint">Pick a card to reveal</div>
-      <button class="dc-collect" id="dc-collect" onclick="this.closest('.dc-overlay').remove()">COLLECT</button>`;
+      <div class="dc-hint" id="dc-hint">${t('Pick a card to reveal','Chọn một thẻ để lật')}</div>
+      <button class="dc-collect" id="dc-collect" onclick="this.closest('.dc-overlay').remove()">${t('COLLECT','THU THẬP')}</button>`;
     let chosen=false;
     cards.forEach((_,i)=>{
       document.getElementById('dcw'+i).addEventListener('click',()=>{
@@ -418,7 +418,7 @@ function showDailyCardPopup(streak, xuAmount, day30offer, milestoneDays){
           setTimeout(()=>{
             cards.forEach((_,j)=>{
               const t=document.getElementById('dct'+j);
-              t.textContent=j===i?'✓ Your pick':'Could have won';
+              t.textContent=j===i?t('✓ Your pick','✓ Lựa chọn của bạn'):t('Could have won','Có thể đã thắng');
               t.className='dc-tag show '+(j===i?'dc-chosen':'dc-missed');
             });
             document.getElementById('dc-collect').classList.add('show');
@@ -429,14 +429,14 @@ function showDailyCardPopup(streak, xuAmount, day30offer, milestoneDays){
     });
   } else {
     ov.innerHTML=`
-      <div class="dc-label">🎁 Daily Reward · Day ${day}</div>
+      <div class="dc-label">🎁 ${t('Daily Reward · Day','Phần thưởng hàng ngày · Ngày')} ${day}</div>
       <div class="dc-cards dc-single">
         <div class="dc-card-wrap" id="dcw0">
           <div class="dc-float" id="dcfl0">
             <div class="dc-card-inner" id="dci0">
               ${_dcCardBack(day)}
               <div class="dc-face dc-front">
-                <div class="dc-day-lbl">Day ${day}</div>
+                <div class="dc-day-lbl">${t('Day','Ngày')} ${day}</div>
                 <div class="dc-xu">+${xuAmount||0}</div>
                 <div class="dc-xu-unit">XU</div>
               </div>
@@ -444,8 +444,8 @@ function showDailyCardPopup(streak, xuAmount, day30offer, milestoneDays){
           </div>
         </div>
       </div>
-      <div class="dc-hint" id="dc-hint">Tap card to reveal</div>
-      <button class="dc-collect" id="dc-collect" onclick="this.closest('.dc-overlay').remove()">COLLECT</button>`;
+      <div class="dc-hint" id="dc-hint">${t('Tap card to reveal','Nhấn thẻ để lật')}</div>
+      <button class="dc-collect" id="dc-collect" onclick="this.closest('.dc-overlay').remove()">${t('COLLECT','THU THẬP')}</button>`;
     let done=false;
     document.getElementById('dcw0').addEventListener('click',()=>{
       if(done)return; done=true;
@@ -504,11 +504,14 @@ function tenantFetch(path, opts){
     if (!a.getAttribute('href').includes('?')) a.href = a.getAttribute('href') + qs;
   });
 })();
+window.LANG='en';
+function t(en,vi){return window.LANG==='vi'?vi:en;}
 (async function applyNavVisibility(){
   try{
     const r = await tenantFetch('/.netlify/functions/nav-flags');
     const j = await r.json();
     if(!r.ok) return;
+    if(j.lang) window.LANG=j.lang;
     const map = { '/events.html': j.eventsEnabled, '/milestones.html': j.milestonesEnabled,
 
       '/daily.html': j.dailyEnabled, '/store.html': j.storeEnabled, '/mailbox.html': j.mailboxEnabled };
@@ -524,7 +527,7 @@ function tenantFetch(path, opts){
 })();
 
 async function load(){
-  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading...</div>`;
+  $('content').innerHTML=`<div class="state"><div class="spinner"></div>${t('Loading...','Đang tải...')}</div>`;
   try{
     const r=await tenantFetch('/.netlify/functions/me');
     const j=await r.json();
@@ -532,7 +535,7 @@ async function load(){
     $('powered-badge').style.display=(j.tier==='paid'&&j.branding?.logoUrl)?'none':'block';
     render(j);
   }catch(e){
-    $('content').innerHTML=`<div class="err"><b>⚠ Could not load data:</b> ${e.message}<br><br>Please open this page inside Whop.</div>`;
+    $('content').innerHTML=`<div class="err"><b>⚠ ${t('Could not load data','Không thể tải dữ liệu')}:</b> ${e.message}<br><br>${t('Please open this page inside Whop.','Vui lòng mở trang này trong Whop.')}</div>`;
   }
 }
 
@@ -562,10 +565,10 @@ function calendarHTML(ck, milestoneBonus, milestoneDays){
       const ts=parseInt(localStorage.getItem('ms_offer_ts_'+dayNum)||'0');
       const claimedSameDay=ts>0&&new Date(ts).toDateString()===new Date().toDateString();
       if(claimedSameDay||!ts){
-        viewBtn='<button id="ms-view-btn-'+dayNum+'" onclick="event.stopPropagation();showMilestoneBonusModal(window.__MB['+i+'])" style="display:block;width:100%;margin-top:6px;background:rgba(244,196,65,.12);border:1px solid rgba(244,196,65,.28);border-radius:5px;color:var(--gold);font-size:9px;padding:3px 4px;cursor:pointer;white-space:nowrap;font-family:\'Oswald\',sans-serif;letter-spacing:.04em;box-sizing:border-box">🎁 View offer</button>';
+        viewBtn='<button id="ms-view-btn-'+dayNum+'" onclick="event.stopPropagation();showMilestoneBonusModal(window.__MB['+i+'])" style="display:block;width:100%;margin-top:6px;background:rgba(244,196,65,.12);border:1px solid rgba(244,196,65,.28);border-radius:5px;color:var(--gold);font-size:9px;padding:3px 4px;cursor:pointer;white-space:nowrap;font-family:\'Oswald\',sans-serif;letter-spacing:.04em;box-sizing:border-box">🎁 '+t('View offer','Xem ưu đãi')+'</button>';
       }
     }
-    return '<div class="'+cls+'"><div class="n">Day '+dayNum+'</div><div class="r">'+rContent+'</div>'+viewBtn+'</div>';
+    return '<div class="'+cls+'"><div class="n">'+t('Day','Ngày')+' '+dayNum+'</div><div class="r">'+rContent+'</div>'+viewBtn+'</div>';
   }).join('');
 }
 
@@ -579,50 +582,50 @@ function render(d){
   const shieldExpLabel=shieldExpiresAt?shieldExpiresAt.slice(5).replace('-','/'):'';
   const shieldHtml=shieldActive
     ?`<div class="shield-bar">
-        <span>🛡️</span><div><b>Streak Shield active</b> — streak protected until ${shieldExpLabel}</div>
+        <span>🛡️</span><div><b>${t('Streak Shield active','Khiên chuỗi đang bật')}</b> — ${t('streak protected until','chuỗi được bảo vệ đến')} ${shieldExpLabel}</div>
       </div>`
     :(ck.streak>0
       ?`<button class="btn gold" id="shield-btn" style="width:100%;margin-top:10px" ${!canAffordShield?'disabled':''}>
-          🛡️ Activate 30-Day Streak Shield — 20 XU
-        </button>${!canAffordShield?`<div style="font-size:11px;color:var(--card-muted);text-align:center;margin-top:4px">Need 20 XU to activate</div>`:''}`
+          🛡️ ${t('Activate 30-Day Streak Shield — 20 XU','Kích hoạt Khiên 30 Ngày — 20 XU')}
+        </button>${!canAffordShield?`<div style="font-size:11px;color:var(--card-muted);text-align:center;margin-top:4px">${t('Need 20 XU to activate','Cần 20 XU để kích hoạt')}</div>`:''}`
       :'');
   const todayXU = ck.canClaim ? ck.nextReward : ((ck.calendar||[])[((ck.streak-1)%(ck.calendar||[1]).length+(ck.calendar||[1]).length)%(ck.calendar||[1]).length]||0);
   const html=`
     <div class="bal">
-      <div class="b main"><div class="v">${fmt(d.available)}</div><div class="l">🪙 Available XU</div></div>
-      <div class="b"><div class="v">${fmt(ck.streak)}</div><div class="l">🔥 Day streak</div></div>
-      <div class="b"><div class="v">${fmt(d.bonus||0)}</div><div class="l">🎁 Bonus XU earned</div></div>
+      <div class="b main"><div class="v">${fmt(d.available)}</div><div class="l">🪙 ${t('Available XU','XU khả dụng')}</div></div>
+      <div class="b"><div class="v">${fmt(ck.streak)}</div><div class="l">🔥 ${t('Day streak','Chuỗi ngày')}</div></div>
+      <div class="b"><div class="v">${fmt(d.bonus||0)}</div><div class="l">🎁 ${t('Bonus XU earned','XU thưởng đã nhận')}</div></div>
     </div>
 
-    <div class="sect">📅 Daily check-in</div>
+    <div class="sect">📅 ${t('Daily check-in','Điểm danh hàng ngày')}</div>
     <div class="panel">
       <div class="streak-head">
-        <div class="streak-big"><span>${ck.streak}</span>-day streak</div>
+        <div class="streak-big"><span>${ck.streak}</span>-${t('day streak','ngày liên tiếp')}</div>
         <button class="btn gold" id="claim-ck" ${!ck.canClaim?'disabled':''}>
-          ${ck.canClaim?`Claim +${ck.nextReward} XU`:'Claimed today'}
+          ${ck.canClaim?`${t('Claim','Nhận')} +${ck.nextReward} XU`:t('Claimed today','Đã nhận hôm nay')}
         </button>
       </div>
       <div class="calendar">${calendarHTML(ck,window.__MB,window.__MSD)}</div>
       <div class="warn-bar">
-        ⚠️ Missing a day resets your streak to Day 1. Milestone days have bigger rewards 🎉
+        ⚠️ ${t('Missing a day resets your streak to Day 1. Milestone days have bigger rewards 🎉','Bỏ lỡ 1 ngày sẽ reset chuỗi về Ngày 1. Ngày mốc có phần thưởng lớn hơn 🎉')}
       </div>
       ${shieldHtml}
     </div>
 
-    <div class="sect">🏆 Season Prizes ${se.label||''}</div>
+    <div class="sect">🏆 ${t('Season Prizes','Giải thưởng mùa')} ${se.label||''}</div>
     <div class="panel">
       <div style="text-align:center;margin-bottom:14px">
-        <div style="font-family:'Oswald',sans-serif;font-size:11px;color:var(--card-muted);letter-spacing:.15em;text-transform:uppercase">Time left</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:11px;color:var(--card-muted);letter-spacing:.15em;text-transform:uppercase">${t('Time left','Thời gian còn lại')}</div>
         <div id="cd" style="font-family:'Oswald',sans-serif;font-size:30px;font-weight:700;color:var(--gold);text-shadow:0 0 16px rgba(244,196,65,.35)">--</div>
       </div>
-      <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">👑 VIP Members</div>
+      <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">👑 ${t('VIP Members','Thành viên VIP')}</div>
       <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
         ${(se.topRewards||[]).map(t=>`
           <div style="display:flex;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--chip-bg);border-radius:10px;font-size:13px">
             <b style="color:var(--gold)">${t.rank}</b><span style="color:var(--card-muted);text-align:right">${t.prize}</span>
           </div>`).join('')}
       </div>
-      <div style="font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">🤝 Referrals</div>
+      <div style="font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">🤝 ${t('Referrals','Giới thiệu bạn bè')}</div>
       <div style="display:flex;flex-direction:column;gap:6px">
         ${((d.seasonRef||{}).topRewards||[]).map(t=>`
           <div style="display:flex;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--chip-bg);border-radius:10px;font-size:13px">
@@ -639,7 +642,7 @@ function render(d){
       let j=null;
       try{ j=await r.json(); }catch(_){ j=null; }
       if(!r.ok) throw new Error((j&&j.error)||'Could not check in, please try again.');
-      toast(j&&j.reward?`🎉 +${j.reward} XU received!`:'🎉 Checked in successfully!');
+      toast(j&&j.reward?`🎉 +${j.reward} XU ${t('received','đã nhận')}!`:t('🎉 Checked in successfully!','🎉 Điểm danh thành công!'));
       showDailyCardPopup(j&&j.streak||1, j&&j.reward||0, j&&j.day30offer||null, window.__MSD);
       // Auto-show milestone bonus modal on milestone days
       const newStreak=j&&j.streak||0;
@@ -662,18 +665,18 @@ function render(d){
   if(shieldBtn){
     shieldBtn.onclick=async ()=>{
       shieldBtn.disabled=true;
-      shieldBtn.textContent='Activating...';
+      shieldBtn.textContent=t('Activating...','Đang kích hoạt...');
       try{
         const r=await tenantFetch('/.netlify/functions/streak-shield',{method:'POST'});
         let j=null;
         try{ j=await r.json(); }catch(_){ j=null; }
         if(!r.ok) throw new Error((j&&j.error)||'Could not activate shield.');
-        toast('🛡️ Streak Shield activated! Your streak is protected.');
+        toast(t('🛡️ Streak Shield activated! Your streak is protected.','🛡️ Khiên chuỗi đã kích hoạt! Chuỗi của bạn được bảo vệ.'));
         setTimeout(load,400);
       }catch(e){
         toast('⚠ '+e.message);
         shieldBtn.disabled=false;
-        shieldBtn.textContent='🛡️ Activate 30-Day Streak Shield — 20 XU';
+        shieldBtn.textContent='🛡️ '+t('Activate 30-Day Streak Shield — 20 XU','Kích hoạt Khiên 30 Ngày — 20 XU');
       }
     };
   }

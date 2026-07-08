@@ -140,7 +140,7 @@
     <div><span class="s">♦</span> <b>Mailbox</b></div>
     <button id="clear-read-btn" onclick="deleteRead()" style="display:none;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:7px;border:1px solid rgba(255,80,80,.35);background:rgba(255,80,80,.08);color:#ff6b6b;cursor:pointer">🗑 Clear Read</button>
   </div>
-  <div id="content"><div class="state"><div class="spinner"></div>Loading...</div></div>
+  <div id="content"><div class="state"><div class="spinner"></div>${t('Loading...','Đang tải...')}</div></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -211,11 +211,14 @@ function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
     if (!a.getAttribute('href').includes('?')) a.href = a.getAttribute('href') + qs;
   });
 })();
+window.LANG='en';
+function t(en,vi){return window.LANG==='vi'?vi:en;}
 (async function applyNavVisibility(){
   try{
     const r = await tenantFetch('/.netlify/functions/nav-flags');
     const j = await r.json();
     if(!r.ok) return;
+    if(j.lang) window.LANG=j.lang;
     const map = { '/events.html': j.eventsEnabled, '/milestones.html': j.milestonesEnabled,
 
       '/daily.html': j.dailyEnabled, '/store.html': j.storeEnabled, '/mailbox.html': j.mailboxEnabled };
@@ -231,7 +234,7 @@ function tenantFetch(path, opts){ return fetch(path + tenantQS(), opts); }
 })();
 
 async function load(){
-  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading...</div>`;
+  $('content').innerHTML=`<div class="state"><div class="spinner"></div>${t('Loading...','Đang tải...')}</div>`;
   try{
     const r=await tenantFetch('/.netlify/functions/mailbox');
     const j=await r.json();
@@ -239,7 +242,7 @@ async function load(){
     $('powered-badge').style.display=(j.isPaid&&j.branding?.logoUrl)?'none':'block';
     render(j.entries||[]);
   }catch(e){
-    $('content').innerHTML=`<div class="err"><b>⚠ Could not load data:</b> ${e.message}<br><br>Please open this page inside Whop.</div>`;
+    $('content').innerHTML=`<div class="err"><b>⚠ ${t('Could not load data','Không thể tải dữ liệu')}:</b> ${e.message}<br><br>${t('Please open this page inside Whop.','Vui lòng mở trang này trong Whop.')}</div>`;
   }
 }
 
@@ -247,7 +250,7 @@ function fmtCountdown(expiresAt){
   const ms = new Date(expiresAt).getTime() - Date.now();
   if (ms <= 0) return 'Expired';
   const h = Math.floor(ms/3600000), m = Math.floor((ms%3600000)/60000), s = Math.floor((ms%60000)/1000);
-  return `Expires in ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return t('Expires in ','Hết hạn sau ')+`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
 const chestRegistry = {};
@@ -257,7 +260,7 @@ function render(entries){
   for (const k in chestRegistry) delete chestRegistry[k];
 
   if (!entries.length){
-    $('content').innerHTML = '<div class="empty">📭 Your mailbox is empty. When a member makes a purchase on Whop, the whole channel will get a chest here!</div>';
+    $('content').innerHTML = `<div class="empty">📭 ${t('Your mailbox is empty. When a member makes a purchase on Whop, the whole channel will get a chest here!','Hộp thư của bạn trống. Khi có thành viên mua hàng trên Whop, cả kênh sẽ nhận được rương thưởng tại đây!')}</div>`;
     return;
   }
   const sparkAngles = [[-26,-10,-22],[24,-8,18],[-10,-34,-14],[12,-30,26],[-34,-22,-30],[30,-20,32]];
@@ -267,7 +270,7 @@ function render(entries){
       return `<div class="promo-card" id="chest-${esc(e.id)}" style="background:rgba(39,227,255,.06);border-color:rgba(39,227,255,.25);position:relative">
         <div class="promo-icon">💬</div>
         <div class="promo-info">
-          <div class="promo-lbl" style="color:var(--cyan)">${esc(e.label||'Message from Admin')}</div>
+          <div class="promo-lbl" style="color:var(--cyan)">${esc(e.label||t('Message from Admin','Tin từ Admin'))}</div>
           <div class="promo-sub" style="white-space:pre-wrap;color:var(--card-text)">${esc(e.message||'')}</div>
         </div>
         <button onclick="deleteOne('${esc(e.id)}')" title="Delete" style="position:absolute;top:8px;right:8px;background:none;border:1px solid rgba(255,80,80,.3);color:#ff6b6b;border-radius:5px;padding:2px 7px;cursor:pointer;font-size:11px;line-height:1.4">✕</button>
@@ -301,9 +304,9 @@ function render(entries){
       <div class="info">
         <div class="label">${esc(e.label)}</div>
         ${e.buyerName ? `<div class="desc"><b>${esc(e.buyerName)}</b> made a purchase on Whop</div>` : (e.desc ? `<div class="desc">${esc(e.desc)}</div>` : '')}
-        ${e.claimed ? '<div class="claimed-tag">✅ Claimed +'+e.xu+' XU</div>' : `<div style="font-size:12px;color:#fcd34d;font-weight:600;margin-bottom:2px">+${e.xu} XU</div><div class="exp" data-exp="${esc(e.expiresAt)}">${fmtCountdown(e.expiresAt)}</div>`}
+        ${e.claimed ? `<div class="claimed-tag">✅ ${t('Claimed','Đã nhận')} +${e.xu} XU</div>` : `<div style="font-size:12px;color:#fcd34d;font-weight:600;margin-bottom:2px">+${e.xu} XU</div><div class="exp" data-exp="${esc(e.expiresAt)}">${fmtCountdown(e.expiresAt)}</div>`}
       </div>
-      ${e.claimed ? '' : `<button class="btn" onclick="claim('${esc(e.id)}',this)">Claim</button>`}
+      ${e.claimed ? '' : `<button class="btn" onclick="claim('${esc(e.id)}',this)">${t('Claim','Nhận')}</button>`}
       <div class="pop" id="pop-${esc(e.id)}"></div>
     </div>`;
   }).join('');

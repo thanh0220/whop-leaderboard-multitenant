@@ -212,7 +212,7 @@
   <div class="nav" data-shared></div>
   <script src="/_nav.js"></script>
   <div class="top"><span class="s">♦</span> Reward <b>Store</b></div>
-  <div id="content"><div class="state"><div class="spinner"></div>Loading your XU...</div></div>
+  <div id="content"><div class="state"><div class="spinner"></div>Loading...</div></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -256,11 +256,14 @@ function tenantFetch(path, opts){
     if (!a.getAttribute('href').includes('?')) a.href = a.getAttribute('href') + qs;
   });
 })();
+window.LANG='en';
+function t(en,vi){return window.LANG==='vi'?vi:en;}
 (async function applyNavVisibility(){
   try{
     const r = await tenantFetch('/.netlify/functions/nav-flags');
     const j = await r.json();
     if(!r.ok) return;
+    if(j.lang) window.LANG=j.lang;
     const map = { '/events.html': j.eventsEnabled, '/milestones.html': j.milestonesEnabled,
 
       '/daily.html': j.dailyEnabled, '/store.html': j.storeEnabled, '/mailbox.html': j.mailboxEnabled };
@@ -321,7 +324,7 @@ function useDemo(){
 }
 
 async function load(){
-  $('content').innerHTML=`<div class="state"><div class="spinner"></div>Loading your XU...</div>`;
+  $('content').innerHTML=`<div class="state"><div class="spinner"></div>${t('Loading...','Đang tải...')}</div>`;
   try{
     const r=await tenantFetch('/.netlify/functions/me');
     const j=await r.json();
@@ -346,8 +349,8 @@ function render(){
   if(!d.rewards || d.rewards.length===0){
     $('content').innerHTML=`
       <div class="bal">
-        <div class="b main"><div class="v" id="v-av">${fmt(d.available)}</div><div class="l">🪙 Available XU</div></div>
-        <div class="b"><div class="v">${fmt(d.earned)}</div><div class="l">🪙 Total earned</div></div>
+        <div class="b main"><div class="v" id="v-av">${fmt(d.available)}</div><div class="l">🪙 ${t('Available XU','XU khả dụng')}</div></div>
+        <div class="b"><div class="v">${fmt(d.earned)}</div><div class="l">🪙 ${t('Total earned','Tổng đã kiếm')}</div></div>
         <div class="b"><div class="v">${fmt(d.spent)}</div><div class="l">Spent</div></div>
       </div>
       <div class="state">This community doesn't have any rewards in the store yet. Check back later!</div>
@@ -388,8 +391,8 @@ function render(){
     const badgeText = badgeKey==='lucky' ? '🎲 Lucky Box' : (BADGE_LABEL[badgeKey]||'');
     const badgeHtml = badgeText ? `<span class="badge ${badgeKey}">${badgeText}</span>` : '';
     const stockHtml = (stockLeft !== null && !done)
-      ? `<span class="stock-pill">${soldOut ? '❌ SOLD OUT' : `📦 ${stockLeft} left`}</span>` : '';
-    const doneBadge = done ? `<span class="done-badge">✅ Redeemed</span>` : '';
+      ? `<span class="stock-pill">${soldOut ? `❌ ${t('SOLD OUT','HẾT HÀNG')}` : `📦 ${stockLeft} ${t('left','còn lại')}`}</span>` : '';
+    const doneBadge = done ? `<span class="done-badge">✅ ${t('Redeemed','Đã đổi')}</span>` : '';
 
     const progress = (!can && !done && !soldOut && !isVipLocked)
       ? `<div class="progress"><i style="width:${pct}%"></i></div>
@@ -417,8 +420,8 @@ function render(){
       btnDisabled = false;
       btnOnclick = `flipCard('${esc(rw.id)}',event)`;
     } else if (can) {
-      if (isLucky) { btnClass='btn lucky-btn'; btnLabel='🎲 Shake & Reveal!'; btnOnclick=`luckyRedeem('${esc(rw.id)}',this)`; }
-      else { btnClass=rw.tier>=4?'btn primary':'btn'; btnLabel=esc(rw.buttonLabel||'BUY'); btnOnclick=`redeem('${esc(rw.id)}',this)`; }
+      if (isLucky) { btnClass='btn lucky-btn'; btnLabel=t('🎲 Shake & Reveal!','🎲 Lắc & Khám phá!'); btnOnclick=`luckyRedeem('${esc(rw.id)}',this)`; }
+      else { btnClass=rw.tier>=4?'btn primary':'btn'; btnLabel=esc(rw.buttonLabel||t('BUY','MUA')); btnOnclick=`redeem('${esc(rw.id)}',this)`; }
       btnDisabled = false;
     } else {
       btnClass='btn'; btnLabel='Not enough XU'; btnDisabled=true; btnOnclick='';
@@ -510,7 +513,7 @@ function render(){
     const back = `
       <div class="flip-face flip-back">
         <div class="fb-hdr">
-          <span class="fb-tag">${p.kind==='lucky-box'?'🎲 Lucky Prize':'🎉 Redeemed'}</span>
+          <span class="fb-tag">${p.kind==='lucky-box'?`🎲 ${t('Lucky Prize','Giải ngẫu nhiên')}`:t('🎉 Redeemed','🎉 Đã đổi')}</span>
           <div class="fb-title">${esc(rw.name)}</div>
         </div>
         <div class="fb-body">${backBody}</div>
@@ -555,8 +558,8 @@ function render(){
   $('content').innerHTML=`
     ${demoBanner}
     <div class="bal">
-      <div class="b main"><div class="v" id="v-av">${fmt(d.available)}</div><div class="l">🪙 Available XU</div></div>
-      <div class="b"><div class="v">${fmt(d.earned)}</div><div class="l">🪙 Total earned</div></div>
+      <div class="b main"><div class="v" id="v-av">${fmt(d.available)}</div><div class="l">🪙 ${t('Available XU','XU khả dụng')}</div></div>
+      <div class="b"><div class="v">${fmt(d.earned)}</div><div class="l">🪙 ${t('Total earned','Tổng đã kiếm')}</div></div>
       <div class="b"><div class="v">${fmt(d.spent)}</div><div class="l">Spent</div></div>
     </div>
     <div class="hi">Hi <b>${esc(d.username)}</b> 👋 — you have <b>🪙 ${fmt(d.available)}</b> XU. (Spent ~$${fmt(d.paidUsd)}, ${fmt(d.referrals)} referrals)</div>
@@ -590,8 +593,8 @@ async function redeem(rewardId,btn){
       }
     });
   }catch(e){
-    toast('⚠ Redeem failed: '+e.message);
-    btn.disabled=false;btn.textContent='🎁 Redeem now';
+    toast('⚠ '+t('Redeem failed: ','Đổi thưởng thất bại: ')+e.message);
+    btn.disabled=false;btn.textContent=t('🎁 Redeem now','🎁 Đổi ngay');
   }
 }
 
@@ -638,7 +641,7 @@ async function luckyRedeem(rewardId, btn) {
 
 
 function vipUpgradeCta() {
-  toast('👑 Buy any paid plan (>$1) to unlock VIP rewards and redeem with XU!');
+  toast(t('👑 Buy any paid plan (>$1) to unlock VIP rewards and redeem with XU!','👑 Mua bất kỳ gói trả phí (>$1) để mở khóa phần thưởng VIP và đổi bằng XU!'));
 }
 
 function startDealCountdown() {
