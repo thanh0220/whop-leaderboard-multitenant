@@ -111,7 +111,7 @@
   @media(prefers-color-scheme:dark){
     .day.milestone{background:linear-gradient(150deg,#0e0028 0%,#1e0050 50%,#0a0018 100%)!important;border-color:#7c3aed!important;box-shadow:0 0 12px #7c3aed66,inset 0 0 14px #ffffff05}
     .day.milestone .n{color:#c4b5fd}
-    .day.milestone .r{background:linear-gradient(170deg,#e8d5ff 0%,#a855f7 50%,#6d28d9 100%);filter:drop-shadow(0 0 8px #a855f7)}
+    .day.milestone .r{background:linear-gradient(170deg,#e8d5ff 0%,#a855f7 50%,#6d28d9 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 8px #a855f7)}
   }
   .day.milestone::before{content:'';position:absolute;top:-100%;left:-70%;width:40%;height:300%;background:linear-gradient(90deg,transparent,#ffffff10,transparent);transform:skewX(-15deg);animation:ms-shimmer 4s ease-in-out infinite;pointer-events:none}
   .day.milestone.done .r{-webkit-text-fill-color:var(--cyan);background:none;filter:none;font-size:18px!important;animation:none}
